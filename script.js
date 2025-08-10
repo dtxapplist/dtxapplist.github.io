@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const popupInstructions = document.getElementById("popup-instructions");
     const popupClose = document.getElementById("popup-close");
 
+    let currentApp = null;
+
     function renderApps(filter = "") {
         appList.innerHTML = "";
 
@@ -47,14 +49,64 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
 
             card.addEventListener("click", () => {
-                popupTitle.textContent = app.supported ? app.name : `${app.name} (${app.alt})`;
-                popupInstructions.textContent = app.install || "Kurulum bilgisi bulunamadı.";
-                popup.classList.remove("hidden");
-                popup.classList.add("visible");
+                currentApp = app;
+                showPopup(app);
             });
 
             appList.appendChild(card);
         });
+    }
+
+    function showPopup(app) {
+        popupTitle.textContent = app.supported ? app.name : `${app.name} (${app.alt})`;
+        
+        // Popup içeriğini temizle ve yeniden oluştur
+        popupInstructions.innerHTML = '';
+        
+        // Tab butonlarını oluştur
+        const tabContainer = document.createElement('div');
+        const tabButtons = document.createElement('div');
+        tabButtons.className = 'tab-buttons';
+        
+        const tabContent = document.createElement('div');
+        tabContent.className = 'tab-content';
+        
+        // İlk distroyu varsayılan olarak seç
+        let firstDistro = Object.keys(app.install)[0];
+        let activeDistro = firstDistro;
+        
+        // Her distro için tab butonu oluştur
+        Object.keys(app.install).forEach((distro, index) => {
+            const button = document.createElement('button');
+            button.className = `tab-button ${index === 0 ? 'active' : ''}`;
+            button.textContent = distro;
+            
+            button.addEventListener('click', () => {
+                // Tüm butonlardan active sınıfını kaldır
+                tabButtons.querySelectorAll('.tab-button').forEach(btn => 
+                    btn.classList.remove('active')
+                );
+                // Bu butona active sınıfını ekle
+                button.classList.add('active');
+                
+                // İçeriği güncelle
+                activeDistro = distro;
+                tabContent.textContent = app.install[distro];
+            });
+            
+            tabButtons.appendChild(button);
+        });
+        
+        // İlk distronun içeriğini göster
+        tabContent.textContent = app.install[firstDistro];
+        
+        // Popup'a ekle
+        tabContainer.appendChild(tabButtons);
+        tabContainer.appendChild(tabContent);
+        popupInstructions.appendChild(tabContainer);
+        
+        popup.classList.remove("hidden");
+        popup.classList.add("visible");
     }
 
     searchInput.addEventListener("input", e => {
@@ -64,12 +116,14 @@ document.addEventListener("DOMContentLoaded", () => {
     popupClose.addEventListener("click", () => {
         popup.classList.remove("visible");
         popup.classList.add("hidden");
+        currentApp = null;
     });
 
     popup.addEventListener("click", (e) => {
         if (e.target === popup) {
             popup.classList.remove("visible");
             popup.classList.add("hidden");
+            currentApp = null;
         }
     });
 
@@ -78,6 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === "Escape" && popup.classList.contains("visible")) {
             popup.classList.remove("visible");
             popup.classList.add("hidden");
+            currentApp = null;
         }
     });
 
