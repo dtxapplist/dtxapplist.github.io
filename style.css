@@ -164,6 +164,53 @@ h1 {
     color: #88c0d0;
 }
 
+/* Tab sistemi */
+.tab-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #434c5e;
+    padding-bottom: 10px;
+}
+
+.tab-button {
+    background-color: #434c5e;
+    color: #d8dee9;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tab-button:hover {
+    background-color: #5e81ac;
+    color: #eceff4;
+}
+
+.tab-button.active {
+    background-color: #88c0d0;
+    color: #2e3440;
+    font-weight: bold;
+}
+
+.tab-content {
+    background-color: #2e3440;
+    padding: 15px;
+    border-radius: 6px;
+    overflow-x: auto;
+    color: #d8dee9;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    font-family: 'Courier New', monospace;
+    border: 1px solid #434c5e;
+}
+
 @keyframes slideDown {
     from { 
         transform: translateY(-30px); 
@@ -175,15 +222,7 @@ h1 {
     }
 }
 
-pre {
-    background-color: #2e3440;
-    padding: 10px;
-    border-radius: 6px;
-    overflow-x: auto;
-    color: #d8dee9;
-    font-size: 13px;
-    line-height: 1.4;
-}
+/* Eski pre stilini kaldırdık, tab-content kullanıyoruz artık */
 
 @media (max-width: 480px) {
     .container {
