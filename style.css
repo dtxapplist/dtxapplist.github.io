@@ -1,70 +1,125 @@
 body {
-    background-color: #2E3440;
-    color: #ECEFF4;
     font-family: Arial, sans-serif;
+    background-color: #2e3440;
+    color: #eceff4;
     margin: 0;
     padding: 0;
 }
 
 .container {
-    max-width: 700px;
-    margin: 40px auto;
-    padding: 10px;
+    text-align: center;
+    padding: 20px;
 }
 
 #search {
-    width: 100%;
-    padding: 12px 15px;
-    font-size: 16px;
-    border-radius: 20px;
+    padding: 12px 20px;
+    border-radius: 15px;
     border: none;
-    outline: none;
-    background-color: #3B4252;
-    color: #ECEFF4;
+    width: 280px;
+    max-width: 80%;
+    background-color: #3b4252;
+    color: #eceff4;
+    font-size: 16px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: inset 0 0 6px #1f242d;
+}
+
+#app-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
 
 .card {
     display: flex;
     align-items: center;
-    background-color: #4C566A;
-    padding: 15px;
+    background-color: #434c5e;
+    padding: 14px;
     border-radius: 12px;
-    margin-bottom: 15px;
+    width: 320px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+.card:hover {
+    transform: scale(1.02);
 }
 
 .card img {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
     border-radius: 8px;
-    margin-right: 15px;
+    margin-right: 12px;
 }
 
 .card-content {
-    display: flex;
-    flex-direction: column;
+    text-align: left;
 }
 
 .app-name {
-    font-size: 18px;
     font-weight: bold;
-}
-
-.status {
-    margin-top: 5px;
-    font-size: 14px;
+    font-size: 17px;
+    margin-bottom: 4px;
 }
 
 .status.green {
-    color: #A3BE8C;
+    color: #a3be8c;
 }
 
 .status.red {
-    color: #BF616A;
+    color: #bf616a;
 }
 
-.alt {
-    color: #88C0D0;
+.status .alt {
+    color: #88c0d0;
     font-weight: bold;
+}
+
+/* Pop-up */
+.popup {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 100px;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.popup.visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.popup-content {
+    background-color: #3b4252;
+    padding: 20px;
+    border-radius: 12px;
+    width: 400px;
+    animation: slideDown 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+#popup-close {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+pre {
+    background-color: #2e3440;
+    padding: 10px;
+    border-radius: 6px;
+    overflow-x: auto;
 }
