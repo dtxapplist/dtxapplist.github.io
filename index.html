@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linux Uygulama Destek Kontrolü</title>
+  <style>
+    :root {
+      --nord0: #2E3440;
+      --nord1: #3B4252;
+      --nord2: #434C5E;
+      --nord3: #4C566A;
+      --nord4: #D8DEE9;
+      --nord5: #E5E9F0;
+      --nord6: #ECEFF4;
+      --nord7: #8FBCBB;
+      --nord8: #88C0D0;
+      --nord9: #81A1C1;
+      --nord10: #5E81AC;
+      --nord11: #BF616A;
+      --nord12: #D08770;
+      --nord13: #EBCB8B;
+      --nord14: #A3BE8C;
+      --nord15: #B48EAD;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--nord0);
+      color: var(--nord6);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .search-container {
+      margin-top: 40px;
+      transition: transform 0.3s ease, margin-top 0.3s ease;
+    }
+    .search-container.moved {
+      margin-top: 20px;
+      transform: translateY(-10px);
+    }
+    .search-box {
+      padding: 10px 15px;
+      font-size: 16px;
+      border: 2px solid var(--nord8);
+      background-color: var(--nord1);
+      color: var(--nord6);
+      width: 300px;
+      clip-path: polygon(
+        10px 0%, calc(100% - 10px) 0%, 100% 10px,
+        100% calc(100% - 10px), calc(100% - 10px) 100%,
+        10px 100%, 0% calc(100% - 10px), 0% 10px
+      );
+    }
+    .cards {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 80%;
+      max-width: 600px;
+    }
+    .card {
+      background-color: var(--nord2);
+      border: 1px solid var(--nord3);
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      border-radius: 8px;
+      opacity: 1;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      cursor: pointer;
+    }
+    .card.hide {
+      opacity: 0;
+      transform: scale(0.98);
+      pointer-events: none;
+      height: 0;
+      padding: 0;
+      margin: 0;
+      overflow: hidden;
+      border: none;
+    }
+    .card-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .app-logo {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      border-radius: 5px;
+      background-color: var(--nord4);
+      padding: 4px;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+    }
+    .supported {
+      background-color: var(--nord14);
+    }
+    .unsupported {
+      background-color: var(--nord11);
+    }
+    /* Modal */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: var(--nord1);
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 400px;
+      width: 90%;
+      color: var(--nord6);
+    }
+    .modal h2 {
+      margin-top: 0;
+    }
+    .modal pre {
+      background: var(--nord2);
+      padding: 8px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    .close-btn {
+      background: var(--nord11);
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      float: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="search-container" id="searchContainer">
+    <input type="text" class="search-box" id="searchBox" placeholder="Uygulama ara...">
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <button class="close-btn" id="closeModal">Kapat</button>
+      <h2 id="modalTitle"></h2>
+      <div id="installInstructions"></div>
+    </div>
+  </div>
+
+  <!-- Önce veri kaynağı -->
+  <script src="apps.js"></script>
+
+  <!-- Sonra ana kod -->
+  <script>
+    const cardsContainer = document.getElementById('cards');
+    const modal = document.getElementById('modal');
+    const closeModal = document.getElementById('closeModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const installInstructions = document.getElementById('installInstructions');
+
+    function renderCards(list) {
+      cardsContainer.innerHTML = "";
+      list.forEach(app => {
+        const card = document.createElement('div');
+        card.classList.add('card');
+
+        card.innerHTML = `
+          <div class="card-left">
+            <img src="${app.logo}" alt="${app.name}" class="app-logo">
+            <span>${app.name}</span>
+          </div>
+          <div class="status">
+            <div class="status-icon ${app.supported ? 'supported' : 'unsupported'}"></div>
+            <span>
+              ${app.supported 
+                ? "Linux'ta destekleniyor" 
+                : `Desteklenmiyor - Alternatif: ${app.alternative}`
+              }
+            </span>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          modalTitle.textContent = app.name;
+          installInstructions.innerHTML = `
+            <h3>Kurulum Talimatları</h3>
+            <p><b>Ubuntu/Debian:</b></p>
+            <pre>${app.install.ubuntu}</pre>
+            <p><b>Arch Linux:</b></p>
+            <pre>${app.install.arch}</pre>
+            <p><b>Fedora:</b></p>
+            <pre>${app.install.fedora}</pre>
+          `;
+          modal.style.display = 'flex';
+        });
+
+        cardsContainer.appendChild(card);
+      });
+    }
+
+    renderCards(apps);
+
+    const searchBox = document.getElementById('searchBox');
+    const searchContainer = document.getElementById('searchContainer');
+
+    searchBox.addEventListener('input', () => {
+      const query = searchBox.value.toLowerCase();
+      searchContainer.classList.toggle('moved', query.trim() !== '');
+      const filtered = apps.filter(app => app.name.toLowerCase().includes(query));
+      renderCards(filtered);
+    });
+
+    closeModal.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
