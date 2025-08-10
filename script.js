@@ -2,6 +2,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const appList = document.getElementById("app-list");
     const searchInput = document.getElementById("search");
 
+    const popup = document.getElementById("popup");
+    const popupTitle = document.getElementById("popup-title");
+    const popupInstructions = document.getElementById("popup-instructions");
+    const popupClose = document.getElementById("popup-close");
+
     function renderApps(filter = "") {
         appList.innerHTML = "";
 
@@ -24,12 +29,28 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
 
+                card.addEventListener("click", () => {
+                    popupTitle.textContent = app.name;
+                    popupInstructions.textContent = app.install || "Kurulum bilgisi bulunamadı.";
+                    popup.classList.add("visible");
+                });
+
                 appList.appendChild(card);
             });
     }
 
     searchInput.addEventListener("input", e => {
         renderApps(e.target.value);
+    });
+
+    popupClose.addEventListener("click", () => {
+        popup.classList.remove("visible");
+    });
+
+    popup.addEventListener("click", (e) => {
+        if (e.target === popup) {
+            popup.classList.remove("visible");
+        }
     });
 
     renderApps();
