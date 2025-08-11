@@ -1,7 +1,7 @@
 const apps = [
     {
         name: "Discord",
-        icon: "/icon/discord.svg",
+        icon: "./icon/discord.svg",
         supported: true,
         install: {
             "Debian/Ubuntu": "sudo apt install discord",
@@ -16,7 +16,7 @@ const apps = [
     },
     {
         name: "Adobe Photoshop",
-        icon: "/icon/AdobePhotoshoSteam",
+        icon: "icon/AdobePhotoshop.svg",
         supported: false,
         alt: "GIMP",
         alternatives: [
