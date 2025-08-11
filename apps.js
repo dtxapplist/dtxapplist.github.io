@@ -106,7 +106,7 @@ sudo dnf check-update && sudo dnf install code`,
     },
     {
         name: "Spotify",
-        icon: "./icon/spotify.svg", // ✅ Nokta eklendi (NOT: spotify-client.svg değil spotify.svg olmalı)
+        icon: "./icon/spotify-client.svg", // ✅ Nokta eklendi (NOT: spotify-client.svg değil spotify.svg olmalı)
         supported: true,
         install: {
             "Debian/Ubuntu": `curl -sS https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
