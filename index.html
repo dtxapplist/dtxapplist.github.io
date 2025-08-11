@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Linux Uygulama Destek Durumu</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.0.1">
 </head>
 <body>
     <div class="container">
@@ -22,9 +22,8 @@
         </div>
     </div>
 
-    <!-- Önce veri dosyası -->
-    <script src="apps.js"></script>
-    <!-- Sonra listeleme mantığı -->
-    <script src="script.js"></script>
+    <!-- Cache-buster ile dosya yükleme -->
+    <script src="apps.js?v=1.0.1"></script>
+    <script src="script.js?v=1.0.1"></script>
 </body>
 </html>
