@@ -64,11 +64,19 @@ const apps = [
         ]
     },
     {
-    name: "Riot Games",
-        icon: "./icon/riot.svg", // ✅ Zaten doğru
+    {
+        name: "Riot Games",
+        icon: "./icon/riot.svg",
         supported: false,
-        alt: "info",
-        alternatives: [{ name: "açıklama:", description: " Riot Games oyunları Vanguard yüzünden oynanamamakta."}
+        alt: "Açıklama",
+        alternatives: [
+            {
+                name: "Vanguard Sorunu",
+                description: "Riot Games oyunları (Valorant, League of Legends) Vanguard anti-cheat sistemi yüzünden Linux'ta oynanamamaktadır. Alternatif olarak web tarayıcısında Legends of Runeterra oynanabilir.",
+                screenshot: "https://via.placeholder.com/400x250/c89b3c/ffffff?text=Riot+Games",
+                website: "https://www.riotgames.com"
+            }
+        ]
     },
 {
         name: "Microsoft Edge",
@@ -76,7 +84,7 @@ const apps = [
         supported: true,
         install: {
             "DEB/RPM": "https://www.microsoft.com/en-us/edge/business/download?form=MA13FJ",
-            "Arch": "yay-S microsoft-edge-stable-bin",
+            "Arch": "yay -S microsoft-edge-stable-bin",
             "Flatpak": "flatpak install flathub com.microsoft.Edge"
         },
         about: {
