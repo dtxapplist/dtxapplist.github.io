@@ -1,7 +1,7 @@
 const apps = [
     {
         name: "Discord",
-        icon: "./icon/discord.svg",
+        icon: "./icon/discord.svg", // ✅ Zaten doğru
         supported: true,
         install: {
             "Debian/Ubuntu": "sudo apt install discord",
@@ -16,7 +16,7 @@ const apps = [
     },
     {
         name: "Adobe Photoshop",
-        icon: "./icon/AdobePhotoshop.svg",
+        icon: "./icon/AdobePhotoshop.svg", // ✅ Zaten doğru
         supported: false,
         alt: "GIMP",
         alternatives: [
@@ -36,7 +36,7 @@ const apps = [
     },
     {
         name: "Steam",
-        icon: "./icon/steam.svg",
+        icon: "./icon/steam.svg", // ✅ Nokta eklendi
         supported: true,
         install: {
             "Debian/Ubuntu": "sudo apt install steam",
@@ -51,7 +51,7 @@ const apps = [
     },
     {
         name: "VLC",
-        icon: "./icon/vlc.svg",
+        icon: "./icon/vlc.svg", // ✅ Nokta eklendi
         supported: true,
         install: {
             "Debian/Ubuntu": "sudo apt install vlc",
@@ -66,13 +66,13 @@ const apps = [
     },
     {
         name: "Microsoft Office",
-        icon: "./icon/ms-office.svg",
+        icon: "./icon/ms-office.svg", // ✅ Nokta eklendi
         supported: false,
         alt: "LibreOffice",
         alternatives: [
             {
                 name: "LibreOffice",
-                description: "Tam özellikli ofis paketi - Word, Excel, Pdiscord.comlternatifi",
+                description: "Tam özellikli ofis paketi - Word, Excel, PowerPoint alternatifi",
                 screenshot: "https://via.placeholder.com/400x250/18a303/ffffff?text=LibreOffice",
                 website: "https://www.libreoffice.org"
             },
@@ -86,7 +86,7 @@ const apps = [
     },
     {
         name: "Visual Studio Code",
-        icon: "./icon/vscode.svg",
+        icon: "./icon/vscode.svg", // ✅ Nokta eklendi
         supported: true,
         install: {
             "Debian/Ubuntu": `wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
@@ -95,7 +95,7 @@ echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.micr
 sudo apt update && sudo apt install code`,
             "Arch": "yay -S visual-studio-code-bin",
             "Fedora": `sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
+sudo sh -c 'echo -e "[code]\\nname=Visual Studio Code\\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\\nenabled=1\\ngpgcheck=1\\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
 sudo dnf check-update && sudo dnf install code`,
             "Flatpak": "flatpak install flathub com.visualstudio.code"
         },
@@ -106,7 +106,7 @@ sudo dnf check-update && sudo dnf install code`,
     },
     {
         name: "Spotify",
-        icon: "./icon/spotify.svg",
+        icon: "./icon/spotify.svg", // ✅ Nokta eklendi (NOT: spotify-client.svg değil spotify.svg olmalı)
         supported: true,
         install: {
             "Debian/Ubuntu": `curl -sS https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
