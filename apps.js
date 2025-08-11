@@ -1,7 +1,7 @@
 const apps = [
     {
         name: "Discord",
-        icon: "./icon/discord.svg", // ✅ Zaten doğru
+        icon: "./icon/discord.svg",
         supported: true,
         install: {
             "Debian/Ubuntu": "sudo apt install discord",
@@ -14,9 +14,9 @@ const apps = [
             website: "https://discord.com"
         }
     },
-{
+    {
         name: "Audacity",
-        icon: "./icon/audacity.svg", // ✅ Zaten doğru
+        icon: "./icon/audacity.svg",
         supported: true,
         install: {
             "Debian/Ubuntu": "sudo apt install audacity",
@@ -25,13 +25,13 @@ const apps = [
             "Flatpak": "flatpak install flathub org.audacityteam.Audacity"
         },
         about: {
-            screenshot: "https://via.placeholder.com/400x250/7289da/ffffff?text=Discord",
+            screenshot: "https://via.placeholder.com/400x250/7289da/ffffff?text=Audacity",
             website: "https://www.audacityteam.org/"
         }
     },
     {
         name: "Adobe Photoshop",
-        icon: "./icon/AdobePhotoshop.svg", // ✅ Zaten doğru
+        icon: "./icon/AdobePhotoshop.svg",
         supported: false,
         alt: "GIMP",
         alternatives: [
@@ -51,19 +51,18 @@ const apps = [
     },
     {
         name: "Adobe Premiere Pro",
-        icon: "./icon/Premiere.svg", // ✅ Zaten doğru
+        icon: "./icon/Premiere.svg",
         supported: false,
         alt: "DaVinci Resolve",
         alternatives: [
             {
                 name: "DaVinci Resolve",
-                description: "Güçlü ve ücretsiz video düzenleyicisi. ",
-                screenshot: "https://via.placeholder.com/400x250/5c616c/ffffff?text=GIMP",
+                description: "Güçlü ve ücretsiz video düzenleyicisi",
+                screenshot: "https://via.placeholder.com/400x250/5c616c/ffffff?text=DaVinci+Resolve",
                 website: "https://www.blackmagicdesign.com/tr/products/davinciresolve"
-            },
+            }
         ]
     },
-    {
     {
         name: "Riot Games",
         icon: "./icon/riot.svg",
@@ -78,9 +77,9 @@ const apps = [
             }
         ]
     },
-{
+    {
         name: "Microsoft Edge",
-        icon: "./icon/edge.svg", // ✅ Zaten doğru
+        icon: "./icon/edge.svg",
         supported: true,
         install: {
             "DEB/RPM": "https://www.microsoft.com/en-us/edge/business/download?form=MA13FJ",
@@ -88,26 +87,26 @@ const apps = [
             "Flatpak": "flatpak install flathub com.microsoft.Edge"
         },
         about: {
-            screenshot: "https://via.placeholder.com/400x250/7289da/ffffff?text=Discord",
-            website: "https://discord.com"
+            screenshot: "https://via.placeholder.com/400x250/0078d4/ffffff?text=Edge",
+            website: "https://www.microsoft.com/edge"
         }
     },
     {
         name: "Brave",
-        icon: "./icon/brave.svg", // ✅ Zaten doğru
+        icon: "./icon/brave.svg",
         supported: true,
         install: {
-            "Genel kod": " curl -fsS https://dl.brave.com/install.sh | sh ",
+            "Genel kod": "curl -fsS https://dl.brave.com/install.sh | sh",
             "Flatpak": "flatpak install flathub com.brave.Browser"
         },
         about: {
-            screenshot: "https://via.placeholder.com/400x250/7289da/ffffff?text=Discord",
+            screenshot: "https://via.placeholder.com/400x250/fb542b/ffffff?text=Brave",
             website: "https://brave.com/linux/"
         }
     },
     {
         name: "Steam",
-        icon: "./icon/steam.svg", // ✅ Nokta eklendi
+        icon: "./icon/steam.svg",
         supported: true,
         install: {
             "Debian/Ubuntu": "sudo apt install steam",
@@ -122,7 +121,7 @@ const apps = [
     },
     {
         name: "VLC",
-        icon: "./icon/vlc.svg", // ✅ Nokta eklendi
+        icon: "./icon/vlc.svg",
         supported: true,
         install: {
             "Debian/Ubuntu": "sudo apt install vlc",
@@ -137,7 +136,7 @@ const apps = [
     },
     {
         name: "Microsoft Office",
-        icon: "./icon/ms-office.svg", // ✅ Nokta eklendi
+        icon: "./icon/ms-office.svg",
         supported: false,
         alt: "LibreOffice",
         alternatives: [
@@ -157,7 +156,7 @@ const apps = [
     },
     {
         name: "Visual Studio Code",
-        icon: "./icon/vscode.svg", // ✅ Nokta eklendi
+        icon: "./icon/vscode.svg",
         supported: true,
         install: {
             "Debian/Ubuntu": `wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
@@ -177,7 +176,7 @@ sudo dnf check-update && sudo dnf install code`,
     },
     {
         name: "Spotify",
-        icon: "./icon/spotify-client.svg", // ✅ Nokta eklendi (NOT: spotify-client.svg değil spotify.svg olmalı)
+        icon: "./icon/spotify-client.svg",
         supported: true,
         install: {
             "Debian/Ubuntu": `curl -sS https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
