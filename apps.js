@@ -14,6 +14,21 @@ const apps = [
             website: "https://discord.com"
         }
     },
+{
+        name: "Audacity",
+        icon: "./icon/audacity.svg", // ✅ Zaten doğru
+        supported: true,
+        install: {
+            "Debian/Ubuntu": "sudo apt install audacity",
+            "Arch": "sudo pacman -S audacity",
+            "Fedora": "sudo dnf install audacity",
+            "Flatpak": "flatpak install flathub org.audacityteam.Audacity"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/7289da/ffffff?text=Discord",
+            website: "https://www.audacityteam.org/"
+        }
+    },
     {
         name: "Adobe Photoshop",
         icon: "./icon/AdobePhotoshop.svg", // ✅ Zaten doğru
@@ -33,6 +48,32 @@ const apps = [
                 website: "https://krita.org"
             }
         ]
+    },
+    {name: "Adobe Premiere Pro",
+        icon: "./icon/premiere.svg", // ✅ Zaten doğru
+        supported: false,
+        alt: "DaVinci Resolve",
+        alternatives: [
+            {
+                name: "DaVinci Resolve",
+                description: "Güçlü ve ücretsiz video düzenleyicisi. ",
+                screenshot: "https://via.placeholder.com/400x250/5c616c/ffffff?text=GIMP",
+                website: "https://www.blackmagicdesign.com/tr/products/davinciresolve"
+            },
+        ]
+    },
+{
+        name: "Brave",
+        icon: "./icon/brave.svg", // ✅ Zaten doğru
+        supported: true,
+        install: {
+            "Otomarik bulucu": " curl -fsS https://dl.brave.com/install.sh | sh ",
+            "Flatpak": "flatpak install flathub com.brave.Browser"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/7289da/ffffff?text=Discord",
+            website: "https://brave.com/linux/"
+        }
     },
     {
         name: "Steam",
