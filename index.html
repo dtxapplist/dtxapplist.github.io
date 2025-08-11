@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dtxapplist ⁉️</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.0.2">
 </head>
 <body>
     <div class="container">
@@ -22,22 +22,8 @@
         </div>
     </div>
 
-    <script>
-        // Cache-buster ile sıralı yükleme
-        const timestamp = Date.now();
-        
-        // Önce apps.js'i yükle
-        const appsScript = document.createElement('script');
-        appsScript.src = `apps.js?v=${timestamp}`;
-        
-        // apps.js yüklendikten sonra script.js'i yükle
-        appsScript.onload = function() {
-            const mainScript = document.createElement('script');
-            mainScript.src = `script.js?v=${timestamp}`;
-            document.head.appendChild(mainScript);
-        };
-        
-        document.head.appendChild(appsScript);
-    </script>
+    <!-- Sıralı yükleme -->
+    <script src="apps.js?v=1.0.2"></script>
+    <script src="script.js?v=1.0.2"></script>
 </body>
 </html>
