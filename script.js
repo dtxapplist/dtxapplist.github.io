@@ -12,9 +12,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderApps(filter = "") {
         appList.innerHTML = "";
 
-        const filteredApps = apps.filter(app => 
+        let filteredApps = apps.filter(app => 
             app.name.toLowerCase().includes(filter.toLowerCase())
         );
+
+        // Uygulamaları A-Z sıralama
+        filteredApps.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
 
         if (filteredApps.length === 0) {
             appList.innerHTML = `
@@ -140,7 +143,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     btn.classList.remove('active')
                 );
                 screenshotBtn.classList.add('active');
-                tabContent.innerHTML = `<img src="${app.about.screenshot}" alt="${app.name} ekran görüntüsü" class="screenshot">`;
+                
+                // Lazy loading: Sadece tıklandığında görsel yükle
+                tabContent.innerHTML = `
+                    <div class="loading-message">Yükleniyor...</div>
+                `;
+                
+                const img = new Image();
+                img.onload = function() {
+                    tabContent.innerHTML = `<img src="${app.about.screenshot}" alt="${app.name} ekran görüntüsü" class="screenshot">`;
+                };
+                img.onerror = function() {
+                    tabContent.innerHTML = `<div class="error-message">Görsel yüklenemedi</div>`;
+                };
+                img.src = app.about.screenshot;
             });
             
             websiteBtn.addEventListener('click', () => {
@@ -154,8 +170,19 @@ document.addEventListener("DOMContentLoaded", () => {
             tabButtons.appendChild(screenshotBtn);
             tabButtons.appendChild(websiteBtn);
             
-            // Varsayılan olarak ekran görüntüsünü göster
-            tabContent.innerHTML = `<img src="${app.about.screenshot}" alt="${app.name} ekran görüntüsü" class="screenshot">`;
+            // Varsayılan olarak ekran görüntüsünü yükle
+            tabContent.innerHTML = `
+                <div class="loading-message">Yükleniyor...</div>
+            `;
+            
+            const img = new Image();
+            img.onload = function() {
+                tabContent.innerHTML = `<img src="${app.about.screenshot}" alt="${app.name} ekran görüntüsü" class="screenshot">`;
+            };
+            img.onerror = function() {
+                tabContent.innerHTML = `<div class="error-message">Görsel yüklenemedi</div>`;
+            };
+            img.src = app.about.screenshot;
             
             tabContainer.appendChild(tabButtons);
             tabContainer.appendChild(tabContent);
@@ -194,14 +221,32 @@ document.addEventListener("DOMContentLoaded", () => {
                 websiteBtn.className = 'tab-button';
                 websiteBtn.textContent = 'Web Sitesi';
                 
-                const altId = `alt-${index}`;
+                let imageLoaded = false;
                 
                 screenshotBtn.addEventListener('click', () => {
                     tabButtons.querySelectorAll('.tab-button').forEach(btn => 
                         btn.classList.remove('active')
                     );
                     screenshotBtn.classList.add('active');
-                    tabContent.innerHTML = `<img src="${alt.screenshot}" alt="${alt.name} ekran görüntüsü" class="screenshot">`;
+                    
+                    if (!imageLoaded) {
+                        // Lazy loading: Sadece tıklandığında görsel yükle
+                        tabContent.innerHTML = `
+                            <div class="loading-message">Yükleniyor...</div>
+                        `;
+                        
+                        const img = new Image();
+                        img.onload = function() {
+                            tabContent.innerHTML = `<img src="${alt.screenshot}" alt="${alt.name} ekran görüntüsü" class="screenshot">`;
+                            imageLoaded = true;
+                        };
+                        img.onerror = function() {
+                            tabContent.innerHTML = `<div class="error-message">Görsel yüklenemedi</div>`;
+                        };
+                        img.src = alt.screenshot;
+                    } else {
+                        tabContent.innerHTML = `<img src="${alt.screenshot}" alt="${alt.name} ekran görüntüsü" class="screenshot">`;
+                    }
                 });
                 
                 websiteBtn.addEventListener('click', () => {
@@ -215,8 +260,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 tabButtons.appendChild(screenshotBtn);
                 tabButtons.appendChild(websiteBtn);
                 
-                // Varsayılan olarak ekran görüntüsünü göster
-                tabContent.innerHTML = `<img src="${alt.screenshot}" alt="${alt.name} ekran görüntüsü" class="screenshot">`;
+                // Varsayılan olarak yükleme mesajı göster, görsel yükleme
+                tabContent.innerHTML = `
+                    <div class="loading-message">Yükleniyor...</div>
+                `;
+                
+                const img = new Image();
+                img.onload = function() {
+                    tabContent.innerHTML = `<img src="${alt.screenshot}" alt="${alt.name} ekran görüntüsü" class="screenshot">`;
+                    imageLoaded = true;
+                };
+                img.onerror = function() {
+                    tabContent.innerHTML = `<div class="error-message">Görsel yüklenemedi</div>`;
+                };
+                img.src = alt.screenshot;
                 
                 tabContainer.appendChild(tabButtons);
                 tabContainer.appendChild(tabContent);
