@@ -67,7 +67,7 @@ const apps = [
         icon: "./icon/brave.svg", // ✅ Zaten doğru
         supported: true,
         install: {
-            "Otomarik bulucu": " curl -fsS https://dl.brave.com/install.sh | sh ",
+            "Genel kod": " curl -fsS https://dl.brave.com/install.sh | sh ",
             "Flatpak": "flatpak install flathub com.brave.Browser"
         },
         about: {
