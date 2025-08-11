@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="status ${app.supported ? "green" : "red"}">
                         ${app.supported 
                             ? "Linux'ta destekleniyor" 
-                            : `Desteklenmiyor - <span class="alt">Önerilenler için bilgi tuşuna basın</span>`
+                            : `Desteklenmiyor<br><span class="alt">Önerilenler için bilgi tuşuna basın</span>`
                         }
                     </div>
                 </div>
