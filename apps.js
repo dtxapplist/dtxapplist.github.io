@@ -71,7 +71,7 @@ const apps = [
     },
 {
         name: "Microsoft Edge",
-        icon: "./icon/discord.svg", // ✅ Zaten doğru
+        icon: "./icon/edge.svg", // ✅ Zaten doğru
         supported: true,
         install: {
             "DEB/RPM": "https://www.microsoft.com/en-us/edge/business/download?form=MA13FJ",
