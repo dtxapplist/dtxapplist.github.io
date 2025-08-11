@@ -258,24 +258,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     renderApps();
-});= null;
-    });
-
-    popup.addEventListener("click", (e) => {
-        if (e.target === popup) {
-            popup.classList.remove("visible");
-            popup.classList.add("hidden");
-            currentApp = null;
-        }
-    });
-
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && popup.classList.contains("visible")) {
-            popup.classList.remove("visible");
-            popup.classList.add("hidden");
-            currentApp = null;
-        }
-    });
-
-    renderApps();
 });
