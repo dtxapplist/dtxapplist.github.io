@@ -29,8 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const card = document.createElement("div");
             card.className = "card";
 
-            // Eğer icon string ise (emoji), card-icon div'i kullan
-            // Eğer .png ile bitiyorsa, img elementi kullan
+            // Icon elementi
             const iconElement = app.icon.includes('.png') 
                 ? `<img src="${app.icon}" alt="${app.name}">` 
                 : `<div class="card-icon">${app.icon}</div>`;
@@ -46,24 +45,37 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     </div>
                 </div>
+                <div class="card-buttons">
+                    ${app.supported ? `<button class="info-btn install-btn" data-action="install">📦</button>` : ''}
+                    <button class="info-btn about-btn" data-action="about">ℹ️</button>
+                </div>
             `;
 
-            card.addEventListener("click", () => {
-                currentApp = app;
-                showPopup(app);
+            // Kurulum butonu event listener'ı
+            if (app.supported) {
+                const installBtn = card.querySelector('.install-btn');
+                installBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showInstallPopup(app);
+                });
+            }
+
+            // Hakkında butonu event listener'ı
+            const aboutBtn = card.querySelector('.about-btn');
+            aboutBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showAboutPopup(app);
             });
 
             appList.appendChild(card);
         });
     }
 
-    function showPopup(app) {
-        popupTitle.textContent = app.supported ? app.name : `${app.name} (${app.alt})`;
+    function showInstallPopup(app) {
+        popupTitle.textContent = `${app.name} - Kurulum`;
         
-        // Popup içeriğini temizle ve yeniden oluştur
         popupInstructions.innerHTML = '';
         
-        // Tab butonlarını oluştur
         const tabContainer = document.createElement('div');
         const tabButtons = document.createElement('div');
         tabButtons.className = 'tab-buttons';
@@ -71,39 +83,149 @@ document.addEventListener("DOMContentLoaded", () => {
         const tabContent = document.createElement('div');
         tabContent.className = 'tab-content';
         
-        // İlk distroyu varsayılan olarak seç
         let firstDistro = Object.keys(app.install)[0];
-        let activeDistro = firstDistro;
         
-        // Her distro için tab butonu oluştur
         Object.keys(app.install).forEach((distro, index) => {
             const button = document.createElement('button');
             button.className = `tab-button ${index === 0 ? 'active' : ''}`;
             button.textContent = distro;
             
             button.addEventListener('click', () => {
-                // Tüm butonlardan active sınıfını kaldır
                 tabButtons.querySelectorAll('.tab-button').forEach(btn => 
                     btn.classList.remove('active')
                 );
-                // Bu butona active sınıfını ekle
                 button.classList.add('active');
-                
-                // İçeriği güncelle
-                activeDistro = distro;
                 tabContent.textContent = app.install[distro];
             });
             
             tabButtons.appendChild(button);
         });
         
-        // İlk distronun içeriğini göster
         tabContent.textContent = app.install[firstDistro];
         
-        // Popup'a ekle
         tabContainer.appendChild(tabButtons);
         tabContainer.appendChild(tabContent);
         popupInstructions.appendChild(tabContainer);
+        
+        popup.classList.remove("hidden");
+        popup.classList.add("visible");
+    }
+
+    function showAboutPopup(app) {
+        if (app.supported) {
+            // Desteklenen uygulama için tek uygulama göster
+            popupTitle.textContent = `${app.name} - Hakkında`;
+            
+            popupInstructions.innerHTML = '';
+            
+            const tabContainer = document.createElement('div');
+            const tabButtons = document.createElement('div');
+            tabButtons.className = 'tab-buttons';
+            
+            const tabContent = document.createElement('div');
+            tabContent.className = 'tab-content about-content';
+            
+            // Ekran Görüntüsü tab
+            const screenshotBtn = document.createElement('button');
+            screenshotBtn.className = 'tab-button active';
+            screenshotBtn.textContent = 'Ekran Görüntüsü';
+            
+            // Web Sitesi tab
+            const websiteBtn = document.createElement('button');
+            websiteBtn.className = 'tab-button';
+            websiteBtn.textContent = 'Web Sitesi';
+            
+            screenshotBtn.addEventListener('click', () => {
+                tabButtons.querySelectorAll('.tab-button').forEach(btn => 
+                    btn.classList.remove('active')
+                );
+                screenshotBtn.classList.add('active');
+                tabContent.innerHTML = `<img src="${app.about.screenshot}" alt="${app.name} ekran görüntüsü" class="screenshot">`;
+            });
+            
+            websiteBtn.addEventListener('click', () => {
+                tabButtons.querySelectorAll('.tab-button').forEach(btn => 
+                    btn.classList.remove('active')
+                );
+                websiteBtn.classList.add('active');
+                tabContent.innerHTML = `<a href="${app.about.website}" target="_blank" class="website-link">${app.about.website}</a>`;
+            });
+            
+            tabButtons.appendChild(screenshotBtn);
+            tabButtons.appendChild(websiteBtn);
+            
+            // Varsayılan olarak ekran görüntüsünü göster
+            tabContent.innerHTML = `<img src="${app.about.screenshot}" alt="${app.name} ekran görüntüsü" class="screenshot">`;
+            
+            tabContainer.appendChild(tabButtons);
+            tabContainer.appendChild(tabContent);
+            popupInstructions.appendChild(tabContainer);
+        } else {
+            // Desteklenmeyen uygulama için alternatifleri göster
+            popupTitle.textContent = `${app.name} - Alternatifler`;
+            
+            popupInstructions.innerHTML = '';
+            
+            app.alternatives.forEach((alt, index) => {
+                const altContainer = document.createElement('div');
+                altContainer.className = 'alternative-container';
+                
+                const altHeader = document.createElement('div');
+                altHeader.className = 'alternative-header';
+                altHeader.innerHTML = `
+                    <h3>${alt.name}</h3>
+                    <p>${alt.description}</p>
+                `;
+                
+                const tabContainer = document.createElement('div');
+                const tabButtons = document.createElement('div');
+                tabButtons.className = 'tab-buttons';
+                
+                const tabContent = document.createElement('div');
+                tabContent.className = 'tab-content about-content';
+                
+                // Ekran Görüntüsü tab
+                const screenshotBtn = document.createElement('button');
+                screenshotBtn.className = 'tab-button active';
+                screenshotBtn.textContent = 'Ekran Görüntüsü';
+                
+                // Web Sitesi tab
+                const websiteBtn = document.createElement('button');
+                websiteBtn.className = 'tab-button';
+                websiteBtn.textContent = 'Web Sitesi';
+                
+                const altId = `alt-${index}`;
+                
+                screenshotBtn.addEventListener('click', () => {
+                    tabButtons.querySelectorAll('.tab-button').forEach(btn => 
+                        btn.classList.remove('active')
+                    );
+                    screenshotBtn.classList.add('active');
+                    tabContent.innerHTML = `<img src="${alt.screenshot}" alt="${alt.name} ekran görüntüsü" class="screenshot">`;
+                });
+                
+                websiteBtn.addEventListener('click', () => {
+                    tabButtons.querySelectorAll('.tab-button').forEach(btn => 
+                        btn.classList.remove('active')
+                    );
+                    websiteBtn.classList.add('active');
+                    tabContent.innerHTML = `<a href="${alt.website}" target="_blank" class="website-link">${alt.website}</a>`;
+                });
+                
+                tabButtons.appendChild(screenshotBtn);
+                tabButtons.appendChild(websiteBtn);
+                
+                // Varsayılan olarak ekran görüntüsünü göster
+                tabContent.innerHTML = `<img src="${alt.screenshot}" alt="${alt.name} ekran görüntüsü" class="screenshot">`;
+                
+                tabContainer.appendChild(tabButtons);
+                tabContainer.appendChild(tabContent);
+                
+                altContainer.appendChild(altHeader);
+                altContainer.appendChild(tabContainer);
+                popupInstructions.appendChild(altContainer);
+            });
+        }
         
         popup.classList.remove("hidden");
         popup.classList.add("visible");
@@ -127,7 +249,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Escape tuşu ile popup'ı kapatma
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && popup.classList.contains("visible")) {
             popup.classList.remove("visible");
