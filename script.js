@@ -29,8 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const card = document.createElement("div");
             card.className = "card";
 
-            // Icon elementi
-            const iconElement = app.icon.includes('.png') 
+            // Icon elementi - SVG ve PNG desteği eklendi
+            const iconElement = (app.icon.includes('.png') || app.icon.includes('.svg'))
                 ? `<img src="${app.icon}" alt="${app.name}">` 
                 : `<div class="card-icon">${app.icon}</div>`;
 
@@ -239,6 +239,26 @@ document.addEventListener("DOMContentLoaded", () => {
         popup.classList.remove("visible");
         popup.classList.add("hidden");
         currentApp = null;
+    });
+
+    popup.addEventListener("click", (e) => {
+        if (e.target === popup) {
+            popup.classList.remove("visible");
+            popup.classList.add("hidden");
+            currentApp = null;
+        }
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && popup.classList.contains("visible")) {
+            popup.classList.remove("visible");
+            popup.classList.add("hidden");
+            currentApp = null;
+        }
+    });
+
+    renderApps();
+});= null;
     });
 
     popup.addEventListener("click", (e) => {
