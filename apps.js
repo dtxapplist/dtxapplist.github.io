@@ -49,7 +49,8 @@ const apps = [
             }
         ]
     },
-    {name: "Adobe Premiere Pro",
+    {
+        name: "Adobe Premiere Pro",
         icon: "./icon/Premiere.svg", // ✅ Zaten doğru
         supported: false,
         alt: "DaVinci Resolve",
@@ -62,7 +63,27 @@ const apps = [
             },
         ]
     },
+    {
+    name: "Riot Games",
+        icon: "./icon/riot.svg", // ✅ Zaten doğru
+        supported: false,
+        about: { açıklama: "Riot Games oyunları Vanguard yüzünden oynanamamakta."}
+    },
 {
+        name: "Microsoft Edge",
+        icon: "./icon/discord.svg", // ✅ Zaten doğru
+        supported: true,
+        install: {
+            "DEB/RPM": "https://www.microsoft.com/en-us/edge/business/download?form=MA13FJ",
+            "Arch": "yay-S microsoft-edge-stable-bin",
+            "Flatpak": "flatpak install flathub com.microsoft.Edge"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/7289da/ffffff?text=Discord",
+            website: "https://discord.com"
+        }
+    },
+    {
         name: "Brave",
         icon: "./icon/brave.svg", // ✅ Zaten doğru
         supported: true,
