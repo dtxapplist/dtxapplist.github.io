@@ -45,8 +45,23 @@ const apps = [
             "Flatpak": "flatpak install flathub com.valvesoftware.Steam"
         },
         about: {
-            screenshot: "https://via.placeholder.com/400x250/171a21/ffffff?text=Steam",
+            screenshot: "https://linuxiac.com/wp-content/uploads/2023/08/steam-on-linux.jpg",
             website: "https://store.steampowered.com"
+        }
+    },
+    {
+        name: "VLC",
+        icon: "♟️",
+        supported: true,
+        install: {
+            "Debian/Ubuntu": "sudo apt install vlc",
+            "Arch": "sudo pacman -S vlc",
+            "Fedora": "sudo dnf install vlc",
+            "Flatpak": "flatpak install flathub org.videolan.VLC"
+        },
+        about: {
+            screenshot: "https://pimylifeup.com/wp-content/uploads/2021/05/install-vlc-on-ubuntu-thumbnail.jpg",
+            website: "https://www.videolan.org/"
         }
     },
     {
@@ -57,7 +72,7 @@ const apps = [
         alternatives: [
             {
                 name: "LibreOffice",
-                description: "Tam özellikli ofis paketi - Word, Excel, PowerPoint alternatifi",
+                description: "Tam özellikli ofis paketi - Word, Excel, Pdiscord.comlternatifi",
                 screenshot: "https://via.placeholder.com/400x250/18a303/ffffff?text=LibreOffice",
                 website: "https://www.libreoffice.org"
             },
