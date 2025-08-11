@@ -36,10 +36,21 @@ h1 {
 }
 
 #app-list {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 12px;
+    align-items: center;
+    justify-items: center;
+}
+
+/* Masaüstü görünümü için 2 sütun */
+@media (min-width: 768px) {
+    #app-list {
+        grid-template-columns: 1fr 1fr;
+        max-width: 900px;
+        margin: 0 auto;
+        gap: 16px;
+    }
 }
 
 .card {
@@ -49,7 +60,7 @@ h1 {
     padding: 14px;
     border-radius: 12px;
     width: 380px;
-    max-width: 90%;
+    max-width: 100%;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     transition: transform 0.15s ease;
 }
@@ -283,6 +294,21 @@ h1 {
     color: #eceff4;
 }
 
+/* Yükleme ve hata mesajları */
+.loading-message {
+    color: #81a1c1;
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+}
+
+.error-message {
+    color: #bf616a;
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+}
+
 /* Alternatif uygulamalar için */
 .alternative-container {
     margin-bottom: 30px;
@@ -320,9 +346,13 @@ h1 {
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 767px) {
     .container {
         padding: 15px;
+    }
+    
+    #app-list {
+        grid-template-columns: 1fr;
     }
     
     .card {
@@ -354,4 +384,4 @@ h1 {
         height: 32px;
         font-size: 14px;
     }
-    }
+}
