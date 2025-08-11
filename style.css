@@ -48,10 +48,9 @@ h1 {
     background-color: #434c5e;
     padding: 14px;
     border-radius: 12px;
-    width: 320px;
+    width: 380px;
     max-width: 90%;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    cursor: pointer;
     transition: transform 0.15s ease;
 }
 
@@ -109,6 +108,47 @@ h1 {
     font-weight: bold;
 }
 
+.card-buttons {
+    display: flex;
+    gap: 8px;
+    margin-left: 12px;
+}
+
+.info-btn {
+    background-color: #5e81ac;
+    color: #eceff4;
+    border: none;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.info-btn:hover {
+    background-color: #81a1c1;
+}
+
+.install-btn {
+    background-color: #a3be8c;
+}
+
+.install-btn:hover {
+    background-color: #b1c89c;
+}
+
+.about-btn {
+    background-color: #88c0d0;
+}
+
+.about-btn:hover {
+    background-color: #9dd0e0;
+}
+
 /* Pop-up */
 .popup {
     position: fixed;
@@ -141,8 +181,10 @@ h1 {
     background-color: #3b4252;
     padding: 20px;
     border-radius: 12px;
-    width: 400px;
+    width: 500px;
     max-width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
     animation: slideDown 0.3s ease;
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
@@ -211,6 +253,62 @@ h1 {
     border: 1px solid #434c5e;
 }
 
+.tab-content.about-content {
+    font-family: Arial, sans-serif;
+    white-space: normal;
+    text-align: center;
+    padding: 20px;
+}
+
+.screenshot {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.website-link {
+    display: inline-block;
+    color: #88c0d0;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 12px 20px;
+    background-color: #434c5e;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.website-link:hover {
+    background-color: #5e81ac;
+    color: #eceff4;
+}
+
+/* Alternatif uygulamalar için */
+.alternative-container {
+    margin-bottom: 30px;
+    border-bottom: 1px solid #434c5e;
+    padding-bottom: 20px;
+}
+
+.alternative-container:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.alternative-header h3 {
+    color: #88c0d0;
+    margin: 0 0 8px 0;
+    font-size: 18px;
+}
+
+.alternative-header p {
+    color: #d8dee9;
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
 @keyframes slideDown {
     from { 
         transform: translateY(-30px); 
@@ -244,4 +342,16 @@ h1 {
     .tab-button {
         padding: 6px 10px;
         font-size: 12px;
+    }
+    
+    .card-buttons {
+        gap: 6px;
+        margin-left: 8px;
+    }
+    
+    .info-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
     }
