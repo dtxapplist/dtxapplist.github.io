@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linux Uygulama Destek Durumu</title>
-    <link rel="stylesheet" href="style.css?v=1.0.1">
+    <title>dtxapplist ⁉️</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // Cache-buster için timestamp
+        const timestamp = Date.now();
+        document.head.innerHTML += `<link rel="stylesheet" href="style.css?t=${timestamp}">`;
+    </script>
 </head>
 <body>
     <div class="container">
@@ -22,8 +27,16 @@
         </div>
     </div>
 
-    <!-- Cache-buster ile dosya yükleme -->
-    <script src="apps.js?v=1.0.1"></script>
-    <script src="script.js?v=1.0.1"></script>
+    <script>
+        // Dinamik olarak cache-buster ile yükle
+        const loadScript = (src) => {
+            const script = document.createElement('script');
+            script.src = `${src}?t=${Date.now()}`;
+            document.body.appendChild(script);
+        };
+        
+        loadScript('apps.js');
+        loadScript('script.js');
+    </script>
 </body>
 </html>
