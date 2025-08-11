@@ -50,7 +50,7 @@ const apps = [
         ]
     },
     {name: "Adobe Premiere Pro",
-        icon: "./icon/premiere.svg", // ✅ Zaten doğru
+        icon: "./icon/Premiere.svg", // ✅ Zaten doğru
         supported: false,
         alt: "DaVinci Resolve",
         alternatives: [
