@@ -8,6 +8,10 @@ const apps = [
             "Arch": "sudo pacman -S discord",
             "Fedora": "sudo dnf install discord",
             "Flatpak": "flatpak install flathub com.discordapp.Discord"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/7289da/ffffff?text=Discord",
+            website: "https://discord.com"
         }
     },
     {
@@ -15,12 +19,20 @@ const apps = [
         icon: "🎨",
         supported: false,
         alt: "GIMP",
-        install: {
-            "Debian/Ubuntu": "sudo apt install gimp",
-            "Arch": "sudo pacman -S gimp",
-            "Fedora": "sudo dnf install gimp",
-            "Flatpak": "flatpak install flathub org.gimp.GIMP"
-        }
+        alternatives: [
+            {
+                name: "GIMP",
+                description: "Güçlü açık kaynak görüntü düzenleme programı",
+                screenshot: "https://via.placeholder.com/400x250/5c616c/ffffff?text=GIMP",
+                website: "https://www.gimp.org"
+            },
+            {
+                name: "Krita",
+                description: "Dijital sanat ve çizim için özel tasarlanmış program",
+                screenshot: "https://via.placeholder.com/400x250/3daee9/ffffff?text=Krita",
+                website: "https://krita.org"
+            }
+        ]
     },
     {
         name: "Steam",
@@ -31,6 +43,10 @@ const apps = [
             "Arch": "sudo pacman -S steam",
             "Fedora": "sudo dnf install steam",
             "Flatpak": "flatpak install flathub com.valvesoftware.Steam"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/171a21/ffffff?text=Steam",
+            website: "https://store.steampowered.com"
         }
     },
     {
@@ -38,12 +54,20 @@ const apps = [
         icon: "📝",
         supported: false,
         alt: "LibreOffice",
-        install: {
-            "Debian/Ubuntu": "sudo apt install libreoffice",
-            "Arch": "sudo pacman -S libreoffice-fresh",
-            "Fedora": "sudo dnf install libreoffice",
-            "Flatpak": "flatpak install flathub org.libreoffice.LibreOffice"
-        }
+        alternatives: [
+            {
+                name: "LibreOffice",
+                description: "Tam özellikli ofis paketi - Word, Excel, PowerPoint alternatifi",
+                screenshot: "https://via.placeholder.com/400x250/18a303/ffffff?text=LibreOffice",
+                website: "https://www.libreoffice.org"
+            },
+            {
+                name: "OnlyOffice",
+                description: "Microsoft Office ile %100 uyumlu ofis paketi",
+                screenshot: "https://via.placeholder.com/400x250/ff6f3d/ffffff?text=OnlyOffice",
+                website: "https://www.onlyoffice.com"
+            }
+        ]
     },
     {
         name: "Visual Studio Code",
@@ -59,6 +83,10 @@ sudo apt update && sudo apt install code`,
 sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
 sudo dnf check-update && sudo dnf install code`,
             "Flatpak": "flatpak install flathub com.visualstudio.code"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/007acc/ffffff?text=VS+Code",
+            website: "https://code.visualstudio.com"
         }
     },
     {
@@ -73,6 +101,10 @@ sudo apt update && sudo apt install spotify-client`,
             "Fedora": `sudo dnf config-manager --add-repo=https://negativo17.org/repos/fedora-spotify.repo
 sudo dnf install spotify-client`,
             "Flatpak": "flatpak install flathub com.spotify.Client"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/1db954/ffffff?text=Spotify",
+            website: "https://www.spotify.com"
         }
     }
 ];
