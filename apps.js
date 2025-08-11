@@ -1,7 +1,7 @@
 const apps = [
     {
         name: "Discord",
-        icon: "🎮",
+        icon: "/icon/discord.svg",
         supported: true,
         install: {
             "Debian/Ubuntu": "sudo apt install discord",
@@ -16,7 +16,7 @@ const apps = [
     },
     {
         name: "Adobe Photoshop",
-        icon: "🎨",
+        icon: "/icon/AdobePhotoshoSteam",
         supported: false,
         alt: "GIMP",
         alternatives: [
@@ -36,7 +36,7 @@ const apps = [
     },
     {
         name: "Steam",
-        icon: "🎯",
+        icon: "/icon/steam.svg",
         supported: true,
         install: {
             "Debian/Ubuntu": "sudo apt install steam",
@@ -51,7 +51,7 @@ const apps = [
     },
     {
         name: "VLC",
-        icon: "♟️",
+        icon: "/icon/vlc.svg",
         supported: true,
         install: {
             "Debian/Ubuntu": "sudo apt install vlc",
@@ -66,7 +66,7 @@ const apps = [
     },
     {
         name: "Microsoft Office",
-        icon: "📝",
+        icon: "/icon/ms-office.svg",
         supported: false,
         alt: "LibreOffice",
         alternatives: [
@@ -86,7 +86,7 @@ const apps = [
     },
     {
         name: "Visual Studio Code",
-        icon: "💻",
+        icon: "/icon/vscode.svg",
         supported: true,
         install: {
             "Debian/Ubuntu": `wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
@@ -106,7 +106,7 @@ sudo dnf check-update && sudo dnf install code`,
     },
     {
         name: "Spotify",
-        icon: "🎵",
+        icon: "/icon/spotify.svg",
         supported: true,
         install: {
             "Debian/Ubuntu": `curl -sS https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
