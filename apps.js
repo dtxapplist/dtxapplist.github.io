@@ -67,7 +67,8 @@ const apps = [
     name: "Riot Games",
         icon: "./icon/riot.svg", // ✅ Zaten doğru
         supported: false,
-        about: { açıklama: "Riot Games oyunları Vanguard yüzünden oynanamamakta."}
+        alt: "info",
+        alternatives: [{ name: "açıklama:", description: " Riot Games oyunları Vanguard yüzünden oynanamamakta."}
     },
 {
         name: "Microsoft Edge",
