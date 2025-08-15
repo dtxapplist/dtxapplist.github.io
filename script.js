@@ -43,10 +43,10 @@ document.addEventListener("DOMContentLoaded", () => {
             
             if (!app.supported) {
                 if (app.alternatives && app.alternatives.length > 0) {
-                    statusClass = "red";
+                    statusClass = "orange";
                     statusText = `Desteklenmiyor<br><span class="alt">Önerilenler için bilgi tuşuna basın</span>`;
                 } else {
-                    statusClass = "orange";
+                    statusClass = "red";
                     statusText = `Desteklenmiyor<br><span class="alt">Sebep için bilgi tuşuna basın</span>`;
                 }
             }
