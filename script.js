@@ -37,15 +37,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 ? `<img src="${app.icon}" alt="${app.name}">` 
                 : `<div class="card-icon">${app.icon}</div>`;
 
+            // Status rengini belirle
+            let statusClass = "green";
+            let statusText = "Linux'ta destekleniyor";
+            
+            if (!app.supported) {
+                if (app.alternatives && app.alternatives.length > 0) {
+                    statusClass = "red";
+                    statusText = `Desteklenmiyor<br><span class="alt">Önerilenler için bilgi tuşuna basın</span>`;
+                } else {
+                    statusClass = "orange";
+                    statusText = `Desteklenmiyor<br><span class="alt">Sebep için bilgi tuşuna basın</span>`;
+                }
+            }
+
             card.innerHTML = `
                 ${iconElement}
                 <div class="card-content">
                     <div class="app-name">${app.name}</div>
-                    <div class="status ${app.supported ? "green" : "red"}">
-                        ${app.supported 
-                            ? "Linux'ta destekleniyor" 
-                            : `Desteklenmiyor<br><span class="alt">Önerilenler için bilgi tuşuna basın</span>`
-                        }
+                    <div class="status ${statusClass}">
+                        ${statusText}
                     </div>
                 </div>
                 <div class="card-buttons">
@@ -187,8 +198,8 @@ document.addEventListener("DOMContentLoaded", () => {
             tabContainer.appendChild(tabButtons);
             tabContainer.appendChild(tabContent);
             popupInstructions.appendChild(tabContainer);
-        } else {
-            // Desteklenmeyen uygulama için alternatifleri göster
+        } else if (app.alternatives && app.alternatives.length > 0) {
+            // Desteklenmeyen uygulama için alternatifleri göster (eski sistem)
             popupTitle.textContent = `${app.name} - Alternatifler`;
             
             popupInstructions.innerHTML = '';
@@ -282,6 +293,43 @@ document.addEventListener("DOMContentLoaded", () => {
                 altContainer.appendChild(tabContainer);
                 popupInstructions.appendChild(altContainer);
             });
+        } else {
+            // Alternatifi olmayan desteklenmeyen uygulama için sadece desteklenmeme sebebi göster
+            popupTitle.textContent = `${app.name} - Desteklenmeme Sebebi`;
+            
+            popupInstructions.innerHTML = '';
+            
+            const tabContainer = document.createElement('div');
+            const tabButtons = document.createElement('div');
+            tabButtons.className = 'tab-buttons';
+            
+            const tabContent = document.createElement('div');
+            tabContent.className = 'tab-content reason-content';
+            
+            // Desteklenmeme Sebebi tab
+            const reasonBtn = document.createElement('button');
+            reasonBtn.className = 'tab-button active';
+            reasonBtn.textContent = 'Desteklenmeme Sebebi';
+            
+            reasonBtn.addEventListener('click', () => {
+                tabButtons.querySelectorAll('.tab-button').forEach(btn => 
+                    btn.classList.remove('active')
+                );
+                reasonBtn.classList.add('active');
+            });
+            
+            tabButtons.appendChild(reasonBtn);
+            
+            // Desteklenmeme sebebini göster
+            tabContent.innerHTML = `<p>${app.unsupportedReason}</p>`;
+            
+            if (app.about && app.about.website) {
+                tabContent.innerHTML += `<br><a href="${app.about.website}" target="_blank" class="website-link">Resmi Web Sitesi</a>`;
+            }
+            
+            tabContainer.appendChild(tabButtons);
+            tabContainer.appendChild(tabContent);
+            popupInstructions.appendChild(tabContainer);
         }
         
         popup.classList.remove("hidden");
