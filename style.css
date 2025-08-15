@@ -114,6 +114,10 @@ h1 {
     color: #bf616a;
 }
 
+.status.orange {
+    color: #d08770;
+}
+
 .status .alt {
     color: #88c0d0;
     font-weight: bold;
@@ -271,6 +275,15 @@ h1 {
     padding: 20px;
 }
 
+.tab-content.reason-content {
+    font-family: Arial, sans-serif;
+    white-space: normal;
+    text-align: left;
+    padding: 20px;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
 .screenshot {
     max-width: 100%;
     height: auto;
@@ -386,4 +399,4 @@ h1 {
         height: 32px;
         font-size: 14px;
     }
-    }
+}
