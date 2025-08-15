@@ -111,11 +111,11 @@ h1 {
 }
 
 .status.red {
-    color: #bf616a;
+    color: #d08770;
 }
 
 .status.orange {
-    color: #d08770;
+    color: #bf616a;
 }
 
 .status .alt {
