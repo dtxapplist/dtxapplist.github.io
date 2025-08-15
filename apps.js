@@ -191,5 +191,23 @@ sudo dnf install spotify-client`,
             screenshot: "https://via.placeholder.com/400x250/1db954/ffffff?text=Spotify",
             website: "https://www.spotify.com"
         }
+    },
+    {
+        name: "Adobe Illustrator",
+        icon: "./icon/Illustrator.svg",
+        supported: false,
+        unsupportedReason: "Adobe Illustrator resmi olarak Linux için geliştirilmemektedir. Adobe şirketi sadece Windows ve macOS platformlarını desteklemektedir. Wine ile çalıştırılabilir ancak kararlı performans garanti edilemez.",
+        about: {
+            website: "https://www.adobe.com/products/illustrator.html"
+        }
+    },
+    {
+        name: "Figma Desktop",
+        icon: "./icon/figma.svg",
+        supported: false,
+        unsupportedReason: "Figma Desktop uygulaması Linux için resmi olarak sunulmamaktadır. Ancak Figma web tarayıcısından tam özellikli olarak kullanılabilir. Alternatif olarak electron-based wrapper'lar kullanılabilir.",
+        about: {
+            website: "https://www.figma.com"
+        }
     }
 ];
