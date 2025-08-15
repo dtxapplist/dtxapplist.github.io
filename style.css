@@ -139,12 +139,11 @@ h1 {
     border-radius: 16px;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
-}
-
-.stat-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.2);
+    transition: none;
+    width: 140px;
+    flex-shrink: 0;
+    pointer-events: none;
+    user-select: none;
 }
 
 .stat-number {
@@ -212,11 +211,16 @@ h1 {
     border-radius: 16px;
     margin-right: 16px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
 }
 
-.card:hover img, .card:hover .card-icon {
-    transform: rotate(5deg) scale(1.1);
+.card:hover img {
+    transform: scale(1.1);
+}
+
+.card:hover .card-icon {
+    transform: scale(1.1);
 }
 
 .card-icon {
@@ -574,6 +578,7 @@ h1 {
     }
 
     .stat-item {
+        width: 110px;
         padding: 12px 16px;
     }
 
