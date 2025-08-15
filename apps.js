@@ -191,7 +191,7 @@ sudo dnf install spotify-client`,
         name: "Riot Games",
         icon: "./icon/riot.svg",
         supported: false,
-        unsupportedReason:"Vanguard, Windows'ta çekirdek (kernel) seviyesinde çalışmakta. Linux'ta çalışadığından Riot'un Vanguard kullanan oyunları oynanamamakta.",
+        unsupportedReason:"Vanguard, Windows'ta çekirdek (kernel) seviyesinde çalışmakta. Linux'ta çalışamadığı için Riot'un Vanguard kullanan oyunları oynanamamakta.",
         about: {
             website: "https://www.riotgames.com/tr"
         }
