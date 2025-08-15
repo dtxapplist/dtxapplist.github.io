@@ -145,6 +145,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showInstallPopup(app) {
+        // URL hash güncelle
+        window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}`);
+        
         popupTitle.textContent = `${app.name} - Kurulum`;
         
         popupInstructions.innerHTML = '';
@@ -185,6 +188,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showAboutPopup(app) {
+        // URL hash güncelle
+        window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}`);
+        
         if (app.supported) {
             // Desteklenen uygulama için tek uygulama göster
             popupTitle.textContent = `${app.name} - Hakkında`;
@@ -404,6 +410,8 @@ document.addEventListener("DOMContentLoaded", () => {
         popup.classList.remove("visible");
         popup.classList.add("hidden");
         currentApp = null;
+        // URL hash temizle
+        window.history.pushState({}, '', window.location.pathname);
     });
 
     popup.addEventListener("click", (e) => {
@@ -411,6 +419,8 @@ document.addEventListener("DOMContentLoaded", () => {
             popup.classList.remove("visible");
             popup.classList.add("hidden");
             currentApp = null;
+            // URL hash temizle
+            window.history.pushState({}, '', window.location.pathname);
         }
     });
 
@@ -419,6 +429,8 @@ document.addEventListener("DOMContentLoaded", () => {
             popup.classList.remove("visible");
             popup.classList.add("hidden");
             currentApp = null;
+            // URL hash temizle
+            window.history.pushState({}, '', window.location.pathname);
         }
     });
 
@@ -429,4 +441,35 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
         updateStats();
     }, 300);
+
+    // URL hash kontrolü - Sayfa yüklendiğinde hash varsa ilgili uygulamayı aç
+    function checkHashOnLoad() {
+        const hash = window.location.hash.substring(1); // # işaretini kaldır
+        if (hash) {
+            const appName = hash.replace(/-/g, ' '); // - işaretlerini boşluğa çevir
+            const app = apps.find(a => a.name.toLowerCase() === appName.toLowerCase());
+            if (app) {
+                setTimeout(() => {
+                    if (app.supported) {
+                        showInstallPopup(app);
+                    } else {
+                        showAboutPopup(app);
+                    }
+                }, 500); // Biraz bekle ki sayfa tamamen yüklensin
+            }
+        }
+    }
+
+    // Sayfa yüklendiğinde hash kontrolü yap
+    checkHashOnLoad();
+
+    // Browser back/forward butonları için
+    window.addEventListener('popstate', () => {
+        if (popup.classList.contains('visible')) {
+            popup.classList.remove("visible");
+            popup.classList.add("hidden");
+            currentApp = null;
+        }
+        checkHashOnLoad();
+    });
 });
