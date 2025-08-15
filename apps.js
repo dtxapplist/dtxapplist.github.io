@@ -64,20 +64,6 @@ const apps = [
         ]
     },
     {
-        name: "Riot Games",
-        icon: "./icon/riot.svg",
-        supported: false,
-        alt: "Açıklama",
-        alternatives: [
-            {
-                name: "Vanguard Sorunu",
-                description: "Riot Games oyunları (Valorant, League of Legends) Vanguard anti-cheat sistemi yüzünden Linux'ta oynanamamaktadır. Alternatif olarak web tarayıcısında Legends of Runeterra oynanabilir.",
-                screenshot: "https://via.placeholder.com/400x250/c89b3c/ffffff?text=Riot+Games",
-                website: "https://www.riotgames.com"
-            }
-        ]
-    },
-    {
         name: "Microsoft Edge",
         icon: "./icon/edge.svg",
         supported: true,
@@ -199,6 +185,15 @@ sudo dnf install spotify-client`,
         unsupportedReason: "Adobe Illustrator resmi olarak Linux için geliştirilmemektedir. Adobe şirketi sadece Windows ve macOS platformlarını desteklemektedir. Wine ile çalıştırılabilir ancak kararlı performans garanti edilemez.",
         about: {
             website: "https://www.adobe.com/products/illustrator.html"
+        }
+    },
+    {
+        name: "Riot Games",
+        icon: "./icon/riot.svg",
+        supported: false,
+        unsupportedReason:"Vanguard, Windows'ta çekirdek (kernel) seviyesinde çalışmakta. Linux'ta çalışadığından Riot'un Vanguard kullanan oyunları oynanamamakta.",
+        about: {
+            website: "https://www.riotgames.com/tr"
         }
     },
     {
