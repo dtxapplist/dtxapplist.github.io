@@ -4,12 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dtxapplist ⁉️</title>
-    <link rel="stylesheet" href="style.css?v=1.0.2">
+    <link rel="stylesheet" href="style.css?v=2.0.0">
 </head>
 <body>
     <div class="container">
-        <h1>Linux Uygulama Destek Durumu</h1>
-        <input type="text" id="search" placeholder="Uygulama ara...">
+        <div class="header">
+            <h1>Linux App Hub</h1>
+            <p class="subtitle">Popüler uygulamaların Linux desteğini keşfedin</p>
+        </div>
+        
+        <div class="search-container">
+            <div class="search-icon">🔍</div>
+            <input type="text" id="search" placeholder="Uygulama ara...">
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-item">
+                <span class="stat-number" id="supported-count">0</span>
+                <span class="stat-label">Desteklenen</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="unsupported-count">0</span>
+                <span class="stat-label">Desteklenmeyen</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="total-count">0</span>
+                <span class="stat-label">Toplam</span>
+            </div>
+        </div>
+
         <div id="app-list"></div>
     </div>
 
@@ -23,7 +46,7 @@
     </div>
 
     <!-- Sıralı yükleme -->
-    <script src="apps.js?v=1.0.2"></script>
-    <script src="script.js?v=1.0.2"></script>
+    <script src="apps.js?v=2.0.0"></script>
+    <script src="script.js?v=2.0.0"></script>
 </body>
-</html>
+    </html>
