@@ -101,7 +101,7 @@ const apps = [
             "Flatpak": "flatpak install flathub com.valvesoftware.Steam"
         },
         about: {
-            screenshot: "https://linuxiac.com/wp-content/uploads/2023/08/steam-on-linux.jpg",
+            screenshot: "./ss/steam.png",
             website: "https://store.steampowered.com"
         }
     },
