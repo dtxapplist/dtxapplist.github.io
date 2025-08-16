@@ -524,7 +524,7 @@ sudo dnf install google-chrome-stable`,
             "Debian/Ubuntu": "sudo apt install scratch",
             "Arch": "sudo pacman -S scratch",
             "Fedora": "sudo dnf install scratch",
-            "Flatpak": "flatpak install flathub org.scratch.Scratch"
+            "Flatpak": "flatpak install flathub edu.mit.Scratch"
         },
         about: {
             screenshot: "https://via.placeholder.com/400x250/ff7f00/ffffff?text=Scratch",
