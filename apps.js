@@ -180,7 +180,7 @@ sudo dnf install spotify-client`,
     },
     {
         name: "Adobe Illustrator",
-        icon: "./icon/Illustrator.svg",
+        icon: "./icon/AdobeIllustrator.svg",
         supported: false,
         unsupportedReason: "Adobe Illustrator resmi olarak Linux için geliştirilmemektedir. Adobe şirketi sadece Windows ve macOS platformlarını desteklemektedir. Wine ile çalıştırılabilir ancak kararlı performans garanti edilemez.",
         about: {
