@@ -73,7 +73,7 @@ const apps = [
             "Flatpak": "flatpak install flathub com.microsoft.Edge"
         },
         about: {
-            screenshot: "https://via.placeholder.com/400x250/0078d4/ffffff?text=Edge",
+            screenshot: "./ss/ms-edge.png",
             website: "https://www.microsoft.com/edge"
         }
     },
@@ -116,7 +116,7 @@ const apps = [
             "Flatpak": "flatpak install flathub org.videolan.VLC"
         },
         about: {
-            screenshot: "https://pimylifeup.com/wp-content/uploads/2021/05/install-vlc-on-ubuntu-thumbnail.jpg",
+            screenshot: "./ss/vlc.png",
             website: "https://www.videolan.org/"
         }
     },
