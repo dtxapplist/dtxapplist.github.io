@@ -314,17 +314,6 @@ sudo yum install onlyoffice-desktopeditors`,
     supported: false,
     alt: "DaVinci Resolve",
     alternatives: [
-        // ... alternatives
-    ]
-}
-
-// Olması gereken:
-{
-    name: "Adobe Premiere Pro",
-    icon: "./icon/Premiere.svg",
-    supported: false,
-    alt: "DaVinci Resolve",
-    alternatives: [
         {
             name: "DaVinci Resolve",
             description: "Güçlü ve ücretsiz video düzenleyicisi",
