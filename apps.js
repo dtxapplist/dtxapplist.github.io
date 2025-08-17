@@ -43,6 +43,17 @@ const apps = [
                 website: "https://web.whatsapp.com"
             },
             {
+                name: "Whatsie",
+                description: "WhatsApp Web için Electron wrapper",
+                screenshot: "https://via.placeholder.com/400x250/25d366/ffffff?text=Whatsie",
+                website: "https://github.com/gsantner/whatsie"
+            }
+        ],
+        about: {
+            website: "https://www.whatsapp.com"
+        }
+    },
+    {
         name: "1Password",
         icon: "./icon/1password.svg",
         supported: true,
