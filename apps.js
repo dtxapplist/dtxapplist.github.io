@@ -15,6 +15,65 @@ const apps = [
         }
     },
     {
+        name: "Telegram",
+        icon: "./icon/telegram.svg",
+        supported: true,
+        install: {
+            "Debian/Ubuntu": "sudo apt install telegram-desktop",
+            "Arch": "sudo pacman -S telegram-desktop",
+            "Fedora": "sudo dnf install telegram-desktop",
+            "Flatpak": "flatpak install flathub org.telegram.desktop",
+            "Snap": "sudo snap install telegram-desktop"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/0088cc/ffffff?text=Telegram",
+            website: "https://telegram.org"
+        }
+    },
+    {
+        name: "WhatsApp",
+        icon: "./icon/whatsapp.svg",
+        supported: false,
+        alt: "WhatsApp Web",
+        alternatives: [
+            {
+                name: "WhatsApp Web (Tarayıcı)",
+                description: "WhatsApp'ın resmi web versiyonu",
+                screenshot: "https://via.placeholder.com/400x250/25d366/ffffff?text=WhatsApp+Web",
+                website: "https://web.whatsapp.com"
+            },
+            {
+                name: "Whatsie",
+                description: "WhatsApp Web için Electron wrapper",
+                screenshot: "https://via.placeholder.com/400x250/25d366/ffffff?text=Whatsie",
+                website: "https://github.com/gsantner/whatsie"
+            }
+        ],
+        about: {
+            website: "https://www.whatsapp.com"
+        }
+    },
+    {
+        name: "OnlyOffice",
+        icon: "./icon/onlyoffice-desktopeditors.svg",
+        supported: true,
+        install: {
+            "Debian/Ubuntu": `wget -qO - https://download.onlyoffice.com/GPG-KEY-ONLYOFFICE | sudo apt-key add -
+echo "deb https://download.onlyoffice.com/repo/debian squeeze main" | sudo tee /etc/apt/sources.list.d/onlyoffice.list
+sudo apt update && sudo apt install onlyoffice-desktopeditors`,
+            "Arch": "yay -S onlyoffice-bin",
+            "Fedora": `sudo yum install https://download.onlyoffice.com/repo/centos/main/noarch/onlyoffice-repo.noarch.rpm
+sudo yum install onlyoffice-desktopeditors`,
+            "Flatpak": "flatpak install flathub org.onlyoffice.desktopeditors",
+            "Snap": "sudo snap install onlyoffice-desktopeditors",
+            "AppImage": "https://www.onlyoffice.com/tr/download-desktop.aspx"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/ff6f3d/ffffff?text=OnlyOffice",
+            website: "https://www.onlyoffice.com"
+        }
+    },
+    {
         name: "Audacity",
         icon: "./icon/audacity.svg",
         supported: true,
