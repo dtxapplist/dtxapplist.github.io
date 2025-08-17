@@ -32,7 +32,7 @@ const apps = [
     },
     {
         name: "WhatsApp",
-        icon: "./icon/whatsapp.svg",
+        icon: "./icon/whatsapp-desktop.svg",
         supported: false,
         alt: "WhatsApp Web",
         alternatives: [
