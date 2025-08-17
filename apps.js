@@ -250,17 +250,6 @@ const apps = [
             website: "https://zen-browser.app"
         }
     },
-            {
-                name: "Whatsie",
-                description: "WhatsApp Web için Electron wrapper",
-                screenshot: "https://via.placeholder.com/400x250/25d366/ffffff?text=Whatsie",
-                website: "https://github.com/gsantner/whatsie"
-            }
-        ],
-        about: {
-            website: "https://www.whatsapp.com"
-        }
-    },
     {
         name: "OnlyOffice",
         icon: "./icon/onlyoffice-desktopeditors.svg",
@@ -296,40 +285,57 @@ sudo yum install onlyoffice-desktopeditors`,
             website: "https://www.audacityteam.org/"
         }
     },
-    {
-        name: "Adobe Photoshop",
-        icon: "./icon/AdobePhotoshop.svg",
-        supported: false,
-        alt: "GIMP",
-        alternatives: [
-            {
-                name: "GIMP",
-                description: "Güçlü açık kaynak görüntü düzenleme programı",
-                screenshot: "https://via.placeholder.com/400x250/5c616c/ffffff?text=GIMP",
-                website: "https://www.gimp.org"
-            },
-            {
-                name: "Krita",
-                description: "Dijital sanat ve çizim için özel tasarlanmış program",
-                screenshot: "https://via.placeholder.com/400x250/3daee9/ffffff?text=Krita",
-                website: "https://krita.org"
-            }
-        ]
-    },
-    {
-        name: "Adobe Premiere Pro",
-        icon: "./icon/Premiere.svg",
-        supported: false,
-        alt: "DaVinci Resolve",
-        alternatives: [
-            {
-                name: "DaVinci Resolve",
-                description: "Güçlü ve ücretsiz video düzenleyicisi",
-                screenshot: "https://via.placeholder.com/400x250/5c616c/ffffff?text=DaVinci+Resolve",
-                website: "https://www.blackmagicdesign.com/tr/products/davinciresolve"
-            }
-        ]
-    },
+{
+    name: "Adobe Photoshop",
+    icon: "./icon/AdobePhotoshop.svg",
+    supported: false,
+    alt: "GIMP",
+    alternatives: [
+        {
+            name: "GIMP",
+            description: "Güçlü açık kaynak görüntü düzenleme programı",
+            screenshot: "https://via.placeholder.com/400x250/5c616c/ffffff?text=GIMP",
+            website: "https://www.gimp.org"
+        },
+        {
+            name: "Krita",
+            description: "Dijital sanat ve çizim için özel tasarlanmış program",
+            screenshot: "https://via.placeholder.com/400x250/3daee9/ffffff?text=Krita",
+            website: "https://krita.org"
+        }
+    ],
+    about: {
+        website: "https://www.adobe.com/products/photoshop.html"
+    }
+},
+{
+    name: "Adobe Premiere Pro",
+    icon: "./icon/Premiere.svg",
+    supported: false,
+    alt: "DaVinci Resolve",
+    alternatives: [
+        // ... alternatives
+    ]
+}
+
+// Olması gereken:
+{
+    name: "Adobe Premiere Pro",
+    icon: "./icon/Premiere.svg",
+    supported: false,
+    alt: "DaVinci Resolve",
+    alternatives: [
+        {
+            name: "DaVinci Resolve",
+            description: "Güçlü ve ücretsiz video düzenleyicisi",
+            screenshot: "https://via.placeholder.com/400x250/5c616c/ffffff?text=DaVinci+Resolve",
+            website: "https://www.blackmagicdesign.com/tr/products/davinciresolve"
+        }
+    ],
+    about: {
+        website: "https://www.adobe.com/products/premiere.html"
+    }
+},
     {
         name: "Microsoft Edge",
         icon: "./icon/edge.svg",
@@ -387,26 +393,29 @@ sudo yum install onlyoffice-desktopeditors`,
             website: "https://www.videolan.org/"
         }
     },
-    {
-        name: "Microsoft Office",
-        icon: "./icon/ms-office.svg",
-        supported: false,
-        alt: "LibreOffice",
-        alternatives: [
-            {
-                name: "LibreOffice",
-                description: "Tam özellikli ofis paketi - Word, Excel, PowerPoint alternatifi",
-                screenshot: "https://via.placeholder.com/400x250/18a303/ffffff?text=LibreOffice",
-                website: "https://www.libreoffice.org"
-            },
-            {
-                name: "OnlyOffice",
-                description: "Microsoft Office ile %100 uyumlu ofis paketi",
-                screenshot: "https://via.placeholder.com/400x250/ff6f3d/ffffff?text=OnlyOffice",
-                website: "https://www.onlyoffice.com"
-            }
-        ]
-    },
+{
+    name: "Microsoft Office",
+    icon: "./icon/ms-office.svg",
+    supported: false,
+    alt: "LibreOffice",
+    alternatives: [
+        {
+            name: "LibreOffice",
+            description: "Tam özellikli ofis paketi - Word, Excel, PowerPoint alternatifi",
+            screenshot: "https://via.placeholder.com/400x250/18a303/ffffff?text=LibreOffice",
+            website: "https://www.libreoffice.org"
+        },
+        {
+            name: "OnlyOffice",
+            description: "Microsoft Office ile %100 uyumlu ofis paketi",
+            screenshot: "https://via.placeholder.com/400x250/ff6f3d/ffffff?text=OnlyOffice",
+            website: "https://www.onlyoffice.com"
+        }
+    ],
+    about: {
+        website: "https://www.microsoft.com/microsoft-365"
+    }
+},
     {
         name: "Visual Studio Code",
         icon: "./icon/vscode.svg",
