@@ -43,6 +43,203 @@ const apps = [
                 website: "https://web.whatsapp.com"
             },
             {
+        name: "1Password",
+        icon: "./icon/1password.svg",
+        supported: true,
+        install: {
+            "DEB/RPM": "https://1password.com/downloads/linux/",
+            "Flatpak": "flatpak install flathub com.1password.OnePassword",
+            "Snap": "sudo snap install 1password"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/0076e2/ffffff?text=1Password",
+            website: "https://1password.com"
+        }
+    },
+    {
+        name: "Adobe AIR",
+        icon: "./icon/adobe-air.svg",
+        supported: false,
+        unsupportedReason: "Adobe AIR resmi olarak Linux desteğini 2011'de sonlandırmıştır. Alternatif olarak web tabanlı uygulamalar veya Electron wrapper'ları kullanılabilir.",
+        about: {
+            website: "https://www.adobe.com/products/air.html"
+        }
+    },
+    {
+        name: "Chromium",
+        icon: "./icon/chromium.svg",
+        supported: true,
+        install: {
+            "Debian/Ubuntu": "sudo apt install chromium-browser",
+            "Arch": "sudo pacman -S chromium",
+            "Fedora": "sudo dnf install chromium",
+            "Flatpak": "flatpak install flathub org.chromium.Chromium",
+            "Snap": "sudo snap install chromium"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/4688f4/ffffff?text=Chromium",
+            website: "https://www.chromium.org"
+        }
+    },
+    {
+        name: "Electron",
+        icon: "./icon/electron.svg",
+        supported: true,
+        install: {
+            "npm": "npm install -g electron",
+            "Debian/Ubuntu": "sudo apt install electron",
+            "Arch": "sudo pacman -S electron",
+            "Fedora": "sudo dnf install electron"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/494c60/ffffff?text=Electron",
+            website: "https://www.electronjs.org"
+        }
+    },
+    {
+        name: "GitHub Desktop",
+        icon: "./icon/github-desktop.svg",
+        supported: true,
+        install: {
+            "DEB/RPM": "https://github.com/shiftkey/desktop/releases",
+            "Flatpak": "flatpak install flathub io.github.shiftey.Desktop",
+            "AppImage": "https://github.com/shiftkey/desktop/releases"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/8034a9/ffffff?text=GitHub+Desktop",
+            website: "https://desktop.github.com"
+        }
+    },
+    {
+        name: "Heroic Games Launcher",
+        icon: "./icon/heroic.svg",
+        supported: true,
+        install: {
+            "AppImage": "https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases",
+            "Flatpak": "flatpak install flathub com.heroicgameslauncher.hgl",
+            "DEB/RPM": "https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/50beee/ffffff?text=Heroic",
+            website: "https://heroicgameslauncher.com"
+        }
+    },
+    {
+        name: "LibreWolf",
+        icon: "./icon/io.gitlab.LibreWolf.svg",
+        supported: true,
+        install: {
+            "Debian/Ubuntu": "https://librewolf.net/installation/debian/",
+            "Arch": "yay -S librewolf-bin",
+            "Fedora": "https://librewolf.net/installation/fedora/",
+            "Flatpak": "flatpak install flathub io.gitlab.LibreWolf",
+            "AppImage": "https://gitlab.com/librewolf-community/browser/appimage/-/releases"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/31aae4/ffffff?text=LibreWolf",
+            website: "https://librewolf.net"
+        }
+    },
+    {
+        name: "KeePass",
+        icon: "./icon/keepass.svg",
+        supported: true,
+        install: {
+            "Debian/Ubuntu": "sudo apt install keepass2",
+            "Arch": "sudo pacman -S keepass",
+            "Fedora": "sudo dnf install keepass",
+            "Flatpak": "flatpak install flathub org.keepassxc.KeePassXC"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/587de6/ffffff?text=KeePass",
+            website: "https://keepass.info"
+        }
+    },
+    {
+        name: "Opera",
+        icon: "./icon/opera.svg",
+        supported: true,
+        install: {
+            "DEB/RPM": "https://www.opera.com/download",
+            "Flatpak": "flatpak install flathub com.opera.Opera",
+            "Snap": "sudo snap install opera"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/c0191f/ffffff?text=Opera",
+            website: "https://www.opera.com"
+        }
+    },
+    {
+        name: "Proton VPN",
+        icon: "./icon/proton-vpn-logo.svg",
+        supported: true,
+        install: {
+            "DEB/RPM": "https://protonvpn.com/download-linux",
+            "Flatpak": "flatpak install flathub com.protonvpn.www"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/3974ff/ffffff?text=Proton+VPN",
+            website: "https://protonvpn.com"
+        }
+    },
+    {
+        name: "Thunderbird",
+        icon: "./icon/thunderbird.svg",
+        supported: true,
+        install: {
+            "Debian/Ubuntu": "sudo apt install thunderbird",
+            "Arch": "sudo pacman -S thunderbird",
+            "Fedora": "sudo dnf install thunderbird",
+            "Flatpak": "flatpak install flathub org.mozilla.Thunderbird",
+            "Snap": "sudo snap install thunderbird"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/248afd/ffffff?text=Thunderbird",
+            website: "https://www.thunderbird.net"
+        }
+    },
+    {
+        name: "TIDAL Hi-Fi",
+        icon: "./icon/tidal-hifi.svg",
+        supported: true,
+        install: {
+            "AppImage": "https://github.com/Mastermindzh/tidal-hifi/releases",
+            "DEB/RPM": "https://github.com/Mastermindzh/tidal-hifi/releases",
+            "AUR": "yay -S tidal-hifi"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/3f3f3f/ffffff?text=TIDAL+Hi-Fi",
+            website: "https://github.com/Mastermindzh/tidal-hifi"
+        }
+    },
+    {
+        name: "UBinary",
+        icon: "./icon/ubinary.svg",
+        supported: true,
+        install: {
+            "AppImage": "https://github.com/mtxr/ubinary/releases",
+            "DEB": "https://github.com/mtxr/ubinary/releases"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/243a85/ffffff?text=UBinary",
+            website: "https://github.com/mtxr/ubinary"
+        }
+    },
+    {
+        name: "Zen Browser",
+        icon: "./icon/zen-browser.svg",
+        supported: true,
+        install: {
+            "AppImage": "https://github.com/zen-browser/desktop/releases",
+            "Flatpak": "flatpak install flathub io.github.zen_browser.zen",
+            "AUR": "yay -S zen-browser-bin"
+        },
+        about: {
+            screenshot: "https://via.placeholder.com/400x250/f76f53/ffffff?text=Zen+Browser",
+            website: "https://zen-browser.app"
+        }
+    },
+            {
                 name: "Whatsie",
                 description: "WhatsApp Web için Electron wrapper",
                 screenshot: "https://via.placeholder.com/400x250/25d366/ffffff?text=Whatsie",
