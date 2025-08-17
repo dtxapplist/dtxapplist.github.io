@@ -470,7 +470,6 @@ sudo dnf install spotify-client`,
             website: "https://www.figma.com"
         }
     },
-    // Yeni eklenen uygulamalar
     {
         name: "Adobe Dreamweaver",
         icon: "./icon/AdobeDreamweaver.svg",
