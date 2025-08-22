@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,13 +9,41 @@
 <body>
     <div class="container">
         <div class="header">
+            <div class="header-controls">
+                <button id="theme-toggle" class="theme-toggle" title="Tema Değiştir">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
             <h1>Linux App Hub</h1>
             <p class="subtitle">Popüler uygulamaların Linux desteğini keşfedin</p>
         </div>
         
         <div class="search-container">
             <div class="search-icon">🔍</div>
-            <input type="text" id="search" placeholder="Uygulama ara...">
+            <input type="text" id="search" placeholder="Uygulama, açıklama veya tag ara...">
+            <div class="advanced-search-toggle" id="advanced-toggle" title="Gelişmiş Arama">
+                <span>⚙️</span>
+            </div>
+        </div>
+
+        <div class="advanced-search" id="advanced-search">
+            <div class="search-filters">
+                <div class="filter-group">
+                    <label>Durum:</label>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">Tümü</button>
+                        <button class="filter-btn" data-filter="supported">Desteklenen</button>
+                        <button class="filter-btn" data-filter="alternatives">Alternatifli</button>
+                        <button class="filter-btn" data-filter="unsupported">Desteklenmeyen</button>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Kategori:</label>
+                    <div class="filter-buttons" id="category-filters">
+                        <button class="filter-btn active" data-category="all">Tümü</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="stats" id="stats">
@@ -43,6 +71,12 @@
             <h2 id="popup-title"></h2>
             <div id="popup-instructions"></div>
         </div>
+    </div>
+
+    <!-- Toast Bildirimi -->
+    <div id="toast" class="toast">
+        <span class="toast-icon">✅</span>
+        <span class="toast-message">Komut kopyalandı!</span>
     </div>
 
     <!-- Sıralı yükleme -->
