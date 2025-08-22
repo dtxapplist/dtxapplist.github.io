@@ -1,85 +1,152 @@
-// Dynamic Asset Loader for Linux App Hub
-// Automatically loads CSS and JS files from assets folder
+// Simple Auto-Loading Asset Loader for Linux App Hub
+// Otomatik olarak aynı isimli CSS ve JS dosyalarını yükler
 
 (function() {
-    const config = {
-        css: [
-            'style'  // assest/css/style.css
-        ],
-        app: [
-            'apps'  // assest/app/apps.js
-        ],
-        js: [
-            'script'  // assest/js/script.js
-        ]
-    };
+    // Yüklenecek modüller - sadece dosya adını ekle, hem CSS hem JS otomatik yüklenecek
+    const modules = [
+        'style',    // style.css + style.js (eğer varsa)
+        'apps',     // apps.css (eğer varsa) + apps.js
+        'script',   // script.css (eğer varsa) + script.js
+        'copyp',    // copyp.css + copyp.js
+        'theme',    // theme.css + theme.js
+        'search',   // search.css + search.js
+        // Yeni modül eklemek için buraya adını yaz
+    ];
 
-    console.log('📦 Asset loader başlatıldı...');
+    let loadedCount = 0;
+    let totalFiles = 0;
+    let jsFilesToLoad = [];
 
-    // CSS dosyalarını yükle
-    config.css.forEach(name => {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = `assest/css/${name}.css`;
-        link.onerror = () => console.error(`❌ CSS dosyası yüklenemedi: ${name}.css`);
-        link.onload = () => console.log(`✅ CSS yüklendi: ${name}.css`);
-        document.head.appendChild(link);
-    });
+    // Dosya var mı kontrol et
+    async function fileExists(url) {
+        try {
+            const response = await fetch(url, { method: 'HEAD' });
+            return response.ok;
+        } catch {
+            return false;
+        }
+    }
 
-    // Önce app dosyalarını yükle (apps.js gibi veri dosyaları)
-    let loadedAppFiles = 0;
-    const totalAppFiles = config.app.length;
-
-    function loadJSFiles() {
-        // JS dosyalarını yükle
-        config.js.forEach((name, index) => {
-            const script = document.createElement('script');
-            script.src = `assest/js/${name}.js`;
-            script.onerror = () => console.error(`❌ JS dosyası yüklenemedi: ${name}.js`);
-            script.onload = () => {
-                console.log(`✅ JS yüklendi: ${name}.js`);
+    // CSS dosyasını yükle
+    function loadCSS(moduleName) {
+        return new Promise(async (resolve) => {
+            const cssPath = `assest/css/${moduleName}.css`;
+            
+            if (await fileExists(cssPath)) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = cssPath;
                 
-                // Son JS dosyası yüklendiğinde tüm yükleme tamamlandı
-                if (index === config.js.length - 1) {
-                    console.log('🚀 Tüm dosyalar başarıyla yüklendi!');
-                    
-                    // DOM hazır olduğunda script.js'deki kodu çalıştır
-                    if (document.readyState === 'loading') {
-                        document.addEventListener('DOMContentLoaded', initializeApp);
-                    } else {
-                        initializeApp();
-                    }
-                }
-            };
-            document.head.appendChild(script);
+                link.onload = () => {
+                    console.log(`✅ ${moduleName}.css yüklendi`);
+                    resolve(true);
+                };
+                
+                link.onerror = () => {
+                    console.log(`⚠️ ${moduleName}.css yüklenemedi`);
+                    resolve(false);
+                };
+                
+                document.head.appendChild(link);
+            } else {
+                console.log(`📄 ${moduleName}.css bulunamadı`);
+                resolve(false);
+            }
         });
+    }
+
+    // JS dosyasını yükle
+    function loadJS(moduleName) {
+        return new Promise(async (resolve) => {
+            const jsPath = `assest/js/${moduleName}.js`;
+            
+            if (await fileExists(jsPath)) {
+                const script = document.createElement('script');
+                script.src = jsPath;
+                
+                script.onload = () => {
+                    console.log(`✅ ${moduleName}.js yüklendi`);
+                    resolve(true);
+                };
+                
+                script.onerror = () => {
+                    console.log(`⚠️ ${moduleName}.js yüklenemedi`);
+                    resolve(false);
+                };
+                
+                document.head.appendChild(script);
+            } else {
+                console.log(`📄 ${moduleName}.js bulunamadı`);
+                resolve(false);
+            }
+        });
+    }
+
+    // App dosyasını yükle (özel durum - assest/app/ klasöründe)
+    function loadApp(moduleName) {
+        return new Promise(async (resolve) => {
+            const appPath = `assest/app/${moduleName}.js`;
+            
+            if (await fileExists(appPath)) {
+                const script = document.createElement('script');
+                script.src = appPath;
+                
+                script.onload = () => {
+                    console.log(`✅ ${moduleName}.js (app) yüklendi`);
+                    resolve(true);
+                };
+                
+                script.onerror = () => {
+                    console.log(`⚠️ ${moduleName}.js (app) yüklenemedi`);
+                    resolve(false);
+                };
+                
+                document.head.appendChild(script);
+            } else {
+                console.log(`📄 ${moduleName}.js (app) bulunamadı`);
+                resolve(false);
+            }
+        });
+    }
+
+    // Ana yükleme fonksiyonu
+    async function loadModules() {
+        console.log('📦 Modüller yükleniyor...');
+
+        // 1. Önce tüm CSS dosyalarını yükle
+        console.log('🎨 CSS dosyaları yükleniyor...');
+        for (const module of modules) {
+            await loadCSS(module);
+        }
+
+        // 2. Sonra app dosyalarını yükle (veri dosyaları)
+        console.log('📊 App dosyaları yükleniyor...');
+        for (const module of modules) {
+            await loadApp(module);
+        }
+
+        // 3. Son olarak JS dosyalarını yükle
+        console.log('⚡ JS dosyaları yükleniyor...');
+        for (const module of modules) {
+            await loadJS(module);
+        }
+
+        // 4. Uygulama başlatma
+        console.log('🚀 Tüm modüller yüklendi!');
+        initializeApp();
     }
 
     function initializeApp() {
         // script.js yüklendikten sonra main fonksiyonu varsa çalıştır
         if (typeof window.initLinuxAppHub === 'function') {
-            window.initLinuxAppHub();
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', window.initLinuxAppHub);
+            } else {
+                window.initLinuxAppHub();
+            }
         }
     }
 
-    // App dosyalarını sırayla yükle
-    if (totalAppFiles > 0) {
-        config.app.forEach(name => {
-            const script = document.createElement('script');
-            script.src = `assest/app/${name}.js`;
-            script.onerror = () => console.error(`❌ App dosyası yüklenemedi: ${name}.js`);
-            script.onload = () => {
-                console.log(`✅ App dosyası yüklendi: ${name}.js`);
-                loadedAppFiles++;
-                if (loadedAppFiles === totalAppFiles) {
-                    // Tüm app dosyaları yüklendikten sonra JS dosyalarını yükle
-                    loadJSFiles();
-                }
-            };
-            document.head.appendChild(script);
-        });
-    } else {
-        // App dosyası yoksa direkt JS dosyalarını yükle
-        loadJSFiles();
-    }
+    // Loader'ı başlat
+    loadModules();
 })();
