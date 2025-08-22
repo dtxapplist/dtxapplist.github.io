@@ -1,4 +1,8 @@
-document.addEventListener("DOMContentLoaded", () => {
+// Linux App Hub Ana Script Dosyası
+// Loader tarafından dinamik olarak yüklenir
+
+window.initLinuxAppHub = function() {
+    // DOM elementlerini al
     const appList = document.getElementById("app-list");
     const searchInput = document.getElementById("search");
     const advancedToggle = document.getElementById("advanced-toggle");
@@ -16,6 +20,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const supportedCount = document.getElementById("supported-count");
     const unsupportedCount = document.getElementById("unsupported-count");
     const totalCount = document.getElementById("total-count");
+
+    // apps.js'den gelen veri kontrolü
+    if (typeof apps === 'undefined' || !Array.isArray(apps)) {
+        console.error('❌ apps verisi bulunamadı! apps.js dosyası doğru yüklendi mi?');
+        appList.innerHTML = '<div class="error-message">Uygulama verileri yüklenemedi. Lütfen sayfayı yenileyin.</div>';
+        return;
+    }
+
+    console.log(`📊 ${apps.length} uygulama verisi yüklendi`);
 
     let currentApp = null;
     let currentFilters = {
@@ -288,15 +301,6 @@ document.addEventListener("DOMContentLoaded", () => {
             aboutBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 showAboutPopup(app);
-            });
-
-            // Card hover effect
-            card.addEventListener('mouseenter', () => {
-                card.style.transform = 'translateY(-8px) scale(1.02)';
-            });
-
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'translateY(0) scale(1)';
             });
 
             appList.appendChild(card);
@@ -687,4 +691,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Sayfa yüklendiğinde hash kontrolü yap
     checkHashOnLoad();
-});
+
+    console.log('✅ Linux App Hub başarıyla başlatıldı!');
+};
