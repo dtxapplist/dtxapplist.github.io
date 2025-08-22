@@ -1,6 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
     const appList = document.getElementById("app-list");
     const searchInput = document.getElementById("search");
+    const advancedToggle = document.getElementById("advanced-toggle");
+    const advancedSearch = document.getElementById("advanced-search");
+    const categoryFilters = document.getElementById("category-filters");
+    const themeToggle = document.getElementById("theme-toggle");
+    const toast = document.getElementById("toast");
 
     const popup = document.getElementById("popup");
     const popupTitle = document.getElementById("popup-title");
@@ -13,6 +18,115 @@ document.addEventListener("DOMContentLoaded", () => {
     const totalCount = document.getElementById("total-count");
 
     let currentApp = null;
+    let currentFilters = {
+        status: 'all',
+        category: 'all',
+        search: ''
+    };
+
+    // Theme management
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+    }
+
+    function updateThemeIcon(theme) {
+        const themeIcon = themeToggle.querySelector('.theme-icon');
+        themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        themeToggle.title = theme === 'dark' ? 'Açık Tema' : 'Koyu Tema';
+    }
+
+    // Toast notification
+    function showToast(message, icon = '✅') {
+        const toastIcon = toast.querySelector('.toast-icon');
+        const toastMessage = toast.querySelector('.toast-message');
+        
+        toastIcon.textContent = icon;
+        toastMessage.textContent = message;
+        
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    // Copy to clipboard
+    async function copyToClipboard(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('Komut kopyalandı!', '📋');
+        } catch (err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showToast('Komut kopyalandı!', '📋');
+        }
+    }
+
+    // Extract categories from apps data
+    function extractCategories() {
+        const categories = new Set();
+        apps.forEach(app => {
+            if (app.category) {
+                categories.add(app.category);
+            }
+        });
+        return Array.from(categories).sort();
+    }
+
+    // Initialize category filters
+    function initCategoryFilters() {
+        const categories = extractCategories();
+        
+        categories.forEach(category => {
+            const button = document.createElement('button');
+            button.className = 'filter-btn';
+            button.setAttribute('data-category', category.toLowerCase());
+            button.textContent = category;
+            button.addEventListener('click', () => filterByCategory(category.toLowerCase()));
+            categoryFilters.appendChild(button);
+        });
+    }
+
+    // Filter functions
+    function filterByStatus(status) {
+        currentFilters.status = status;
+        
+        // Update button states
+        document.querySelectorAll('[data-filter]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.filter === status);
+        });
+        
+        renderApps();
+    }
+
+    function filterByCategory(category) {
+        currentFilters.category = category;
+        
+        // Update button states
+        document.querySelectorAll('[data-category]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.category === category);
+        });
+        
+        renderApps();
+    }
 
     function updateStats(filteredApps = apps) {
         const supported = filteredApps.filter(app => app.supported).length;
@@ -45,12 +159,53 @@ document.addEventListener("DOMContentLoaded", () => {
         requestAnimationFrame(update);
     }
 
-    function renderApps(filter = "") {
+    function getFilteredApps() {
+        let filteredApps = apps.slice();
+
+        // Search filter
+        if (currentFilters.search) {
+            const searchTerm = currentFilters.search.toLowerCase();
+            filteredApps = filteredApps.filter(app => {
+                const searchableText = [
+                    app.name,
+                    app.description || '',
+                    app.category || '',
+                    ...(app.tags || [])
+                ].join(' ').toLowerCase();
+                
+                return searchableText.includes(searchTerm);
+            });
+        }
+
+        // Status filter
+        if (currentFilters.status !== 'all') {
+            switch (currentFilters.status) {
+                case 'supported':
+                    filteredApps = filteredApps.filter(app => app.supported);
+                    break;
+                case 'alternatives':
+                    filteredApps = filteredApps.filter(app => !app.supported && app.alternatives && app.alternatives.length > 0);
+                    break;
+                case 'unsupported':
+                    filteredApps = filteredApps.filter(app => !app.supported && (!app.alternatives || app.alternatives.length === 0));
+                    break;
+            }
+        }
+
+        // Category filter
+        if (currentFilters.category !== 'all') {
+            filteredApps = filteredApps.filter(app => 
+                app.category && app.category.toLowerCase() === currentFilters.category
+            );
+        }
+
+        return filteredApps;
+    }
+
+    function renderApps() {
         appList.innerHTML = "";
 
-        let filteredApps = apps.filter(app => 
-            app.name.toLowerCase().includes(filter.toLowerCase())
-        );
+        let filteredApps = getFilteredApps();
 
         // Uygulamaları A-Z sıralama
         filteredApps.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
@@ -62,8 +217,8 @@ document.addEventListener("DOMContentLoaded", () => {
             appList.innerHTML = `
                 <div class="no-results">
                     <div class="no-results-icon">🔍</div>
-                    <h3>Aradığınız uygulama bulunamadı</h3>
-                    <p>Farklı bir arama terimi deneyin</p>
+                    <h3>Aradığınız kriterlere uygun uygulama bulunamadı</h3>
+                    <p>Farklı filtreler veya arama terimi deneyin</p>
                 </div>
             `;
             return;
@@ -98,12 +253,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
+            // Category display
+            const categoryDisplay = app.category ? `<div class="app-category">${app.category}</div>` : '';
+
             card.innerHTML = `
                 <div class="card-header">
                     ${iconElement}
                     ${fallbackIcon}
                     <div class="card-info">
                         <div class="app-name">${app.name}</div>
+                        ${categoryDisplay}
                         <div class="status ${statusClass}">
                             <span class="status-icon">${statusIcon}</span>
                             ${statusText}
@@ -171,13 +330,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     btn.classList.remove('active')
                 );
                 button.classList.add('active');
-                tabContent.textContent = app.install[distro];
+                
+                // Update content with copy button
+                updateTabContentWithCopy(tabContent, app.install[distro]);
             });
             
             tabButtons.appendChild(button);
         });
         
-        tabContent.textContent = app.install[firstDistro];
+        // Initial content with copy button
+        updateTabContentWithCopy(tabContent, app.install[firstDistro]);
         
         tabContainer.appendChild(tabButtons);
         tabContainer.appendChild(tabContent);
@@ -185,6 +347,22 @@ document.addEventListener("DOMContentLoaded", () => {
         
         popup.classList.remove("hidden");
         popup.classList.add("visible");
+    }
+
+    function updateTabContentWithCopy(tabContent, command) {
+        tabContent.innerHTML = '';
+        tabContent.textContent = command;
+        
+        // Add copy button
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-btn';
+        copyBtn.innerHTML = '📋';
+        copyBtn.title = 'Kopyala';
+        copyBtn.addEventListener('click', () => {
+            copyToClipboard(command);
+        });
+        
+        tabContent.appendChild(copyBtn);
     }
 
     function showAboutPopup(app) {
@@ -400,9 +578,27 @@ document.addEventListener("DOMContentLoaded", () => {
         popup.classList.add("visible");
     }
 
+    // Event Listeners
+    
+    // Theme toggle
+    themeToggle.addEventListener('click', toggleTheme);
+
+    // Advanced search toggle
+    advancedToggle.addEventListener('click', () => {
+        advancedSearch.classList.toggle('active');
+    });
+
     // Search functionality
     searchInput.addEventListener("input", e => {
-        renderApps(e.target.value);
+        currentFilters.search = e.target.value;
+        renderApps();
+    });
+
+    // Status filter buttons
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterByStatus(btn.dataset.filter);
+        });
     });
 
     // Popup close handlers
@@ -425,22 +621,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && popup.classList.contains("visible")) {
-            popup.classList.remove("visible");
-            popup.classList.add("hidden");
-            currentApp = null;
-            // URL hash temizle
-            window.history.pushState({}, '', window.location.pathname);
+        if (e.key === "Escape") {
+            if (advancedSearch.classList.contains('active')) {
+                advancedSearch.classList.remove('active');
+            } else if (popup.classList.contains("visible")) {
+                popup.classList.remove("visible");
+                popup.classList.add("hidden");
+                currentApp = null;
+                // URL hash temizle
+                window.history.pushState({}, '', window.location.pathname);
+            }
         }
     });
-
-    // Initial render
-    renderApps();
-
-    // Add subtle animations to stats on load
-    setTimeout(() => {
-        updateStats();
-    }, 300);
 
     // URL hash kontrolü - Sayfa yüklendiğinde hash varsa ilgili uygulamayı aç
     function checkHashOnLoad() {
@@ -473,9 +665,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Sayfa yüklendiğinde hash kontrolü yap
-    checkHashOnLoad();
-
     // Browser back/forward butonları için
     window.addEventListener('popstate', () => {
         if (popup.classList.contains('visible')) {
@@ -485,4 +674,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         checkHashOnLoad();
     });
+
+    // Initialize everything
+    initTheme();
+    initCategoryFilters();
+    renderApps();
+    
+    // Add subtle animations to stats on load
+    setTimeout(() => {
+        updateStats();
+    }, 300);
+
+    // Sayfa yüklendiğinde hash kontrolü yap
+    checkHashOnLoad();
 });
