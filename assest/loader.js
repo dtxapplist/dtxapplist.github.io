@@ -4,22 +4,25 @@
 (function() {
     const config = {
         css: [
-            'main'  // assets/css/main.css (eski style.css)
+            'style'  // assest/css/style.css
         ],
         app: [
-            'apps'  // assets/app/apps.js
+            'apps'  // assest/app/apps.js
         ],
         js: [
-            'main'  // assets/js/main.js (eski script.js)
+            'script'  // assest/js/script.js
         ]
     };
+
+    console.log('📦 Asset loader başlatıldı...');
 
     // CSS dosyalarını yükle
     config.css.forEach(name => {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = `assets/css/${name}.css`;
-        link.onerror = () => console.error(`CSS dosyası yüklenemedi: ${name}.css`);
+        link.href = `assest/css/${name}.css`;
+        link.onerror = () => console.error(`❌ CSS dosyası yüklenemedi: ${name}.css`);
+        link.onload = () => console.log(`✅ CSS yüklendi: ${name}.css`);
         document.head.appendChild(link);
     });
 
@@ -31,34 +34,52 @@
         // JS dosyalarını yükle
         config.js.forEach((name, index) => {
             const script = document.createElement('script');
-            script.src = `assets/js/${name}.js`;
-            script.onerror = () => console.error(`JS dosyası yüklenemedi: ${name}.js`);
-            
-            // Son JS dosyası yüklendiğinde console'a bilgi ver
-            if (index === config.js.length - 1) {
-                script.onload = () => {
+            script.src = `assest/js/${name}.js`;
+            script.onerror = () => console.error(`❌ JS dosyası yüklenemedi: ${name}.js`);
+            script.onload = () => {
+                console.log(`✅ JS yüklendi: ${name}.js`);
+                
+                // Son JS dosyası yüklendiğinde tüm yükleme tamamlandı
+                if (index === config.js.length - 1) {
                     console.log('🚀 Tüm dosyalar başarıyla yüklendi!');
-                };
-            }
-            
+                    
+                    // DOM hazır olduğunda script.js'deki kodu çalıştır
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', initializeApp);
+                    } else {
+                        initializeApp();
+                    }
+                }
+            };
             document.head.appendChild(script);
         });
     }
 
-    // App dosyalarını sırayla yükle
-    config.app.forEach(name => {
-        const script = document.createElement('script');
-        script.src = `assets/app/${name}.js`;
-        script.onerror = () => console.error(`App dosyası yüklenemedi: ${name}.js`);
-        script.onload = () => {
-            loadedAppFiles++;
-            if (loadedAppFiles === totalAppFiles) {
-                // Tüm app dosyaları yüklendikten sonra JS dosyalarını yükle
-                loadJSFiles();
-            }
-        };
-        document.head.appendChild(script);
-    });
+    function initializeApp() {
+        // script.js yüklendikten sonra main fonksiyonu varsa çalıştır
+        if (typeof window.initLinuxAppHub === 'function') {
+            window.initLinuxAppHub();
+        }
+    }
 
-    console.log('📦 Asset loader başlatıldı...');
+    // App dosyalarını sırayla yükle
+    if (totalAppFiles > 0) {
+        config.app.forEach(name => {
+            const script = document.createElement('script');
+            script.src = `assest/app/${name}.js`;
+            script.onerror = () => console.error(`❌ App dosyası yüklenemedi: ${name}.js`);
+            script.onload = () => {
+                console.log(`✅ App dosyası yüklendi: ${name}.js`);
+                loadedAppFiles++;
+                if (loadedAppFiles === totalAppFiles) {
+                    // Tüm app dosyaları yüklendikten sonra JS dosyalarını yükle
+                    loadJSFiles();
+                }
+            };
+            document.head.appendChild(script);
+        });
+    } else {
+        // App dosyası yoksa direkt JS dosyalarını yükle
+        loadJSFiles();
+    }
 })();
