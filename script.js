@@ -145,8 +145,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showInstallPopup(app) {
-        // URL hash güncelle
-        window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}`);
+        // URL hash güncelle - paket yükleme için /p eki
+        window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/p`);
         
         popupTitle.textContent = `${app.name} - Kurulum`;
         
@@ -188,8 +188,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showAboutPopup(app) {
-        // URL hash güncelle
-        window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}`);
+        // URL hash güncelle - hakkında için /h eki
+        window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/h`);
         
         if (app.supported) {
             // Desteklenen uygulama için tek uygulama göster
@@ -446,14 +446,27 @@ document.addEventListener("DOMContentLoaded", () => {
     function checkHashOnLoad() {
         const hash = window.location.hash.substring(1); // # işaretini kaldır
         if (hash) {
-            const appName = hash.replace(/-/g, ' '); // - işaretlerini boşluğa çevir
+            // Yeni format: app-name/p veya app-name/h
+            const parts = hash.split('/');
+            const appName = parts[0].replace(/-/g, ' '); // - işaretlerini boşluğa çevir
+            const action = parts[1]; // 'p' (package) veya 'h' (hakkında)
+            
             const app = apps.find(a => a.name.toLowerCase() === appName.toLowerCase());
             if (app) {
                 setTimeout(() => {
-                    if (app.supported) {
+                    if (action === 'p' && app.supported) {
+                        // Paket yükleme sayfası
                         showInstallPopup(app);
-                    } else {
+                    } else if (action === 'h' || !app.supported) {
+                        // Hakkında/Alternatifler sayfası
                         showAboutPopup(app);
+                    } else if (!action) {
+                        // Eski format uyumluluğu için
+                        if (app.supported) {
+                            showInstallPopup(app);
+                        } else {
+                            showAboutPopup(app);
+                        }
                     }
                 }, 500); // Biraz bekle ki sayfa tamamen yüklensin
             }
