@@ -1,152 +1,176 @@
-// Simple Auto-Loading Asset Loader for Linux App Hub
-// Otomatik olarak aynı isimli CSS ve JS dosyalarını yükler
+// Optimized Asset Loader for Linux App Hub
+// CSS'i önce yükler, performansı artırır
 
 (function() {
-    // Yüklenecek modüller - sadece dosya adını ekle, hem CSS hem JS otomatik yüklenecek
     const modules = [
-        'style',    // style.css + style.js (eğer varsa)
-        'apps',     // apps.css (eğer varsa) + apps.js
-        'script',   // script.css (eğer varsa) + script.js
-        'copyp',    // copyp.css + copyp.js
-        'theme',    // theme.css + theme.js
-        'search',   // search.css + search.js
-        // Yeni modül eklemek için buraya adını yaz
+        'style',
+        'apps', 
+        'script',
+        'copyp',
+        'theme',
+        'search'
     ];
 
-    let loadedCount = 0;
-    let totalFiles = 0;
-    let jsFilesToLoad = [];
+    // Performance monitoring
+    const perfStart = performance.now();
+    
+    // Cache for loaded files
+    const loadedFiles = new Set();
+    
+    // Batch load CSS files immediately
+    async function loadAllCSS() {
+        console.log('🎨 CSS batch loading started');
+        const cssPromises = modules.map(async (module) => {
+            const cssPath = `assest/css/${module}.css`;
+            
+            if (loadedFiles.has(cssPath)) return;
+            
+            try {
+                // Check if file exists first
+                const response = await fetch(cssPath, { method: 'HEAD' });
+                if (response.ok) {
+                    return new Promise((resolve, reject) => {
+                        const link = document.createElement('link');
+                        link.rel = 'stylesheet';
+                        link.href = cssPath;
+                        
+                        link.onload = () => {
+                            console.log(`✅ ${module}.css loaded`);
+                            loadedFiles.add(cssPath);
+                            resolve();
+                        };
+                        
+                        link.onerror = () => {
+                            console.log(`⚠️ ${module}.css failed to load`);
+                            reject();
+                        };
+                        
+                        document.head.appendChild(link);
+                    });
+                }
+            } catch (error) {
+                console.log(`📄 ${module}.css not found`);
+            }
+        });
 
-    // Dosya var mı kontrol et
-    async function fileExists(url) {
+        // Wait for all CSS to load
+        await Promise.allSettled(cssPromises);
+        console.log('🎨 All CSS files processed');
+    }
+
+    // Load JS files
+    async function loadJS(modulePath, moduleName) {
+        if (loadedFiles.has(modulePath)) return false;
+        
         try {
-            const response = await fetch(url, { method: 'HEAD' });
-            return response.ok;
-        } catch {
+            const response = await fetch(modulePath, { method: 'HEAD' });
+            if (response.ok) {
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = modulePath;
+                    
+                    script.onload = () => {
+                        console.log(`✅ ${moduleName} loaded`);
+                        loadedFiles.add(modulePath);
+                        resolve(true);
+                    };
+                    
+                    script.onerror = () => {
+                        console.log(`⚠️ ${moduleName} failed to load`);
+                        reject(false);
+                    };
+                    
+                    document.head.appendChild(script);
+                });
+            }
+        } catch (error) {
+            console.log(`📄 ${moduleName} not found`);
             return false;
         }
+        return false;
     }
 
-    // CSS dosyasını yükle
-    function loadCSS(moduleName) {
-        return new Promise(async (resolve) => {
-            const cssPath = `assest/css/${moduleName}.css`;
-            
-            if (await fileExists(cssPath)) {
-                const link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = cssPath;
-                
-                link.onload = () => {
-                    console.log(`✅ ${moduleName}.css yüklendi`);
-                    resolve(true);
-                };
-                
-                link.onerror = () => {
-                    console.log(`⚠️ ${moduleName}.css yüklenemedi`);
-                    resolve(false);
-                };
-                
-                document.head.appendChild(link);
-            } else {
-                console.log(`📄 ${moduleName}.css bulunamadı`);
-                resolve(false);
-            }
+    // Load data files (apps.js)
+    async function loadDataFiles() {
+        console.log('📊 Loading data files');
+        const dataPromises = modules.map(async (module) => {
+            const appPath = `assest/app/${module}.js`;
+            return await loadJS(appPath, `${module}.js (data)`);
         });
+        
+        await Promise.allSettled(dataPromises);
     }
 
-    // JS dosyasını yükle
-    function loadJS(moduleName) {
-        return new Promise(async (resolve) => {
-            const jsPath = `assest/js/${moduleName}.js`;
-            
-            if (await fileExists(jsPath)) {
-                const script = document.createElement('script');
-                script.src = jsPath;
-                
-                script.onload = () => {
-                    console.log(`✅ ${moduleName}.js yüklendi`);
-                    resolve(true);
-                };
-                
-                script.onerror = () => {
-                    console.log(`⚠️ ${moduleName}.js yüklenemedi`);
-                    resolve(false);
-                };
-                
-                document.head.appendChild(script);
-            } else {
-                console.log(`📄 ${moduleName}.js bulunamadı`);
-                resolve(false);
-            }
+    // Load script files
+    async function loadScriptFiles() {
+        console.log('⚡ Loading script files');
+        const scriptPromises = modules.map(async (module) => {
+            const jsPath = `assest/js/${module}.js`;
+            return await loadJS(jsPath, `${module}.js`);
         });
+        
+        await Promise.allSettled(scriptPromises);
     }
 
-    // App dosyasını yükle (özel durum - assest/app/ klasöründe)
-    function loadApp(moduleName) {
-        return new Promise(async (resolve) => {
-            const appPath = `assest/app/${moduleName}.js`;
-            
-            if (await fileExists(appPath)) {
-                const script = document.createElement('script');
-                script.src = appPath;
-                
-                script.onload = () => {
-                    console.log(`✅ ${moduleName}.js (app) yüklendi`);
-                    resolve(true);
-                };
-                
-                script.onerror = () => {
-                    console.log(`⚠️ ${moduleName}.js (app) yüklenemedi`);
-                    resolve(false);
-                };
-                
-                document.head.appendChild(script);
-            } else {
-                console.log(`📄 ${moduleName}.js (app) bulunamadı`);
-                resolve(false);
-            }
-        });
-    }
-
-    // Ana yükleme fonksiyonu
-    async function loadModules() {
-        console.log('📦 Modüller yükleniyor...');
-
-        // 1. Önce tüm CSS dosyalarını yükle
-        console.log('🎨 CSS dosyaları yükleniyor...');
-        for (const module of modules) {
-            await loadCSS(module);
-        }
-
-        // 2. Sonra app dosyalarını yükle (veri dosyaları)
-        console.log('📊 App dosyaları yükleniyor...');
-        for (const module of modules) {
-            await loadApp(module);
-        }
-
-        // 3. Son olarak JS dosyalarını yükle
-        console.log('⚡ JS dosyaları yükleniyor...');
-        for (const module of modules) {
-            await loadJS(module);
-        }
-
-        // 4. Uygulama başlatma
-        console.log('🚀 Tüm modüller yüklendi!');
-        initializeApp();
-    }
-
+    // Initialize app
     function initializeApp() {
-        // script.js yüklendikten sonra main fonksiyonu varsa çalıştır
+        const perfEnd = performance.now();
+        console.log(`⚡ Total loading time: ${Math.round(perfEnd - perfStart)}ms`);
+        
+        // Hide loading indicator if exists
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+        
+        // Show main content
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+            mainContent.style.opacity = '1';
+        }
+        
+        // Initialize main app
         if (typeof window.initLinuxAppHub === 'function') {
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', window.initLinuxAppHub);
             } else {
-                window.initLinuxAppHub();
+                setTimeout(window.initLinuxAppHub, 100);
             }
+        } else {
+            console.warn('⚠️ initLinuxAppHub function not found');
         }
     }
 
-    // Loader'ı başlat
-    loadModules();
+    // Main loading sequence
+    async function loadAll() {
+        console.log('📦 Optimized asset loading started');
+        
+        try {
+            // 1. Load CSS first (parallel)
+            await loadAllCSS();
+            
+            // 2. Load data files
+            await loadDataFiles();
+            
+            // 3. Load script files
+            await loadScriptFiles();
+            
+            // 4. Initialize
+            initializeApp();
+            
+        } catch (error) {
+            console.error('❌ Loading error:', error);
+            
+            // Fallback: still try to initialize
+            setTimeout(initializeApp, 1000);
+        }
+    }
+
+    // Start loading when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadAll);
+    } else {
+        loadAll();
+    }
+    
 })();
