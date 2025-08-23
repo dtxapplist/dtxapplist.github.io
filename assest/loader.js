@@ -8,7 +8,8 @@
         'script',
         'copyp',
         'theme',
-        'search'
+        'search',
+        'categories' // Yeni kategori modülü eklendi
     ];
 
     // Performance monitoring
@@ -90,10 +91,22 @@
         return false;
     }
 
-    // Load data files (apps.js)
+    // Load data files (apps.js ve categories.js)
     async function loadDataFiles() {
         console.log('📊 Loading data files');
-        const dataPromises = modules.map(async (module) => {
+        
+        // Önce categories.js'yi yükle, sonra apps.js'yi yükle
+        const priorityModules = ['categories', 'apps'];
+        
+        // Öncelikli dosyaları sırayla yükle
+        for (const module of priorityModules) {
+            const appPath = `assest/app/${module}.js`;
+            await loadJS(appPath, `${module}.js (data)`);
+        }
+        
+        // Diğer modülleri paralel yükle
+        const otherModules = modules.filter(m => !priorityModules.includes(m));
+        const dataPromises = otherModules.map(async (module) => {
             const appPath = `assest/app/${module}.js`;
             return await loadJS(appPath, `${module}.js (data)`);
         });
@@ -112,10 +125,17 @@
         await Promise.allSettled(scriptPromises);
     }
 
-    // Initialize app
+    // Initialize app with category processing
     function initializeApp() {
         const perfEnd = performance.now();
         console.log(`⚡ Total loading time: ${Math.round(perfEnd - perfStart)}ms`);
+        
+        // Kategorileri apps verisine uygula
+        if (typeof window.applyCategoriesTo === 'function' && typeof apps !== 'undefined') {
+            console.log('📂 Kategoriler apps verisine uygulanıyor...');
+            window.apps = window.applyCategoriesTo(apps);
+            console.log('✅ Kategoriler başarıyla uygulandı');
+        }
         
         // Hide loading indicator if exists
         const loadingIndicator = document.getElementById('loading-indicator');
@@ -149,13 +169,13 @@
             // 1. Load CSS first (parallel)
             await loadAllCSS();
             
-            // 2. Load data files
+            // 2. Load data files (categories.js önce, sonra apps.js)
             await loadDataFiles();
             
             // 3. Load script files
             await loadScriptFiles();
             
-            // 4. Initialize
+            // 4. Initialize with category processing
             initializeApp();
             
         } catch (error) {
