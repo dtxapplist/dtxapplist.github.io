@@ -93,28 +93,56 @@ window.initLinuxAppHub = function() {
         }
     }
 
-    // Extract categories from apps data
-    function extractCategories() {
+    // Extract categories from apps data (güncellenmiş kategori sistemini kullan)
+    function getAvailableCategories() {
+        if (typeof window.getAvailableCategories === 'function') {
+            return window.getAvailableCategories();
+        }
+        
+        // Fallback: apps verisinden kategorileri çıkar
         const categories = new Set();
         apps.forEach(app => {
             if (app.category) {
                 categories.add(app.category);
             }
         });
-        return Array.from(categories).sort();
+        return Array.from(categories).sort((a, b) => a.localeCompare(b, 'tr', { sensitivity: 'base' }));
     }
 
     // Initialize category filters
     function initCategoryFilters() {
-        const categories = extractCategories();
+        const categories = getAvailableCategories();
+        
+        // Kategori sayılarını hesapla
+        let categoryCounts = {};
+        if (typeof window.getCategoryCounts === 'function') {
+            categoryCounts = window.getCategoryCounts(apps);
+        } else {
+            // Fallback
+            apps.forEach(app => {
+                const category = app.category || 'Diğer';
+                categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+            });
+        }
+        
+        // Tümünü göster butonu
+        const allButton = document.createElement('button');
+        allButton.className = 'filter-btn active';
+        allButton.setAttribute('data-category', 'all');
+        allButton.innerHTML = `Tümü <span class="count">(${apps.length})</span>`;
+        allButton.addEventListener('click', () => filterByCategory('all'));
+        categoryFilters.appendChild(allButton);
         
         categories.forEach(category => {
-            const button = document.createElement('button');
-            button.className = 'filter-btn';
-            button.setAttribute('data-category', category.toLowerCase());
-            button.textContent = category;
-            button.addEventListener('click', () => filterByCategory(category.toLowerCase()));
-            categoryFilters.appendChild(button);
+            const count = categoryCounts[category] || 0;
+            if (count > 0) {
+                const button = document.createElement('button');
+                button.className = 'filter-btn';
+                button.setAttribute('data-category', category.toLowerCase().replace(/\s+/g, '-'));
+                button.innerHTML = `${category} <span class="count">(${count})</span>`;
+                button.addEventListener('click', () => filterByCategory(category));
+                categoryFilters.appendChild(button);
+            }
         });
     }
 
@@ -135,7 +163,10 @@ window.initLinuxAppHub = function() {
         
         // Update button states
         document.querySelectorAll('[data-category]').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.category === category);
+            const btnCategory = btn.dataset.category;
+            const isActive = (category === 'all' && btnCategory === 'all') || 
+                           (category !== 'all' && btnCategory === category.toLowerCase().replace(/\s+/g, '-'));
+            btn.classList.toggle('active', isActive);
         });
         
         renderApps();
@@ -208,7 +239,7 @@ window.initLinuxAppHub = function() {
         // Category filter
         if (currentFilters.category !== 'all') {
             filteredApps = filteredApps.filter(app => 
-                app.category && app.category.toLowerCase() === currentFilters.category
+                app.category && app.category === currentFilters.category
             );
         }
 
@@ -693,4 +724,10 @@ window.initLinuxAppHub = function() {
     checkHashOnLoad();
 
     console.log('✅ Linux App Hub başarıyla başlatıldı!');
+    
+    // Kategori sistem durumunu logla
+    if (typeof window.appCategories === 'object') {
+        console.log(`📂 ${Object.keys(window.appCategories).length} uygulama kategorilendirildi`);
+        console.log(`📊 ${getAvailableCategories().length} farklı kategori mevcut:`, getAvailableCategories());
+    }
 };
