@@ -5,9 +5,175 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dtxapplist ⁉️</title>
     <meta name="description" content="Popüler uygulamaların Linux desteğini keşfedin">
+    
+    <!-- Critical CSS - Inline olarak ekle -->
+    <style>
+        /* Critical Above-the-fold CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e);
+            --bg-secondary: rgba(255, 255, 255, 0.08);
+            --bg-tertiary: rgba(255, 255, 255, 0.05);
+            --text-primary: #e4e4e7;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border-color: rgba(255, 255, 255, 0.12);
+            --accent-primary: #8b5cf6;
+            --accent-secondary: #06b6d4;
+            --accent-success: #10b981;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --backdrop-blur: blur(20px);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: linear-gradient(135deg, #f8fafc, #e2e8f0, #cbd5e1);
+            --bg-secondary: rgba(255, 255, 255, 0.9);
+            --bg-tertiary: rgba(255, 255, 255, 0.7);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --accent-primary: #7c3aed;
+            --accent-secondary: #0284c7;
+            --accent-success: #059669;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --backdrop-blur: blur(10px);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        .header-controls {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: flex;
+            gap: 12px;
+        }
+
+        .theme-toggle {
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            backdrop-filter: var(--backdrop-blur);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-success));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-bottom: 40px;
+        }
+
+        .search-container {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto 20px;
+        }
+
+        #search {
+            width: 100%;
+            padding: 20px 100px 20px 60px;
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            border-radius: 25px;
+            background: var(--bg-tertiary);
+            backdrop-filter: var(--backdrop-blur);
+            color: var(--text-primary);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-primary);
+            font-size: 20px;
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--accent-primary);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 20px 16px; }
+            .header-controls { position: relative; margin-bottom: 20px; justify-content: center; }
+        }
+    </style>
+    
+    <!-- Preload en önemli CSS dosyası -->
+    <link rel="preload" href="assest/css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="assest/css/style.css"></noscript>
+    
+    <!-- DNS prefetch -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//via.placeholder.com">
 </head>
 <body>
-    <div class="container">
+    <!-- Loading indicator -->
+    <div id="loading-indicator" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999;">
+        <div class="loading-spinner"></div>
+        <p style="margin-top: 10px; color: var(--text-secondary);">Yükleniyor...</p>
+    </div>
+
+    <div class="container" style="opacity: 0; transition: opacity 0.5s ease;" id="main-content">
         <div class="header">
             <div class="header-controls">
                 <button id="theme-toggle" class="theme-toggle" title="Tema Değiştir">
@@ -79,7 +245,44 @@
         <span class="toast-message">Komut kopyalandı!</span>
     </div>
 
-    <!-- Asset Loader -->
-    <script src="assest/loader.js"></script>
+    <!-- Optimized Asset Loader -->
+    <script>
+        // İyileştirilmiş loader
+        (function() {
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const mainContent = document.getElementById('main-content');
+            
+            // CSS dosyalarını hemen yükle
+            const criticalCSS = [
+                'assest/css/style.css'
+            ];
+            
+            let cssLoaded = 0;
+            const totalCSS = criticalCSS.length;
+            
+            criticalCSS.forEach(css => {
+                if (!document.querySelector(`link[href="${css}"]`)) {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = css;
+                    link.onload = () => {
+                        cssLoaded++;
+                        if (cssLoaded === totalCSS) {
+                            // CSS yüklendi, içeriği göster
+                            mainContent.style.opacity = '1';
+                            loadingIndicator.style.display = 'none';
+                        }
+                    };
+                    document.head.appendChild(link);
+                }
+            });
+            
+            // Ana loader'ı sonra yükle
+            const script = document.createElement('script');
+            script.src = 'assest/loader.js';
+            script.async = true;
+            document.head.appendChild(script);
+        })();
+    </script>
 </body>
-    </html>
+                </html>
