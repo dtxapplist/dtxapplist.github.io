@@ -1,8 +1,8 @@
-// Linux App Hub Ana Script Dosyası - Kategori Filtreleme Düzeltildi
-// Null check'ler ve debug logging eklendi
+// Linux App Hub - Basitleştirilmiş Kategori Sistemi
+// Karmaşık sistem yerine direkt apps.js'de kategori tanımlama
 
 window.initLinuxAppHub = function() {
-    console.log('🚀 Linux App Hub başlatılıyor...');
+    console.log('🚀 Linux App Hub başlatılıyor - Basit kategori sistemi');
     
     // DOM elementlerini güvenli şekilde al
     function safeGetElement(id) {
@@ -13,7 +13,7 @@ window.initLinuxAppHub = function() {
         return element;
     }
 
-    // DOM elementlerini al
+    // DOM elementleri
     const appList = safeGetElement("app-list");
     const searchInput = safeGetElement("search");
     const advancedToggle = safeGetElement("advanced-toggle");
@@ -21,36 +21,179 @@ window.initLinuxAppHub = function() {
     const categoryFilters = safeGetElement("category-filters");
     const themeToggle = safeGetElement("theme-toggle");
     const toast = safeGetElement("toast");
-
     const popup = safeGetElement("popup");
     const popupTitle = safeGetElement("popup-title");
     const popupInstructions = safeGetElement("popup-instructions");
     const popupClose = safeGetElement("popup-close");
-
-    // Stats elements
     const supportedCount = safeGetElement("supported-count");
     const unsupportedCount = safeGetElement("unsupported-count");
     const totalCount = safeGetElement("total-count");
 
-    // apps.js'den gelen veri kontrolü
+    // Veri kontrolü
     if (typeof apps === 'undefined' || !Array.isArray(apps)) {
-        console.error('❌ apps verisi bulunamadı! apps.js dosyası doğru yüklendi mi?');
+        console.error('❌ apps verisi bulunamadı!');
         if (appList) {
             appList.innerHTML = '<div class="error-message">Uygulama verileri yüklenemedi. Lütfen sayfayı yenileyin.</div>';
         }
         return;
     }
 
-    console.log(`📊 ${apps.length} uygulama verisi yüklendi`);
+    console.log(`📊 ${apps.length} uygulama yüklendi`);
 
-    let currentApp = null;
     let currentFilters = {
         status: 'all',
         category: 'all',
         search: ''
     };
 
-    // Theme management
+    // Basit kategori eşleştirme - Bu listeyi apps.js'inizdeki uygulamalara göre ayarlayın
+    const APP_CATEGORIES = {
+        // İletişim
+        "Discord": "İletişim",
+        "Telegram": "İletişim", 
+        "WhatsApp": "İletişim",
+        "TeamSpeak": "İletişim",
+        "Zoom": "İletişim",
+        "Skype": "İletişim",
+        
+        // Tarayıcılar
+        "Google Chrome": "İnternet",
+        "Mozilla Firefox": "İnternet",
+        "Chromium": "İnternet",
+        "Opera": "İnternet",
+        "Brave": "İnternet",
+        "Microsoft Edge": "İnternet",
+        
+        // Geliştirme
+        "Visual Studio Code": "Geliştirme",
+        "IntelliJ IDEA": "Geliştirme",
+        "PyCharm": "Geliştirme",
+        "Atom": "Geliştirme",
+        "Sublime Text": "Geliştirme",
+        "GitHub Desktop": "Geliştirme",
+        
+        // Multimedya
+        "VLC": "Multimedya",
+        "Spotify": "Multimedya",
+        "OBS Studio": "Multimedya",
+        "Audacity": "Multimedya",
+        "GIMP": "Multimedya",
+        
+        // Oyun
+        "Steam": "Oyun",
+        "Epic Games": "Oyun",
+        "Minecraft": "Oyun",
+        
+        // Ofis
+        "LibreOffice": "Ofis",
+        "Microsoft Office": "Ofis",
+        "OnlyOffice": "Ofis",
+        
+        // Sistem
+        "VirtualBox": "Sistem",
+        "VMware": "Sistem",
+        "7-Zip": "Sistem",
+        "WinRAR": "Sistem"
+    };
+
+    // Apps'e kategori ata - BASİT YÖNTEM
+    function assignCategories() {
+        console.log('📂 Kategoriler atanıyor...');
+        
+        apps.forEach(app => {
+            // Kategoriyi bul
+            let category = null;
+            
+            // 1. Direkt eşleşme
+            if (APP_CATEGORIES[app.name]) {
+                category = APP_CATEGORIES[app.name];
+            }
+            // 2. Kısmi eşleşme
+            else {
+                for (const [appName, cat] of Object.entries(APP_CATEGORIES)) {
+                    if (app.name.toLowerCase().includes(appName.toLowerCase()) || 
+                        appName.toLowerCase().includes(app.name.toLowerCase())) {
+                        category = cat;
+                        break;
+                    }
+                }
+            }
+            
+            // 3. Varsayılan kategori
+            app.category = category || 'Diğer';
+        });
+        
+        // Sonuçları logla
+        const categorized = apps.filter(app => app.category !== 'Diğer').length;
+        console.log(`✅ ${categorized}/${apps.length} uygulama kategorize edildi`);
+        
+        // İlk 10 uygulamanın kategorilerini göster
+        console.log('📋 İlk 10 uygulamanın kategorileri:');
+        apps.slice(0, 10).forEach(app => {
+            console.log(`  - ${app.name}: ${app.category}`);
+        });
+    }
+
+    // Mevcut kategorileri çıkar
+    function getCategories() {
+        const categories = new Set();
+        apps.forEach(app => {
+            if (app.category) {
+                categories.add(app.category);
+            }
+        });
+        return Array.from(categories).sort();
+    }
+
+    // Kategori sayılarını hesapla
+    function getCategoryCounts() {
+        const counts = {};
+        apps.forEach(app => {
+            const category = app.category || 'Diğer';
+            counts[category] = (counts[category] || 0) + 1;
+        });
+        return counts;
+    }
+
+    // Kategori filtrelerini oluştur
+    function initCategoryFilters() {
+        console.log('🏷️ Kategori filtreleri oluşturuluyor...');
+        
+        if (!categoryFilters) return;
+        
+        categoryFilters.innerHTML = '';
+        
+        const categories = getCategories();
+        const counts = getCategoryCounts();
+        
+        console.log('📊 Bulunan kategoriler:', categories);
+        console.log('📊 Kategori sayıları:', counts);
+        
+        // Tümü butonu
+        const allButton = document.createElement('button');
+        allButton.className = 'filter-btn active';
+        allButton.setAttribute('data-category', 'all');
+        allButton.innerHTML = `Tümü <span class="count">(${apps.length})</span>`;
+        allButton.addEventListener('click', () => filterByCategory('all'));
+        categoryFilters.appendChild(allButton);
+        
+        // Kategori butonları
+        categories.forEach(category => {
+            const count = counts[category] || 0;
+            if (count > 0) {
+                const button = document.createElement('button');
+                button.className = 'filter-btn';
+                button.setAttribute('data-category', category);
+                button.innerHTML = `${category} <span class="count">(${count})</span>`;
+                button.addEventListener('click', () => filterByCategory(category));
+                categoryFilters.appendChild(button);
+            }
+        });
+        
+        console.log(`✅ ${categories.length + 1} kategori butonu oluşturuldu`);
+    }
+
+    // Tema yönetimi
     function initTheme() {
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
@@ -68,7 +211,6 @@ window.initLinuxAppHub = function() {
 
     function updateThemeIcon(theme) {
         if (!themeToggle) return;
-        
         const themeIcon = themeToggle.querySelector('.theme-icon');
         if (themeIcon) {
             themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
@@ -76,30 +218,23 @@ window.initLinuxAppHub = function() {
         }
     }
 
-    // Toast notification
+    // Toast bildirim
     function showToast(message, icon = '✅') {
         if (!toast) return;
-        
         const toastIcon = toast.querySelector('.toast-icon');
         const toastMessage = toast.querySelector('.toast-message');
-        
         if (toastIcon) toastIcon.textContent = icon;
         if (toastMessage) toastMessage.textContent = message;
-        
         toast.classList.add('show');
-        
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
+        setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // Copy to clipboard
+    // Panoya kopyala
     async function copyToClipboard(text) {
         try {
             await navigator.clipboard.writeText(text);
             showToast('Komut kopyalandı!', '📋');
         } catch (err) {
-            // Fallback for older browsers
             const textArea = document.createElement('textarea');
             textArea.value = text;
             textArea.style.position = 'fixed';
@@ -112,140 +247,77 @@ window.initLinuxAppHub = function() {
         }
     }
 
-    // Extract categories from apps data (düzeltilmiş versiyon)
-    function getAvailableCategories() {
-        // Önce global fonksiyonu kontrol et
-        if (typeof window.getAvailableCategories === 'function') {
-            try {
-                return window.getAvailableCategories();
-            } catch (error) {
-                console.warn('⚠️ Global getAvailableCategories fonksiyonu hata verdi:', error);
-            }
-        }
-        
-        // Fallback: apps verisinden kategorileri çıkar
-        console.log('📂 Fallback kategori çıkarma kullanılıyor');
-        const categories = new Set();
-        apps.forEach(app => {
-            if (app.category) {
-                categories.add(app.category);
-            }
-        });
-        
-        const categoryArray = Array.from(categories).sort((a, b) => a.localeCompare(b, 'tr', { sensitivity: 'base' }));
-        console.log('📂 Çıkarılan kategoriler:', categoryArray);
-        return categoryArray;
-    }
-
-    // Initialize category filters - TAMAMEN YENİDEN YAZILDI
-    function initCategoryFilters() {
-        console.log('🏷️ Kategori filtreleri başlatılıyor...');
-        
-        if (!categoryFilters) {
-            console.error('❌ categoryFilters DOM elementi bulunamadı!');
-            return;
-        }
-
-        if (!window.apps || !Array.isArray(window.apps)) {
-            console.error('❌ Apps verisi yok!');
-            return;
-        }
-
-        // Mevcut tüm butonları temizle
-        categoryFilters.innerHTML = '';
-        
-        // Kategorileri çıkar ve say
-        const categorySet = new Set();
-        window.apps.forEach(app => {
-            if (app.category) {
-                categorySet.add(app.category);
-            }
-        });
-        
-        const categories = Array.from(categorySet).sort((a, b) => a.localeCompare(b, 'tr'));
-        console.log('📂 Bulunan kategoriler:', categories);
-        
-        // Kategori sayılarını hesapla
-        const categoryCounts = {};
-        window.apps.forEach(app => {
-            const category = app.category || 'Diğer';
-            categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-        });
-        
-        console.log('📊 Kategori sayıları:', categoryCounts);
-        
-        // "Tümü" butonunu oluştur
-        const allButton = document.createElement('button');
-        allButton.className = 'filter-btn active';
-        allButton.setAttribute('data-category', 'all');
-        allButton.innerHTML = `Tümü <span class="count">(${window.apps.length})</span>`;
-        allButton.addEventListener('click', () => filterByCategory('all'));
-        categoryFilters.appendChild(allButton);
-        
-        // Diğer kategorileri ekle
-        categories.forEach((category, index) => {
-            const count = categoryCounts[category] || 0;
-            if (count > 0) {
-                const button = document.createElement('button');
-                button.className = 'filter-btn';
-                button.setAttribute('data-category', category);
-                button.innerHTML = `${category} <span class="count">(${count})</span>`;
-                button.style.setProperty('--index', index + 1);
-                
-                // Click event - DÜZELT: kategoriyi direkt geç
-                button.addEventListener('click', () => {
-                    console.log('🔘 Kategori butonuna tıklandı:', category);
-                    filterByCategory(category);
-                });
-                
-                categoryFilters.appendChild(button);
-            }
-        });
-        
-        console.log(`✅ ${categories.length + 1} kategori filtresi oluşturuldu`);
-    }
-
-    // Filter functions
+    // Filtreleme fonksiyonları
     function filterByStatus(status) {
+        console.log('🔍 Durum filtresi:', status);
         currentFilters.status = status;
-        
-        // Update button states
         document.querySelectorAll('[data-filter]').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.filter === status);
         });
-        
         renderApps();
     }
 
-    // Kategori filtreleme fonksiyonu - TAMAMEN YENİDEN YAZILDI
     function filterByCategory(category) {
-        console.log('🔍 Kategori filtresi uygulanıyor:', category);
-        console.log('🔍 Mevcut filtrelemeden önce:', currentFilters);
-        
-        // Filtreyi güncelle
+        console.log('🔍 Kategori filtresi:', category);
         currentFilters.category = category;
-        console.log('🔍 Filtre güncellendi:', currentFilters);
         
-        // Button states güncelle - BU KRITIK!
+        // Buton durumlarını güncelle
         document.querySelectorAll('[data-category]').forEach(btn => {
-            const btnCategory = btn.dataset.category;
-            const isActive = btnCategory === category;
-            btn.classList.toggle('active', isActive);
-            
-            console.log(`🔘 Buton: ${btnCategory}, Aktif: ${isActive}`);
+            btn.classList.toggle('active', btn.dataset.category === category);
         });
         
-        // Apps'i yeniden render et
-        console.log('🔄 renderApps() çağrılıyor...');
         renderApps();
     }
 
+    // Filtrelenmiş uygulamaları al
+    function getFilteredApps() {
+        console.log('🔍 Filtreleme yapılıyor:', currentFilters);
+        
+        let filtered = apps.slice();
+        
+        // Arama filtresi
+        if (currentFilters.search) {
+            const searchTerm = currentFilters.search.toLowerCase();
+            filtered = filtered.filter(app => {
+                const searchText = [
+                    app.name,
+                    app.description || '',
+                    app.category || ''
+                ].join(' ').toLowerCase();
+                return searchText.includes(searchTerm);
+            });
+        }
+        
+        // Durum filtresi
+        if (currentFilters.status !== 'all') {
+            switch (currentFilters.status) {
+                case 'supported':
+                    filtered = filtered.filter(app => app.supported);
+                    break;
+                case 'alternatives':
+                    filtered = filtered.filter(app => !app.supported && app.alternatives?.length > 0);
+                    break;
+                case 'unsupported':
+                    filtered = filtered.filter(app => !app.supported && (!app.alternatives || app.alternatives.length === 0));
+                    break;
+            }
+        }
+        
+        // Kategori filtresi
+        if (currentFilters.category !== 'all') {
+            filtered = filtered.filter(app => app.category === currentFilters.category);
+        }
+        
+        console.log(`📋 Filtreleme sonucu: ${filtered.length} uygulama`);
+        return filtered;
+    }
+
+    // İstatistikleri güncelle
     function updateStats(filteredApps = apps) {
         const supported = filteredApps.filter(app => app.supported).length;
         const unsupported = filteredApps.filter(app => !app.supported).length;
         const total = filteredApps.length;
 
-        // Animated counter effect
         if (supportedCount) animateNumber(supportedCount, supported);
         if (unsupportedCount) animateNumber(unsupportedCount, unsupported);
         if (totalCount) animateNumber(totalCount, total);
@@ -253,7 +325,6 @@ window.initLinuxAppHub = function() {
 
     function animateNumber(element, targetValue) {
         if (!element) return;
-        
         const startValue = parseInt(element.textContent) || 0;
         const duration = 500;
         const startTime = performance.now();
@@ -261,131 +332,33 @@ window.initLinuxAppHub = function() {
         function update(currentTime) {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            
             const currentValue = Math.floor(startValue + (targetValue - startValue) * progress);
             element.textContent = currentValue;
-
-            if (progress < 1) {
-                requestAnimationFrame(update);
-            }
+            if (progress < 1) requestAnimationFrame(update);
         }
-
         requestAnimationFrame(update);
     }
 
-    // Filtrelenmiş uygulamaları al - GELİŞTİRİLDİ
-    function getFilteredApps() {
-        console.log('🔍 Filtreleme başlıyor, mevcut filtreler:', currentFilters);
-        
-        let filteredApps = apps.slice();
-        console.log(`📋 Başlangıç: ${filteredApps.length} uygulama`);
-
-        // Search filter
-        if (currentFilters.search) {
-            const searchTerm = currentFilters.search.toLowerCase();
-            const beforeSearch = filteredApps.length;
-            filteredApps = filteredApps.filter(app => {
-                const searchableText = [
-                    app.name,
-                    app.description || '',
-                    app.category || '',
-                    ...(app.tags || [])
-                ].join(' ').toLowerCase();
-                
-                return searchableText.includes(searchTerm);
-            });
-            console.log(`🔍 Arama sonrası: ${beforeSearch} -> ${filteredApps.length}`);
-        }
-
-        // Status filter
-        if (currentFilters.status !== 'all') {
-            const beforeStatus = filteredApps.length;
-            switch (currentFilters.status) {
-                case 'supported':
-                    filteredApps = filteredApps.filter(app => app.supported);
-                    break;
-                case 'alternatives':
-                    filteredApps = filteredApps.filter(app => !app.supported && app.alternatives && app.alternatives.length > 0);
-                    break;
-                case 'unsupported':
-                    filteredApps = filteredApps.filter(app => !app.supported && (!app.alternatives || app.alternatives.length === 0));
-                    break;
-            }
-            console.log(`🔍 Durum filtresi sonrası: ${beforeStatus} -> ${filteredApps.length}`);
-        }
-
-        // Category filter - YENİDEN YAZILDI VE GELİŞTİRİLDİ
-        if (currentFilters.category !== 'all') {
-            console.log(`🔍 Kategori filtresi uygulanıyor: "${currentFilters.category}"`);
-            const beforeCategory = filteredApps.length;
-            
-            // Kategori eşleştirmesini debug et
-            console.log('📂 İlk 5 uygulamanın kategorileri:');
-            filteredApps.slice(0, 5).forEach(app => {
-                console.log(`  - ${app.name}: "${app.category || 'undefined'}"`);
-            });
-            
-            filteredApps = filteredApps.filter(app => {
-                const appCategory = app.category || 'Diğer';
-                const matches = appCategory === currentFilters.category;
-                
-                if (!matches && beforeCategory <= 10) { // Sadece az sayıda uygulama varsa debug yap
-                    console.log(`❌ ${app.name}: "${appCategory}" !== "${currentFilters.category}"`);
-                }
-                
-                return matches;
-            });
-            
-            console.log(`🔍 Kategori filtresi sonrası: ${beforeCategory} -> ${filteredApps.length}`);
-            
-            // Eğer sonuç 0 ise, detaylı debug yap
-            if (filteredApps.length === 0 && beforeCategory > 0) {
-                console.warn('⚠️ Kategori filtresi 0 sonuç döndürdü! Detaylı analiz:');
-                console.log(`   Aranan kategori: "${currentFilters.category}"`);
-                console.log('   Mevcut kategoriler:');
-                
-                const categoriesInData = new Set();
-                apps.forEach(app => {
-                    if (app.category) {
-                        categoriesInData.add(app.category);
-                    }
-                });
-                
-                Array.from(categoriesInData).forEach(cat => {
-                    console.log(`     - "${cat}" (${cat === currentFilters.category ? 'MATCH' : 'no match'})`);
-                });
-            }
-        }
-
-        console.log(`✅ Final sonuç: ${filteredApps.length} uygulama`);
-        return filteredApps;
-    }
-
+    // Uygulamaları render et
     function renderApps() {
-        if (!appList) {
-            console.error('❌ appList elementi bulunamadı!');
-            return;
-        }
+        console.log('🎨 Apps render ediliyor...');
         
-        console.log('🔄 Uygulamalar render ediliyor...');
+        if (!appList) return;
+        
         appList.innerHTML = "";
-
-        let filteredApps = getFilteredApps();
-        console.log(`📋 ${filteredApps.length} uygulama gösterilecek`);
-
-        // Uygulamaları A-Z sıralama
-        filteredApps.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
-
-        // Update stats
+        const filteredApps = getFilteredApps();
+        
+        // Alfabetik sıralama
+        filteredApps.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+        
         updateStats(filteredApps);
 
         if (filteredApps.length === 0) {
             appList.innerHTML = `
                 <div class="no-results">
                     <div class="no-results-icon">🔍</div>
-                    <h3>Aradığınız kriterlere uygun uygulama bulunamadı</h3>
-                    <p>Farklı filtreler veya arama terimi deneyin</p>
-                    <p><small>Aktif filtreler: Kategori: ${currentFilters.category}, Durum: ${currentFilters.status}, Arama: "${currentFilters.search}"</small></p>
+                    <h3>Sonuç bulunamadı</h3>
+                    <p>Filtreler: Kategori="${currentFilters.category}", Durum="${currentFilters.status}", Arama="${currentFilters.search}"</p>
                 </div>
             `;
             return;
@@ -396,20 +369,16 @@ window.initLinuxAppHub = function() {
             card.className = "card";
             card.style.animationDelay = `${index * 0.1}s`;
 
-            // Icon elementi - SVG ve PNG desteği eklendi
-            const iconElement = (app.icon && (app.icon.includes('.png') || app.icon.includes('.svg')))
-                ? `<img src="${app.icon}" alt="${app.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` 
+            // Icon
+            const iconElement = app.icon ? 
+                `<img src="${app.icon}" alt="${app.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` 
                 : '';
-            
             const fallbackIcon = `<div class="card-icon" ${iconElement ? 'style="display:none;"' : ''}>${app.name.charAt(0).toUpperCase()}</div>`;
 
-            // Status rengini ve iconunu belirle
-            let statusClass = "green";
-            let statusText = "Destekleniyor";
-            let statusIcon = "✓";
-            
+            // Status
+            let statusClass = "green", statusText = "Destekleniyor", statusIcon = "✓";
             if (!app.supported) {
-                if (app.alternatives && app.alternatives.length > 0) {
+                if (app.alternatives?.length > 0) {
                     statusClass = "orange";
                     statusText = "Alternatifler Mevcut";
                     statusIcon = "⚠";
@@ -420,7 +389,6 @@ window.initLinuxAppHub = function() {
                 }
             }
 
-            // Category display
             const categoryDisplay = app.category ? `<div class="app-category">${app.category}</div>` : '';
 
             card.innerHTML = `
@@ -442,7 +410,7 @@ window.initLinuxAppHub = function() {
                 </div>
             `;
 
-            // Event listeners
+            // Event listeners - butonlara tıklama olayları
             if (app.supported) {
                 const installBtn = card.querySelector('.install-btn');
                 if (installBtn) {
@@ -467,14 +435,14 @@ window.initLinuxAppHub = function() {
         console.log(`✅ ${filteredApps.length} kart render edildi`);
     }
 
+    // Kurulum popup'ını göster
     function showInstallPopup(app) {
         if (!popup || !popupTitle || !popupInstructions) return;
         
-        // URL hash güncelle - paket yükleme için /p eki
+        // URL hash güncelle
         window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/p`);
         
         popupTitle.textContent = `${app.name} - Kurulum`;
-        
         popupInstructions.innerHTML = '';
         
         const tabContainer = document.createElement('div');
@@ -486,6 +454,7 @@ window.initLinuxAppHub = function() {
         
         let firstDistro = Object.keys(app.install)[0];
         
+        // Dağıtım sekmelerini oluştur
         Object.keys(app.install).forEach((distro, index) => {
             const button = document.createElement('button');
             button.className = `tab-button ${index === 0 ? 'active' : ''}`;
@@ -496,15 +465,13 @@ window.initLinuxAppHub = function() {
                     btn.classList.remove('active')
                 );
                 button.classList.add('active');
-                
-                // Update content with copy button
                 updateTabContentWithCopy(tabContent, app.install[distro]);
             });
             
             tabButtons.appendChild(button);
         });
         
-        // Initial content with copy button
+        // İlk sekmenin içeriğini göster
         updateTabContentWithCopy(tabContent, app.install[firstDistro]);
         
         tabContainer.appendChild(tabButtons);
@@ -515,13 +482,14 @@ window.initLinuxAppHub = function() {
         popup.classList.add("visible");
     }
 
+    // Tab içeriğini kopyalama butonu ile güncelle
     function updateTabContentWithCopy(tabContent, command) {
         if (!tabContent) return;
         
         tabContent.innerHTML = '';
         tabContent.textContent = command;
         
-        // Add copy button
+        // Kopyala butonu ekle
         const copyBtn = document.createElement('button');
         copyBtn.className = 'copy-btn';
         copyBtn.innerHTML = '📋';
@@ -533,16 +501,16 @@ window.initLinuxAppHub = function() {
         tabContent.appendChild(copyBtn);
     }
 
+    // Hakkında popup'ını göster
     function showAboutPopup(app) {
         if (!popup || !popupTitle || !popupInstructions) return;
         
-        // URL hash güncelle - hakkında için /h eki
+        // URL hash güncelle
         window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/h`);
         
         if (app.supported) {
-            // Desteklenen uygulama için tek uygulama göster
+            // Desteklenen uygulama
             popupTitle.textContent = `${app.name} - Hakkında`;
-            
             popupInstructions.innerHTML = '';
             
             const tabContainer = document.createElement('div');
@@ -552,12 +520,12 @@ window.initLinuxAppHub = function() {
             const tabContent = document.createElement('div');
             tabContent.className = 'tab-content about-content';
             
-            // Ekran Görüntüsü tab
+            // Ekran görüntüsü sekmesi
             const screenshotBtn = document.createElement('button');
             screenshotBtn.className = 'tab-button active';
             screenshotBtn.textContent = 'Ekran Görüntüsü';
             
-            // Web Sitesi tab
+            // Web sitesi sekmesi
             const websiteBtn = document.createElement('button');
             websiteBtn.className = 'tab-button';
             websiteBtn.textContent = 'Web Sitesi';
@@ -568,17 +536,14 @@ window.initLinuxAppHub = function() {
                 );
                 screenshotBtn.classList.add('active');
                 
-                // Lazy loading: Sadece tıklandığında görsel yükle
-                tabContent.innerHTML = `
-                    <div class="loading-message">Yükleniyor...</div>
-                `;
+                tabContent.innerHTML = '<div class="loading-message">Yükleniyor...</div>';
                 
                 const img = new Image();
                 img.onload = function() {
                     tabContent.innerHTML = `<img src="${app.about.screenshot}" alt="${app.name} ekran görüntüsü" class="screenshot">`;
                 };
                 img.onerror = function() {
-                    tabContent.innerHTML = `<div class="error-message">Görsel yüklenemedi</div>`;
+                    tabContent.innerHTML = '<div class="error-message">Görsel yüklenemedi</div>';
                 };
                 img.src = app.about.screenshot;
             });
@@ -594,27 +559,24 @@ window.initLinuxAppHub = function() {
             tabButtons.appendChild(screenshotBtn);
             tabButtons.appendChild(websiteBtn);
             
-            // Varsayılan olarak ekran görüntüsünü yükle
-            tabContent.innerHTML = `
-                <div class="loading-message">Yükleniyor...</div>
-            `;
-            
+            // Varsayılan ekran görüntüsü
+            tabContent.innerHTML = '<div class="loading-message">Yükleniyor...</div>';
             const img = new Image();
             img.onload = function() {
                 tabContent.innerHTML = `<img src="${app.about.screenshot}" alt="${app.name} ekran görüntüsü" class="screenshot">`;
             };
             img.onerror = function() {
-                tabContent.innerHTML = `<div class="error-message">Görsel yüklenemedi</div>`;
+                tabContent.innerHTML = '<div class="error-message">Görsel yüklenemedi</div>';
             };
             img.src = app.about.screenshot;
             
             tabContainer.appendChild(tabButtons);
             tabContainer.appendChild(tabContent);
             popupInstructions.appendChild(tabContainer);
-        } else if (app.alternatives && app.alternatives.length > 0) {
-            // Desteklenmeyen uygulama için alternatifleri göster
-            popupTitle.textContent = `${app.name} - Alternatifler`;
             
+        } else if (app.alternatives && app.alternatives.length > 0) {
+            // Alternatifleri olan uygulama
+            popupTitle.textContent = `${app.name} - Alternatifler`;
             popupInstructions.innerHTML = '';
             
             app.alternatives.forEach((alt, index) => {
@@ -635,12 +597,12 @@ window.initLinuxAppHub = function() {
                 const tabContent = document.createElement('div');
                 tabContent.className = 'tab-content about-content';
                 
-                // Ekran Görüntüsü tab
+                // Ekran görüntüsü sekmesi
                 const screenshotBtn = document.createElement('button');
                 screenshotBtn.className = 'tab-button active';
                 screenshotBtn.textContent = 'Ekran Görüntüsü';
                 
-                // Web Sitesi tab
+                // Web sitesi sekmesi
                 const websiteBtn = document.createElement('button');
                 websiteBtn.className = 'tab-button';
                 websiteBtn.textContent = 'Web Sitesi';
@@ -654,17 +616,14 @@ window.initLinuxAppHub = function() {
                     screenshotBtn.classList.add('active');
                     
                     if (!imageLoaded) {
-                        tabContent.innerHTML = `
-                            <div class="loading-message">Yükleniyor...</div>
-                        `;
-                        
+                        tabContent.innerHTML = '<div class="loading-message">Yükleniyor...</div>';
                         const img = new Image();
                         img.onload = function() {
                             tabContent.innerHTML = `<img src="${alt.screenshot}" alt="${alt.name} ekran görüntüsü" class="screenshot">`;
                             imageLoaded = true;
                         };
                         img.onerror = function() {
-                            tabContent.innerHTML = `<div class="error-message">Görsel yüklenemedi</div>`;
+                            tabContent.innerHTML = '<div class="error-message">Görsel yüklenemedi</div>';
                         };
                         img.src = alt.screenshot;
                     } else {
@@ -683,32 +642,28 @@ window.initLinuxAppHub = function() {
                 tabButtons.appendChild(screenshotBtn);
                 tabButtons.appendChild(websiteBtn);
                 
-                // Varsayılan olarak yükleme mesajı göster
-                tabContent.innerHTML = `
-                    <div class="loading-message">Yükleniyor...</div>
-                `;
-                
+                // Varsayılan görsel
+                tabContent.innerHTML = '<div class="loading-message">Yükleniyor...</div>';
                 const img = new Image();
                 img.onload = function() {
                     tabContent.innerHTML = `<img src="${alt.screenshot}" alt="${alt.name} ekran görüntüsü" class="screenshot">`;
                     imageLoaded = true;
                 };
                 img.onerror = function() {
-                    tabContent.innerHTML = `<div class="error-message">Görsel yüklenemedi</div>`;
+                    tabContent.innerHTML = '<div class="error-message">Görsel yüklenemedi</div>';
                 };
                 img.src = alt.screenshot;
                 
                 tabContainer.appendChild(tabButtons);
                 tabContainer.appendChild(tabContent);
-                
                 altContainer.appendChild(altHeader);
                 altContainer.appendChild(tabContainer);
                 popupInstructions.appendChild(altContainer);
             });
-        } else {
-            // Alternatifi olmayan desteklenmeyen uygulama için sadece desteklenmeme sebebi göster
-            popupTitle.textContent = `${app.name} - Desteklenmeme Sebebi`;
             
+        } else {
+            // Desteklenmeyen uygulama
+            popupTitle.textContent = `${app.name} - Desteklenmeme Sebebi`;
             popupInstructions.innerHTML = '';
             
             const tabContainer = document.createElement('div');
@@ -718,21 +673,11 @@ window.initLinuxAppHub = function() {
             const tabContent = document.createElement('div');
             tabContent.className = 'tab-content reason-content';
             
-            // Desteklenmeme Sebebi tab
             const reasonBtn = document.createElement('button');
             reasonBtn.className = 'tab-button active';
             reasonBtn.textContent = 'Desteklenmeme Sebebi';
             
-            reasonBtn.addEventListener('click', () => {
-                tabButtons.querySelectorAll('.tab-button').forEach(btn => 
-                    btn.classList.remove('active')
-                );
-                reasonBtn.classList.add('active');
-            });
-            
             tabButtons.appendChild(reasonBtn);
-            
-            // Desteklenmeme sebebini göster
             tabContent.innerHTML = `<p>${app.unsupportedReason}</p>`;
             
             if (app.about && app.about.website) {
@@ -748,44 +693,63 @@ window.initLinuxAppHub = function() {
         popup.classList.add("visible");
     }
 
-    // Event Listeners
-    
-    // Theme toggle
+    // URL hash kontrolü
+    function checkHashOnLoad() {
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            const parts = hash.split('/');
+            const appName = parts[0].replace(/-/g, ' ');
+            const action = parts[1];
+            
+            const app = apps.find(a => a.name.toLowerCase() === appName.toLowerCase());
+            if (app) {
+                setTimeout(() => {
+                    if (action === 'p' && app.supported) {
+                        showInstallPopup(app);
+                    } else if (action === 'h' || !app.supported) {
+                        showAboutPopup(app);
+                    } else if (!action) {
+                        if (app.supported) {
+                            showInstallPopup(app);
+                        } else {
+                            showAboutPopup(app);
+                        }
+                    }
+                }, 500);
+            }
+        }
+    }
+
+    // Event listeners
     if (themeToggle) {
         themeToggle.addEventListener('click', toggleTheme);
     }
 
-    // Advanced search toggle
     if (advancedToggle && advancedSearch) {
         advancedToggle.addEventListener('click', () => {
             advancedSearch.classList.toggle('active');
         });
     }
 
-    // Search functionality
     if (searchInput) {
         searchInput.addEventListener("input", e => {
             currentFilters.search = e.target.value;
-            console.log('🔍 Arama terimi güncellendi:', currentFilters.search);
             renderApps();
         });
     }
 
-    // Status filter buttons
+    // Durum filtresi butonları
     document.querySelectorAll('[data-filter]').forEach(btn => {
         btn.addEventListener('click', () => {
-            console.log('🔘 Durum filtresi seçildi:', btn.dataset.filter);
             filterByStatus(btn.dataset.filter);
         });
     });
 
-    // Popup close handlers
+    // Popup kapatma olayları
     if (popupClose && popup) {
         popupClose.addEventListener("click", () => {
             popup.classList.remove("visible");
             popup.classList.add("hidden");
-            currentApp = null;
-            // URL hash temizle
             window.history.pushState({}, '', window.location.pathname);
         });
 
@@ -793,13 +757,12 @@ window.initLinuxAppHub = function() {
             if (e.target === popup) {
                 popup.classList.remove("visible");
                 popup.classList.add("hidden");
-                currentApp = null;
-                // URL hash temizle
                 window.history.pushState({}, '', window.location.pathname);
             }
         });
     }
 
+    // Klavye olayları
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
             if (advancedSearch && advancedSearch.classList.contains('active')) {
@@ -807,126 +770,35 @@ window.initLinuxAppHub = function() {
             } else if (popup && popup.classList.contains("visible")) {
                 popup.classList.remove("visible");
                 popup.classList.add("hidden");
-                currentApp = null;
-                // URL hash temizle
                 window.history.pushState({}, '', window.location.pathname);
             }
         }
     });
 
-    // URL hash kontrolü - Sayfa yüklendiğinde hash varsa ilgili uygulamayı aç
-    function checkHashOnLoad() {
-        const hash = window.location.hash.substring(1); // # işaretini kaldır
-        if (hash) {
-            // Yeni format: app-name/p veya app-name/h
-            const parts = hash.split('/');
-            const appName = parts[0].replace(/-/g, ' '); // - işaretlerini boşluğa çevir
-            const action = parts[1]; // 'p' (package) veya 'h' (hakkında)
-            
-            const app = apps.find(a => a.name.toLowerCase() === appName.toLowerCase());
-            if (app) {
-                setTimeout(() => {
-                    if (action === 'p' && app.supported) {
-                        // Paket yükleme sayfası
-                        showInstallPopup(app);
-                    } else if (action === 'h' || !app.supported) {
-                        // Hakkında/Alternatifler sayfası
-                        showAboutPopup(app);
-                    } else if (!action) {
-                        // Eski format uyumluluğu için
-                        if (app.supported) {
-                            showInstallPopup(app);
-                        } else {
-                            showAboutPopup(app);
-                        }
-                    }
-                }, 500); // Biraz bekle ki sayfa tamamen yüklensin
-            }
-        }
-    }
-
-    // Browser back/forward butonları için
+    // Browser geri/ileri butonları
     window.addEventListener('popstate', () => {
         if (popup && popup.classList.contains('visible')) {
             popup.classList.remove("visible");
             popup.classList.add("hidden");
-            currentApp = null;
         }
         checkHashOnLoad();
     });
 
-    // Initialize everything
-    console.log('🚀 Başlatma işlemleri başlıyor...');
+    // Başlat
+    console.log('🚀 Sistem başlatılıyor...');
     
     initTheme();
-    
-    // Kategorileri kontrol et ve uygula
-    console.log('🔍 Kategori sistemi kontrolü yapılıyor...');
-    
-    // Global apps değişkenini kontrol et
-    if (typeof window.apps !== 'undefined') {
-        console.log('✅ Global apps değişkeni mevcut');
-    } else {
-        console.log('⚠️ Global apps değişkeni bulunamadı, apps değişkenini global yap');
-        window.apps = apps;
-    }
-    
-    // Kategorileri uygula
-    if (typeof window.applyCategoriesTo === 'function') {
-        console.log('📂 Kategoriler apps verisine uygulanıyor...');
-        window.apps = window.applyCategoriesTo(apps);
-        console.log('✅ Kategoriler başarıyla uygulandı');
-        
-        // Kategorizasyon sonuçlarını kontrol et
-        const categorizedCount = window.apps.filter(app => app.category && app.category !== 'Diğer').length;
-        console.log(`📊 ${categorizedCount}/${window.apps.length} uygulama kategorize edildi`);
-        
-        // Kategori dağılımını göster
-        if (typeof window.getCategoryCounts === 'function') {
-            const counts = window.getCategoryCounts(window.apps);
-            console.log('📊 Kategori dağılımı:', counts);
-        }
-        
-        // Birkaç örnek logla
-        console.log('📝 İlk 10 uygulamanın kategorileri:');
-        window.apps.slice(0, 10).forEach(app => {
-            console.log(`  - ${app.name}: ${app.category || 'Kategori yok'}`);
-        });
-    } else {
-        console.warn('⚠️ applyCategoriesTo fonksiyonu bulunamadı!');
-    }
-    
-    // Kategori filtrelerini başlat
-    console.log('🏷️ Kategori filtreleri başlatılıyor...');
+    assignCategories();  // ← Bu çok önemli!
     initCategoryFilters();
-    
-    // İlk render
-    console.log('🎨 İlk render başlatılıyor...');
     renderApps();
     
-    // Add subtle animations to stats on load
+    // Animasyonlu istatistikler
     setTimeout(() => {
         updateStats();
     }, 300);
 
-    // Sayfa yüklendiğinde hash kontrolü yap
+    // URL hash kontrolü
     checkHashOnLoad();
-
-    console.log('✅ Linux App Hub başarıyla başlatıldı!');
     
-    // Final durum raporu
-    if (typeof window.appCategories === 'object') {
-        console.log(`📂 ${Object.keys(window.appCategories).length} uygulama kategorilendirildi`);
-        console.log(`📊 ${getAvailableCategories().length} farklı kategori mevcut:`, getAvailableCategories());
-    }
-    
-    // Debug: Mevcut filter durumunu göster
-    console.log('🔍 Başlangıç filter durumu:', currentFilters);
-    
-    // Debug: İlk birkaç uygulamanın kategori durumunu göster
-    console.log('📋 İlk 5 uygulamanın final durumu:');
-    const finalApps = window.apps || apps;
-    finalApps.slice(0, 5).forEach(app => {
-        console.log(`  - ${app.name}: "${app.category || 'undefined'}"`);
-    });
+    console.log('✅ Linux App Hub hazır!');
 };
