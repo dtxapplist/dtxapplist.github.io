@@ -97,7 +97,7 @@
         
         // ÖNEMLİ: Önce categories.js'yi yükle, sonra apps.js'yi yükle
         try {
-            // 1. Önce categories.js'yi yükle
+            // 1. Önce categories.js'yi yükle - assest/app/ klasöründen
             console.log('📂 categories.js yükleniyor...');
             await loadJS('assest/app/categories.js', 'categories.js (data)');
             
@@ -108,7 +108,7 @@
                 console.warn('⚠️ Kategoriler yüklenemedi!');
             }
             
-            // 2. Sonra apps.js'yi yükle
+            // 2. Sonra apps.js'yi yükle - assest/app/ klasöründen
             console.log('📊 apps.js yükleniyor...');
             await loadJS('assest/app/apps.js', 'apps.js (data)');
             
@@ -129,7 +129,7 @@
             console.error('❌ Veri dosyalarını yüklerken hata:', error);
         }
         
-        // Diğer modülleri paralel yükle
+        // Diğer modülleri paralel yükle - assest/app/ klasöründen
         const otherModules = modules.filter(m => !['categories', 'apps'].includes(m));
         const dataPromises = otherModules.map(async (module) => {
             const appPath = `assest/app/${module}.js`;
