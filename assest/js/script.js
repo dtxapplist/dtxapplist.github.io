@@ -138,71 +138,79 @@ window.initLinuxAppHub = function() {
     }
 
     // Initialize category filters (düzeltilmiş versiyon)
-    function initCategoryFilters() {
-        console.log('🏷️ Kategori filtreleri başlatılıyor...');
-        
-        if (!categoryFilters) {
-            console.error('❌ categoryFilters DOM elementi bulunamadı!');
-            return;
-        }
+// Script.js'deki initCategoryFilters fonksiyonunu bu ile değiştirin
 
-        // Mevcut kategori butonlarını temizle (Tümü hariç)
-        const existingButtons = categoryFilters.querySelectorAll('[data-category]:not([data-category="all"])');
-        existingButtons.forEach(btn => btn.remove());
-        
-        const categories = getAvailableCategories();
-        console.log('📂 Bulunan kategoriler:', categories);
-        
-        // Kategori sayılarını hesapla
-        let categoryCounts = {};
-        if (typeof window.getCategoryCounts === 'function') {
-            try {
-                categoryCounts = window.getCategoryCounts(apps);
-            } catch (error) {
-                console.warn('⚠️ Global getCategoryCounts fonksiyonu hata verdi:', error);
-            }
-        }
-        
-        // Fallback: manuel hesaplama
-        if (Object.keys(categoryCounts).length === 0) {
-            console.log('📊 Fallback kategori sayım kullanılıyor');
-            apps.forEach(app => {
-                const category = app.category || 'Diğer';
-                categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-            });
-        }
-        
-        console.log('📊 Kategori sayıları:', categoryCounts);
-        
-        // "Tümü" butonu zaten var mı kontrol et
-        let allButton = categoryFilters.querySelector('[data-category="all"]');
-        if (!allButton) {
-            allButton = document.createElement('button');
-            allButton.className = 'filter-btn active';
-            allButton.setAttribute('data-category', 'all');
-            allButton.addEventListener('click', () => filterByCategory('all'));
-            categoryFilters.appendChild(allButton);
-        }
-        
-        // "Tümü" butonunu güncelle
-        allButton.innerHTML = `Tümü <span class="count">(${apps.length})</span>`;
-        
-        // Diğer kategorileri ekle
-        categories.forEach((category, index) => {
-            const count = categoryCounts[category] || 0;
-            if (count > 0) {
-                const button = document.createElement('button');
-                button.className = 'filter-btn';
-                button.setAttribute('data-category', category);
-                button.innerHTML = `${category} <span class="count">(${count})</span>`;
-                button.style.setProperty('--index', index);
-                button.addEventListener('click', () => filterByCategory(category));
-                categoryFilters.appendChild(button);
-            }
-        });
-        
-        console.log(`✅ ${categories.length} kategori filtresi oluşturuldu`);
+function initCategoryFilters() {
+    console.log('🏷️ Kategori filtreleri başlatılıyor...');
+    
+    if (!categoryFilters) {
+        console.error('❌ categoryFilters DOM elementi bulunamadı!');
+        return;
     }
+
+    if (!window.apps || !Array.isArray(window.apps)) {
+        console.error('❌ Apps verisi yok!');
+        return;
+    }
+
+    // Mevcut kategori butonlarını temizle (Tümü hariç)
+    const existingButtons = categoryFilters.querySelectorAll('[data-category]:not([data-category="all"])');
+    existingButtons.forEach(btn => btn.remove());
+    
+    // Kategorileri çıkar
+    const categorySet = new Set();
+    window.apps.forEach(app => {
+        if (app.category) {
+            categorySet.add(app.category);
+        }
+    });
+    
+    const categories = Array.from(categorySet).sort((a, b) => a.localeCompare(b, 'tr'));
+    console.log('📂 Bulunan kategoriler:', categories);
+    
+    // Kategori sayılarını hesapla
+    const categoryCounts = {};
+    window.apps.forEach(app => {
+        const category = app.category || 'Diğer';
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+    
+    console.log('📊 Kategori sayıları:', categoryCounts);
+    
+    // "Tümü" butonunu güncelle/oluştur
+    let allButton = categoryFilters.querySelector('[data-category="all"]');
+    if (!allButton) {
+        allButton = document.createElement('button');
+        allButton.className = 'filter-btn active';
+        allButton.setAttribute('data-category', 'all');
+        categoryFilters.appendChild(allButton);
+    }
+    allButton.innerHTML = `Tümü <span class="count">(${window.apps.length})</span>`;
+    
+    // Diğer kategorileri ekle
+    categories.forEach((category, index) => {
+        const count = categoryCounts[category] || 0;
+        if (count > 0) {
+            const button = document.createElement('button');
+            button.className = 'filter-btn';
+            // DÜZELT: Kategori adını direkt kullan
+            button.setAttribute('data-category', category);
+            button.innerHTML = `${category} <span class="count">(${count})</span>`;
+            button.style.setProperty('--index', index);
+            
+            // Click event
+            button.addEventListener('click', () => filterByCategory(category));
+            
+            categoryFilters.appendChild(button);
+        }
+    });
+    
+    // "Tümü" butonuna event listener ekle
+    allButton.removeEventListener('click', () => filterByCategory('all')); // Eski listener'ı kaldır
+    allButton.addEventListener('click', () => filterByCategory('all'));
+    
+    console.log(`✅ ${categories.length + 1} kategori filtresi oluşturuldu`);
+}
 
     // Filter functions
     function filterByStatus(status) {
