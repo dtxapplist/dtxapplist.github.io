@@ -1,8 +1,8 @@
-// Linux App Hub - Basitleştirilmiş Kategori Sistemi
-// Karmaşık sistem yerine direkt apps.js'de kategori tanımlama
+// Linux App Hub - Sayfalama Sistemi ile Güncellenmiş
+// Kategori filtreleri advanced search'e taşındı, sayfalama eklendi
 
 window.initLinuxAppHub = function() {
-    console.log('🚀 Linux App Hub başlatılıyor - Basit kategori sistemi');
+    console.log('🚀 Linux App Hub başlatılıyor - Sayfalama sistemi ile');
     
     // DOM elementlerini güvenli şekilde al
     function safeGetElement(id) {
@@ -18,7 +18,6 @@ window.initLinuxAppHub = function() {
     const searchInput = safeGetElement("search");
     const advancedToggle = safeGetElement("advanced-toggle");
     const advancedSearch = safeGetElement("advanced-search");
-    const categoryFilters = safeGetElement("category-filters");
     const themeToggle = safeGetElement("theme-toggle");
     const toast = safeGetElement("toast");
     const popup = safeGetElement("popup");
@@ -40,13 +39,18 @@ window.initLinuxAppHub = function() {
 
     console.log(`📊 ${apps.length} uygulama yüklendi`);
 
+    // Sayfalama ayarları
+    const APPS_PER_PAGE = 10;
+    let currentPage = 1;
+    let showingAll = false;
+
     let currentFilters = {
         status: 'all',
         category: 'all',
         search: ''
     };
 
-    // Basit kategori eşleştirme - Bu listeyi apps.js'inizdeki uygulamalara göre ayarlayın
+    // Basit kategori eşleştirme
     const APP_CATEGORIES = {
         // İletişim
         "Discord": "İletişim",
@@ -55,6 +59,7 @@ window.initLinuxAppHub = function() {
         "TeamSpeak": "İletişim",
         "Zoom": "İletişim",
         "Skype": "İletişim",
+        "Revolt": "İletişim",
         
         // Tarayıcılar
         "Google Chrome": "İnternet",
@@ -63,6 +68,10 @@ window.initLinuxAppHub = function() {
         "Opera": "İnternet",
         "Brave": "İnternet",
         "Microsoft Edge": "İnternet",
+        "LibreWolf": "İnternet",
+        "Vivaldi": "İnternet",
+        "Zen Browser": "İnternet",
+        "Tor Browser": "İnternet",
         
         // Geliştirme
         "Visual Studio Code": "Geliştirme",
@@ -71,6 +80,10 @@ window.initLinuxAppHub = function() {
         "Atom": "Geliştirme",
         "Sublime Text": "Geliştirme",
         "GitHub Desktop": "Geliştirme",
+        "CLion": "Geliştirme",
+        "WebStorm": "Geliştirme",
+        "Rider": "Geliştirme",
+        "Unity Hub": "Geliştirme",
         
         // Multimedya
         "VLC": "Multimedya",
@@ -78,30 +91,69 @@ window.initLinuxAppHub = function() {
         "OBS Studio": "Multimedya",
         "Audacity": "Multimedya",
         "GIMP": "Multimedya",
+        "Adobe Photoshop": "Multimedya",
+        "Adobe Premiere Pro": "Multimedya",
+        "Adobe Illustrator": "Multimedya",
+        "Adobe Lightroom": "Multimedya",
+        "Blender": "Multimedya",
+        "TIDAL Hi-Fi": "Multimedya",
+        "Krita": "Multimedya",
+        "darktable": "Multimedya",
+        "RawTherapee": "Multimedya",
         
         // Oyun
         "Steam": "Oyun",
-        "Epic Games": "Oyun",
+        "Epic Games Launcher": "Oyun",
+        "Heroic Games Launcher": "Oyun",
         "Minecraft": "Oyun",
+        "Riot Games": "Oyun",
         
         // Ofis
         "LibreOffice": "Ofis",
         "Microsoft Office": "Ofis",
         "OnlyOffice": "Ofis",
+        "Adobe Dreamweaver": "Ofis",
+        "Figma Desktop": "Ofis",
+        "Obsidian": "Ofis",
+        "RemNote": "Ofis",
         
-        // Sistem
+        // Sistem & Araçlar
         "VirtualBox": "Sistem",
-        "VMware": "Sistem",
+        "VMware Workstation": "Sistem",
         "7-Zip": "Sistem",
-        "WinRAR": "Sistem"
+        "WinRAR": "Sistem",
+        "PeaZip": "Sistem",
+        "AutoCAD": "Sistem",
+        "FreeCAD": "Sistem",
+        "LibreCAD": "Sistem",
+        "Syncthing": "Sistem",
+        "UBinary": "Sistem",
+        "Scratch": "Sistem",
+        
+        // Güvenlik
+        "1Password": "Güvenlik",
+        "KeePass": "Güvenlik",
+        "Bitwarden": "Güvenlik",
+        "Proton VPN": "Güvenlik",
+        
+        // Uzaktan Erişim
+        "TeamViewer": "Uzaktan Erişim",
+        "AnyDesk": "Uzaktan Erişim",
+        "RustDesk": "Uzaktan Erişim",
+        
+        // E-posta
+        "Thunderbird": "E-posta",
+        
+        // Framework/Runtime
+        "Electron": "Geliştirme",
+        "Adobe AIR": "Geliştirme"
     };
 
-    // Apps'e kategori ata - BASİT YÖNTEM
+    // Apps'e kategori ata
     function assignCategories() {
         console.log('📂 Kategoriler atanıyor...');
         
         apps.forEach(app => {
-            // Kategoriyi bul
             let category = null;
             
             // 1. Direkt eşleşme
@@ -119,19 +171,11 @@ window.initLinuxAppHub = function() {
                 }
             }
             
-            // 3. Varsayılan kategori
             app.category = category || 'Diğer';
         });
         
-        // Sonuçları logla
         const categorized = apps.filter(app => app.category !== 'Diğer').length;
         console.log(`✅ ${categorized}/${apps.length} uygulama kategorize edildi`);
-        
-        // İlk 10 uygulamanın kategorilerini göster
-        console.log('📋 İlk 10 uygulamanın kategorileri:');
-        apps.slice(0, 10).forEach(app => {
-            console.log(`  - ${app.name}: ${app.category}`);
-        });
     }
 
     // Mevcut kategorileri çıkar
@@ -155,19 +199,42 @@ window.initLinuxAppHub = function() {
         return counts;
     }
 
-    // Kategori filtrelerini oluştur
+    // Kategori filtrelerini advanced search içine oluştur
     function initCategoryFilters() {
-        console.log('🏷️ Kategori filtreleri oluşturuluyor...');
+        console.log('🏷️ Kategori filtreleri oluşturuluyor (advanced search içinde)...');
         
-        if (!categoryFilters) return;
+        if (!advancedSearch) return;
         
-        categoryFilters.innerHTML = '';
+        // Kategori filtreleri için yeni bir grup ekle
+        let categoryFilterGroup = advancedSearch.querySelector('.category-filter-group');
+        if (!categoryFilterGroup) {
+            const searchFilters = advancedSearch.querySelector('.search-filters');
+            if (searchFilters) {
+                categoryFilterGroup = document.createElement('div');
+                categoryFilterGroup.className = 'filter-group category-filter-group';
+                
+                const label = document.createElement('label');
+                label.textContent = 'Kategori Filtresi:';
+                
+                const filterButtons = document.createElement('div');
+                filterButtons.className = 'filter-buttons';
+                filterButtons.id = 'category-filter-buttons';
+                
+                categoryFilterGroup.appendChild(label);
+                categoryFilterGroup.appendChild(filterButtons);
+                searchFilters.appendChild(categoryFilterGroup);
+            }
+        }
+        
+        const categoryButtons = document.getElementById('category-filter-buttons');
+        if (!categoryButtons) return;
+        
+        categoryButtons.innerHTML = '';
         
         const categories = getCategories();
         const counts = getCategoryCounts();
         
         console.log('📊 Bulunan kategoriler:', categories);
-        console.log('📊 Kategori sayıları:', counts);
         
         // Tümü butonu
         const allButton = document.createElement('button');
@@ -175,7 +242,7 @@ window.initLinuxAppHub = function() {
         allButton.setAttribute('data-category', 'all');
         allButton.innerHTML = `Tümü <span class="count">(${apps.length})</span>`;
         allButton.addEventListener('click', () => filterByCategory('all'));
-        categoryFilters.appendChild(allButton);
+        categoryButtons.appendChild(allButton);
         
         // Kategori butonları
         categories.forEach(category => {
@@ -186,11 +253,20 @@ window.initLinuxAppHub = function() {
                 button.setAttribute('data-category', category);
                 button.innerHTML = `${category} <span class="count">(${count})</span>`;
                 button.addEventListener('click', () => filterByCategory(category));
-                categoryFilters.appendChild(button);
+                categoryButtons.appendChild(button);
             }
         });
         
-        console.log(`✅ ${categories.length + 1} kategori butonu oluşturuldu`);
+        console.log(`✅ ${categories.length + 1} kategori butonu oluşturuldu (advanced search içinde)`);
+    }
+
+    // Ana sayfadaki kategori filtrelerini kaldır
+    function removeCategoryFiltersFromMain() {
+        const categoryFilters = document.getElementById('category-filters');
+        if (categoryFilters) {
+            categoryFilters.style.display = 'none';
+            console.log('📋 Ana sayfadaki kategori filtreleri gizlendi');
+        }
     }
 
     // Tema yönetimi
@@ -254,6 +330,7 @@ window.initLinuxAppHub = function() {
         document.querySelectorAll('[data-filter]').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.filter === status);
         });
+        resetPagination();
         renderApps();
     }
 
@@ -261,12 +338,19 @@ window.initLinuxAppHub = function() {
         console.log('🔍 Kategori filtresi:', category);
         currentFilters.category = category;
         
-        // Buton durumlarını güncelle
-        document.querySelectorAll('[data-category]').forEach(btn => {
+        // Buton durumlarını güncelle (advanced search içindeki butonlar)
+        document.querySelectorAll('#category-filter-buttons [data-category]').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.category === category);
         });
         
+        resetPagination();
         renderApps();
+    }
+
+    // Sayfalamayı sıfırla
+    function resetPagination() {
+        currentPage = 1;
+        showingAll = false;
     }
 
     // Filtrelenmiş uygulamaları al
@@ -339,9 +423,60 @@ window.initLinuxAppHub = function() {
         requestAnimationFrame(update);
     }
 
-    // Uygulamaları render et
+    // "Daha fazla göster" butonunu oluştur
+    function createShowMoreButton(filteredApps) {
+        const showMoreBtn = document.createElement('div');
+        showMoreBtn.className = 'show-more-container';
+        showMoreBtn.style.cssText = `
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+            grid-column: 1 / -1;
+        `;
+        
+        const button = document.createElement('button');
+        button.className = 'show-more-btn';
+        button.textContent = `Daha Fazla Göster (${filteredApps.length - APPS_PER_PAGE} kaldı)`;
+        button.style.cssText = `
+            padding: 16px 32px;
+            border: 2px solid var(--accent-primary);
+            border-radius: 25px;
+            background: var(--bg-secondary);
+            backdrop-filter: var(--backdrop-blur);
+            color: var(--accent-primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px var(--shadow-color);
+        `;
+        
+        button.addEventListener('mouseenter', () => {
+            button.style.background = 'var(--accent-primary)';
+            button.style.color = 'white';
+            button.style.transform = 'translateY(-2px) scale(1.05)';
+            button.style.boxShadow = '0 12px 32px rgba(139, 92, 246, 0.4)';
+        });
+        
+        button.addEventListener('mouseleave', () => {
+            button.style.background = 'var(--bg-secondary)';
+            button.style.color = 'var(--accent-primary)';
+            button.style.transform = 'translateY(0) scale(1)';
+            button.style.boxShadow = '0 8px 24px var(--shadow-color)';
+        });
+        
+        button.addEventListener('click', () => {
+            showingAll = true;
+            renderApps();
+        });
+        
+        showMoreBtn.appendChild(button);
+        return showMoreBtn;
+    }
+
+    // Uygulamaları render et (sayfalama ile)
     function renderApps() {
-        console.log('🎨 Apps render ediliyor...');
+        console.log('🎨 Apps render ediliyor... (sayfalama ile)');
         
         if (!appList) return;
         
@@ -364,7 +499,17 @@ window.initLinuxAppHub = function() {
             return;
         }
 
-        filteredApps.forEach((app, index) => {
+        // Sayfalama logic'i
+        let appsToShow = filteredApps;
+        let shouldShowMoreButton = false;
+
+        if (!showingAll && filteredApps.length > APPS_PER_PAGE) {
+            appsToShow = filteredApps.slice(0, APPS_PER_PAGE);
+            shouldShowMoreButton = true;
+        }
+
+        // Uygulamaları render et
+        appsToShow.forEach((app, index) => {
             const card = document.createElement("div");
             card.className = "card";
             card.style.animationDelay = `${index * 0.1}s`;
@@ -410,7 +555,7 @@ window.initLinuxAppHub = function() {
                 </div>
             `;
 
-            // Event listeners - butonlara tıklama olayları
+            // Event listeners
             if (app.supported) {
                 const installBtn = card.querySelector('.install-btn');
                 if (installBtn) {
@@ -431,15 +576,20 @@ window.initLinuxAppHub = function() {
 
             appList.appendChild(card);
         });
+
+        // "Daha fazla göster" butonunu ekle
+        if (shouldShowMoreButton) {
+            const showMoreButton = createShowMoreButton(filteredApps);
+            appList.appendChild(showMoreButton);
+        }
         
-        console.log(`✅ ${filteredApps.length} kart render edildi`);
+        console.log(`✅ ${appsToShow.length}/${filteredApps.length} kart render edildi ${shouldShowMoreButton ? '(daha fazla göster butonu ile)' : ''}`);
     }
 
     // Kurulum popup'ını göster
     function showInstallPopup(app) {
         if (!popup || !popupTitle || !popupInstructions) return;
         
-        // URL hash güncelle
         window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/p`);
         
         popupTitle.textContent = `${app.name} - Kurulum`;
@@ -454,7 +604,6 @@ window.initLinuxAppHub = function() {
         
         let firstDistro = Object.keys(app.install)[0];
         
-        // Dağıtım sekmelerini oluştur
         Object.keys(app.install).forEach((distro, index) => {
             const button = document.createElement('button');
             button.className = `tab-button ${index === 0 ? 'active' : ''}`;
@@ -471,7 +620,6 @@ window.initLinuxAppHub = function() {
             tabButtons.appendChild(button);
         });
         
-        // İlk sekmenin içeriğini göster
         updateTabContentWithCopy(tabContent, app.install[firstDistro]);
         
         tabContainer.appendChild(tabButtons);
@@ -482,14 +630,12 @@ window.initLinuxAppHub = function() {
         popup.classList.add("visible");
     }
 
-    // Tab içeriğini kopyalama butonu ile güncelle
     function updateTabContentWithCopy(tabContent, command) {
         if (!tabContent) return;
         
         tabContent.innerHTML = '';
         tabContent.textContent = command;
         
-        // Kopyala butonu ekle
         const copyBtn = document.createElement('button');
         copyBtn.className = 'copy-btn';
         copyBtn.innerHTML = '📋';
@@ -501,15 +647,13 @@ window.initLinuxAppHub = function() {
         tabContent.appendChild(copyBtn);
     }
 
-    // Hakkında popup'ını göster
+    // Hakkında popup'ını göster (aynı kalıyor)
     function showAboutPopup(app) {
         if (!popup || !popupTitle || !popupInstructions) return;
         
-        // URL hash güncelle
         window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/h`);
         
         if (app.supported) {
-            // Desteklenen uygulama
             popupTitle.textContent = `${app.name} - Hakkında`;
             popupInstructions.innerHTML = '';
             
@@ -520,12 +664,10 @@ window.initLinuxAppHub = function() {
             const tabContent = document.createElement('div');
             tabContent.className = 'tab-content about-content';
             
-            // Ekran görüntüsü sekmesi
             const screenshotBtn = document.createElement('button');
             screenshotBtn.className = 'tab-button active';
             screenshotBtn.textContent = 'Ekran Görüntüsü';
             
-            // Web sitesi sekmesi
             const websiteBtn = document.createElement('button');
             websiteBtn.className = 'tab-button';
             websiteBtn.textContent = 'Web Sitesi';
@@ -559,7 +701,6 @@ window.initLinuxAppHub = function() {
             tabButtons.appendChild(screenshotBtn);
             tabButtons.appendChild(websiteBtn);
             
-            // Varsayılan ekran görüntüsü
             tabContent.innerHTML = '<div class="loading-message">Yükleniyor...</div>';
             const img = new Image();
             img.onload = function() {
@@ -575,7 +716,6 @@ window.initLinuxAppHub = function() {
             popupInstructions.appendChild(tabContainer);
             
         } else if (app.alternatives && app.alternatives.length > 0) {
-            // Alternatifleri olan uygulama
             popupTitle.textContent = `${app.name} - Alternatifler`;
             popupInstructions.innerHTML = '';
             
@@ -597,12 +737,10 @@ window.initLinuxAppHub = function() {
                 const tabContent = document.createElement('div');
                 tabContent.className = 'tab-content about-content';
                 
-                // Ekran görüntüsü sekmesi
                 const screenshotBtn = document.createElement('button');
                 screenshotBtn.className = 'tab-button active';
                 screenshotBtn.textContent = 'Ekran Görüntüsü';
                 
-                // Web sitesi sekmesi
                 const websiteBtn = document.createElement('button');
                 websiteBtn.className = 'tab-button';
                 websiteBtn.textContent = 'Web Sitesi';
@@ -642,7 +780,6 @@ window.initLinuxAppHub = function() {
                 tabButtons.appendChild(screenshotBtn);
                 tabButtons.appendChild(websiteBtn);
                 
-                // Varsayılan görsel
                 tabContent.innerHTML = '<div class="loading-message">Yükleniyor...</div>';
                 const img = new Image();
                 img.onload = function() {
@@ -662,7 +799,6 @@ window.initLinuxAppHub = function() {
             });
             
         } else {
-            // Desteklenmeyen uygulama
             popupTitle.textContent = `${app.name} - Desteklenmeme Sebebi`;
             popupInstructions.innerHTML = '';
             
@@ -734,6 +870,7 @@ window.initLinuxAppHub = function() {
     if (searchInput) {
         searchInput.addEventListener("input", e => {
             currentFilters.search = e.target.value;
+            resetPagination();
             renderApps();
         });
     }
@@ -788,8 +925,9 @@ window.initLinuxAppHub = function() {
     console.log('🚀 Sistem başlatılıyor...');
     
     initTheme();
-    assignCategories();  // ← Bu çok önemli!
-    initCategoryFilters();
+    assignCategories();
+    removeCategoryFiltersFromMain(); // Ana sayfadaki kategori filtrelerini kaldır
+    initCategoryFilters(); // Advanced search içine ekle
     renderApps();
     
     // Animasyonlu istatistikler
@@ -800,5 +938,5 @@ window.initLinuxAppHub = function() {
     // URL hash kontrolü
     checkHashOnLoad();
     
-    console.log('✅ Linux App Hub hazır!');
+    console.log('✅ Linux App Hub hazır! (Sayfalama sistemi ile)');
 };
