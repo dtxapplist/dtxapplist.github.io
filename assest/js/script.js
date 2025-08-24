@@ -1,5 +1,5 @@
-// Linux App Hub Ana Script Dosyası - Güvenli Versiyon
-// Null check'ler eklendi
+// Linux App Hub Ana Script Dosyası - Kategori Filtreleme Düzeltildi
+// Null check'ler ve debug logging eklendi
 
 window.initLinuxAppHub = function() {
     console.log('🚀 Linux App Hub başlatılıyor...');
@@ -137,80 +137,73 @@ window.initLinuxAppHub = function() {
         return categoryArray;
     }
 
-    // Initialize category filters (düzeltilmiş versiyon)
-// Script.js'deki initCategoryFilters fonksiyonunu bu ile değiştirin
-
-function initCategoryFilters() {
-    console.log('🏷️ Kategori filtreleri başlatılıyor...');
-    
-    if (!categoryFilters) {
-        console.error('❌ categoryFilters DOM elementi bulunamadı!');
-        return;
-    }
-
-    if (!window.apps || !Array.isArray(window.apps)) {
-        console.error('❌ Apps verisi yok!');
-        return;
-    }
-
-    // Mevcut kategori butonlarını temizle (Tümü hariç)
-    const existingButtons = categoryFilters.querySelectorAll('[data-category]:not([data-category="all"])');
-    existingButtons.forEach(btn => btn.remove());
-    
-    // Kategorileri çıkar
-    const categorySet = new Set();
-    window.apps.forEach(app => {
-        if (app.category) {
-            categorySet.add(app.category);
+    // Initialize category filters - TAMAMEN YENİDEN YAZILDI
+    function initCategoryFilters() {
+        console.log('🏷️ Kategori filtreleri başlatılıyor...');
+        
+        if (!categoryFilters) {
+            console.error('❌ categoryFilters DOM elementi bulunamadı!');
+            return;
         }
-    });
-    
-    const categories = Array.from(categorySet).sort((a, b) => a.localeCompare(b, 'tr'));
-    console.log('📂 Bulunan kategoriler:', categories);
-    
-    // Kategori sayılarını hesapla
-    const categoryCounts = {};
-    window.apps.forEach(app => {
-        const category = app.category || 'Diğer';
-        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-    });
-    
-    console.log('📊 Kategori sayıları:', categoryCounts);
-    
-    // "Tümü" butonunu güncelle/oluştur
-    let allButton = categoryFilters.querySelector('[data-category="all"]');
-    if (!allButton) {
-        allButton = document.createElement('button');
+
+        if (!window.apps || !Array.isArray(window.apps)) {
+            console.error('❌ Apps verisi yok!');
+            return;
+        }
+
+        // Mevcut tüm butonları temizle
+        categoryFilters.innerHTML = '';
+        
+        // Kategorileri çıkar ve say
+        const categorySet = new Set();
+        window.apps.forEach(app => {
+            if (app.category) {
+                categorySet.add(app.category);
+            }
+        });
+        
+        const categories = Array.from(categorySet).sort((a, b) => a.localeCompare(b, 'tr'));
+        console.log('📂 Bulunan kategoriler:', categories);
+        
+        // Kategori sayılarını hesapla
+        const categoryCounts = {};
+        window.apps.forEach(app => {
+            const category = app.category || 'Diğer';
+            categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+        });
+        
+        console.log('📊 Kategori sayıları:', categoryCounts);
+        
+        // "Tümü" butonunu oluştur
+        const allButton = document.createElement('button');
         allButton.className = 'filter-btn active';
         allButton.setAttribute('data-category', 'all');
+        allButton.innerHTML = `Tümü <span class="count">(${window.apps.length})</span>`;
+        allButton.addEventListener('click', () => filterByCategory('all'));
         categoryFilters.appendChild(allButton);
+        
+        // Diğer kategorileri ekle
+        categories.forEach((category, index) => {
+            const count = categoryCounts[category] || 0;
+            if (count > 0) {
+                const button = document.createElement('button');
+                button.className = 'filter-btn';
+                button.setAttribute('data-category', category);
+                button.innerHTML = `${category} <span class="count">(${count})</span>`;
+                button.style.setProperty('--index', index + 1);
+                
+                // Click event - DÜZELT: kategoriyi direkt geç
+                button.addEventListener('click', () => {
+                    console.log('🔘 Kategori butonuna tıklandı:', category);
+                    filterByCategory(category);
+                });
+                
+                categoryFilters.appendChild(button);
+            }
+        });
+        
+        console.log(`✅ ${categories.length + 1} kategori filtresi oluşturuldu`);
     }
-    allButton.innerHTML = `Tümü <span class="count">(${window.apps.length})</span>`;
-    
-    // Diğer kategorileri ekle
-    categories.forEach((category, index) => {
-        const count = categoryCounts[category] || 0;
-        if (count > 0) {
-            const button = document.createElement('button');
-            button.className = 'filter-btn';
-            // DÜZELT: Kategori adını direkt kullan
-            button.setAttribute('data-category', category);
-            button.innerHTML = `${category} <span class="count">(${count})</span>`;
-            button.style.setProperty('--index', index);
-            
-            // Click event
-            button.addEventListener('click', () => filterByCategory(category));
-            
-            categoryFilters.appendChild(button);
-        }
-    });
-    
-    // "Tümü" butonuna event listener ekle
-    allButton.removeEventListener('click', () => filterByCategory('all')); // Eski listener'ı kaldır
-    allButton.addEventListener('click', () => filterByCategory('all'));
-    
-    console.log(`✅ ${categories.length + 1} kategori filtresi oluşturuldu`);
-}
 
     // Filter functions
     function filterByStatus(status) {
@@ -224,18 +217,26 @@ function initCategoryFilters() {
         renderApps();
     }
 
+    // Kategori filtreleme fonksiyonu - TAMAMEN YENİDEN YAZILDI
     function filterByCategory(category) {
         console.log('🔍 Kategori filtresi uygulanıyor:', category);
-        currentFilters.category = category;
+        console.log('🔍 Mevcut filtrelemeden önce:', currentFilters);
         
-        // Update button states
+        // Filtreyi güncelle
+        currentFilters.category = category;
+        console.log('🔍 Filtre güncellendi:', currentFilters);
+        
+        // Button states güncelle - BU KRITIK!
         document.querySelectorAll('[data-category]').forEach(btn => {
             const btnCategory = btn.dataset.category;
-            const isActive = (category === 'all' && btnCategory === 'all') || 
-                           (category !== 'all' && btnCategory === category.toLowerCase().replace(/\s+/g, '-'));
+            const isActive = btnCategory === category;
             btn.classList.toggle('active', isActive);
+            
+            console.log(`🔘 Buton: ${btnCategory}, Aktif: ${isActive}`);
         });
         
+        // Apps'i yeniden render et
+        console.log('🔄 renderApps() çağrılıyor...');
         renderApps();
     }
 
@@ -272,12 +273,17 @@ function initCategoryFilters() {
         requestAnimationFrame(update);
     }
 
+    // Filtrelenmiş uygulamaları al - GELİŞTİRİLDİ
     function getFilteredApps() {
+        console.log('🔍 Filtreleme başlıyor, mevcut filtreler:', currentFilters);
+        
         let filteredApps = apps.slice();
+        console.log(`📋 Başlangıç: ${filteredApps.length} uygulama`);
 
         // Search filter
         if (currentFilters.search) {
             const searchTerm = currentFilters.search.toLowerCase();
+            const beforeSearch = filteredApps.length;
             filteredApps = filteredApps.filter(app => {
                 const searchableText = [
                     app.name,
@@ -288,10 +294,12 @@ function initCategoryFilters() {
                 
                 return searchableText.includes(searchTerm);
             });
+            console.log(`🔍 Arama sonrası: ${beforeSearch} -> ${filteredApps.length}`);
         }
 
         // Status filter
         if (currentFilters.status !== 'all') {
+            const beforeStatus = filteredApps.length;
             switch (currentFilters.status) {
                 case 'supported':
                     filteredApps = filteredApps.filter(app => app.supported);
@@ -303,23 +311,53 @@ function initCategoryFilters() {
                     filteredApps = filteredApps.filter(app => !app.supported && (!app.alternatives || app.alternatives.length === 0));
                     break;
             }
+            console.log(`🔍 Durum filtresi sonrası: ${beforeStatus} -> ${filteredApps.length}`);
         }
 
-        // Category filter - DÜZELTİLDİ
+        // Category filter - YENİDEN YAZILDI VE GELİŞTİRİLDİ
         if (currentFilters.category !== 'all') {
-            console.log('🔍 Kategori filtresi uygulanıyor:', currentFilters.category);
-            const beforeCount = filteredApps.length;
+            console.log(`🔍 Kategori filtresi uygulanıyor: "${currentFilters.category}"`);
+            const beforeCategory = filteredApps.length;
+            
+            // Kategori eşleştirmesini debug et
+            console.log('📂 İlk 5 uygulamanın kategorileri:');
+            filteredApps.slice(0, 5).forEach(app => {
+                console.log(`  - ${app.name}: "${app.category || 'undefined'}"`);
+            });
+            
             filteredApps = filteredApps.filter(app => {
                 const appCategory = app.category || 'Diğer';
                 const matches = appCategory === currentFilters.category;
-                if (!matches) {
+                
+                if (!matches && beforeCategory <= 10) { // Sadece az sayıda uygulama varsa debug yap
                     console.log(`❌ ${app.name}: "${appCategory}" !== "${currentFilters.category}"`);
                 }
+                
                 return matches;
             });
-            console.log(`🔍 Filtreleme: ${beforeCount} -> ${filteredApps.length} uygulama`);
+            
+            console.log(`🔍 Kategori filtresi sonrası: ${beforeCategory} -> ${filteredApps.length}`);
+            
+            // Eğer sonuç 0 ise, detaylı debug yap
+            if (filteredApps.length === 0 && beforeCategory > 0) {
+                console.warn('⚠️ Kategori filtresi 0 sonuç döndürdü! Detaylı analiz:');
+                console.log(`   Aranan kategori: "${currentFilters.category}"`);
+                console.log('   Mevcut kategoriler:');
+                
+                const categoriesInData = new Set();
+                apps.forEach(app => {
+                    if (app.category) {
+                        categoriesInData.add(app.category);
+                    }
+                });
+                
+                Array.from(categoriesInData).forEach(cat => {
+                    console.log(`     - "${cat}" (${cat === currentFilters.category ? 'MATCH' : 'no match'})`);
+                });
+            }
         }
 
+        console.log(`✅ Final sonuç: ${filteredApps.length} uygulama`);
         return filteredApps;
     }
 
@@ -347,6 +385,7 @@ function initCategoryFilters() {
                     <div class="no-results-icon">🔍</div>
                     <h3>Aradığınız kriterlere uygun uygulama bulunamadı</h3>
                     <p>Farklı filtreler veya arama terimi deneyin</p>
+                    <p><small>Aktif filtreler: Kategori: ${currentFilters.category}, Durum: ${currentFilters.status}, Arama: "${currentFilters.search}"</small></p>
                 </div>
             `;
             return;
@@ -424,6 +463,8 @@ function initCategoryFilters() {
 
             appList.appendChild(card);
         });
+        
+        console.log(`✅ ${filteredApps.length} kart render edildi`);
     }
 
     function showInstallPopup(app) {
@@ -725,6 +766,7 @@ function initCategoryFilters() {
     if (searchInput) {
         searchInput.addEventListener("input", e => {
             currentFilters.search = e.target.value;
+            console.log('🔍 Arama terimi güncellendi:', currentFilters.search);
             renderApps();
         });
     }
@@ -732,6 +774,7 @@ function initCategoryFilters() {
     // Status filter buttons
     document.querySelectorAll('[data-filter]').forEach(btn => {
         btn.addEventListener('click', () => {
+            console.log('🔘 Durum filtresi seçildi:', btn.dataset.filter);
             filterByStatus(btn.dataset.filter);
         });
     });
@@ -813,6 +856,8 @@ function initCategoryFilters() {
     });
 
     // Initialize everything
+    console.log('🚀 Başlatma işlemleri başlıyor...');
+    
     initTheme();
     
     // Kategorileri kontrol et ve uygula
@@ -836,16 +881,27 @@ function initCategoryFilters() {
         const categorizedCount = window.apps.filter(app => app.category && app.category !== 'Diğer').length;
         console.log(`📊 ${categorizedCount}/${window.apps.length} uygulama kategorize edildi`);
         
+        // Kategori dağılımını göster
+        if (typeof window.getCategoryCounts === 'function') {
+            const counts = window.getCategoryCounts(window.apps);
+            console.log('📊 Kategori dağılımı:', counts);
+        }
+        
         // Birkaç örnek logla
-        console.log('📝 İlk 5 uygulamanın kategorileri:');
-        window.apps.slice(0, 5).forEach(app => {
-            console.log(`- ${app.name}: ${app.category || 'Kategori yok'}`);
+        console.log('📝 İlk 10 uygulamanın kategorileri:');
+        window.apps.slice(0, 10).forEach(app => {
+            console.log(`  - ${app.name}: ${app.category || 'Kategori yok'}`);
         });
     } else {
         console.warn('⚠️ applyCategoriesTo fonksiyonu bulunamadı!');
     }
     
+    // Kategori filtrelerini başlat
+    console.log('🏷️ Kategori filtreleri başlatılıyor...');
     initCategoryFilters();
+    
+    // İlk render
+    console.log('🎨 İlk render başlatılıyor...');
     renderApps();
     
     // Add subtle animations to stats on load
@@ -858,9 +914,19 @@ function initCategoryFilters() {
 
     console.log('✅ Linux App Hub başarıyla başlatıldı!');
     
-    // Kategori sistem durumunu logla
+    // Final durum raporu
     if (typeof window.appCategories === 'object') {
         console.log(`📂 ${Object.keys(window.appCategories).length} uygulama kategorilendirildi`);
         console.log(`📊 ${getAvailableCategories().length} farklı kategori mevcut:`, getAvailableCategories());
     }
+    
+    // Debug: Mevcut filter durumunu göster
+    console.log('🔍 Başlangıç filter durumu:', currentFilters);
+    
+    // Debug: İlk birkaç uygulamanın kategori durumunu göster
+    console.log('📋 İlk 5 uygulamanın final durumu:');
+    const finalApps = window.apps || apps;
+    finalApps.slice(0, 5).forEach(app => {
+        console.log(`  - ${app.name}: "${app.category || 'undefined'}"`);
+    });
 };
