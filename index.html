@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linux App Hub</title>
-    <meta name="description" content="Popüler uygulamaların Linux desteğini keşfedin">
+    <title>Linux App Hub - Analytics Powered</title>
+    <meta name="description" content="Popüler uygulamaların Linux desteğini keşfedin - En popüler uygulamaları takip edin">
+    
+    <!-- Vercel Analytics - Manuel yükleme analytics.js tarafından yapılacak -->
+    <script>
+        // Analytics configuration for Vercel
+        window.va = window.va || function () {
+            (window.vaq = window.vaq || []).push(arguments);
+        };
+    </script>
     
     <style>
         /* Critical CSS */
@@ -274,6 +282,33 @@
             flex-direction: column;
             align-items: center;
             gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        /* Popüler uygulamalar butonu için özel stiller */
+        .stat-item.popular-btn {
+            cursor: pointer;
+            border: 2px solid transparent;
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+        }
+
+        .stat-item.popular-btn:hover {
+            transform: translateY(-4px) scale(1.05);
+            border-color: var(--accent-primary);
+            box-shadow: 0 12px 32px rgba(139, 92, 246, 0.3);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), var(--bg-secondary));
+        }
+
+        .stat-item.popular-btn:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .stat-item.popular-btn .stat-number {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
         }
 
         .stat-icon {
@@ -482,6 +517,35 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Analytics Notification */
+        .analytics-notice {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--bg-secondary);
+            backdrop-filter: var(--backdrop-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            z-index: 1000;
+            max-width: 300px;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .analytics-notice.show {
+            transform: translateX(0);
+        }
+
+        .analytics-notice .close-btn {
+            float: right;
+            margin-left: 10px;
+            cursor: pointer;
+            color: var(--accent-primary);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .container { padding: 20px 16px; }
@@ -516,6 +580,15 @@
             .stat-item {
                 width: 80px;
                 padding: 12px 16px;
+            }
+            .analytics-notice {
+                left: 10px;
+                right: 10px;
+                max-width: none;
+                transform: translateY(100%);
+            }
+            .analytics-notice.show {
+                transform: translateY(0);
             }
         }
 
@@ -799,7 +872,7 @@
                 </button>
             </div>
             <h1>Linux App Hub</h1>
-            <p class="subtitle">Popüler uygulamaların Linux desteğini keşfedin</p>
+            <p class="subtitle">Popüler uygulamaların Linux desteğini keşfedin - En popüler uygulamaları takip edin</p>
         </div>
         
         <div class="search-container">
@@ -841,12 +914,13 @@
                 <span class="stat-icon">🗄️</span>
                 <span class="stat-number" id="total-count">0</span>
             </div>
+            <!-- Popüler uygulamalar butonu analytics.js tarafından otomatik eklenecek -->
         </div>
 
         <!-- Loading indicator -->
         <div id="loading-indicator" class="loading-indicator">
             <div class="spinner"></div>
-            <span>Yükleniyor...</span>
+            <span>Analytics sistemi ile yükleniyor...</span>
         </div>
 
         <div id="app-list"></div>
@@ -858,7 +932,7 @@
         <span class="toast-message">Test mesajı!</span>
     </div>
 
-    <!-- Popup Modal -->
+    <!-- Ana Popup Modal -->
     <div id="popup" class="popup hidden">
         <div class="popup-content">
             <div class="popup-header">
@@ -871,7 +945,36 @@
         </div>
     </div>
 
-    <!-- Load the optimized loader script -->
+    <!-- Analytics Notice -->
+    <div id="analytics-notice" class="analytics-notice">
+        <span class="close-btn" onclick="this.parentElement.classList.remove('show')">&times;</span>
+        📊 Bu site Vercel Analytics kullanarak anonim kullanım verilerini toplar
+    </div>
+
+    <!-- Load the optimized loader script with analytics -->
     <script src="assest/loader.js"></script>
+    
+    <script>
+        // Show analytics notice after a delay
+        setTimeout(() => {
+            const notice = document.getElementById('analytics-notice');
+            if (notice) {
+                notice.classList.add('show');
+                // Auto hide after 10 seconds
+                setTimeout(() => {
+                    notice.classList.remove('show');
+                }, 10000);
+            }
+        }, 3000);
+        
+        // Development mode indicator
+        if (window.location.hostname === 'localhost' || 
+            window.location.hostname === '127.0.0.1' || 
+            window.location.hostname.includes('192.168.')) {
+            
+            console.log('🧪 Development Mode - Analytics test data will be generated');
+            document.title += ' (Dev Mode)';
+        }
+    </script>
 </body>
 </html>
