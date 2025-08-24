@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dtxapplist ⁉️</title>
+    <title>Linux App Hub</title>
     <meta name="description" content="Popüler uygulamaların Linux desteğini keşfedin">
     
     <style>
@@ -150,6 +150,44 @@
             transform: translateY(-50%);
             color: var(--accent-primary);
             font-size: 20px;
+        }
+
+        .advanced-search-toggle {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .advanced-search-toggle:hover {
+            color: var(--accent-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .advanced-search {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            background: var(--bg-secondary);
+            backdrop-filter: var(--backdrop-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .advanced-search.active {
+            opacity: 1;
+            max-height: 500px;
+            margin-bottom: 40px;
         }
 
         /* Kategori Filtreleri - Ana konteyner */
@@ -767,9 +805,25 @@
         <div class="search-container">
             <div class="search-icon">🔍</div>
             <input type="text" id="search" placeholder="Uygulama, açıklama veya tag ara...">
+            <div id="advanced-toggle" class="advanced-search-toggle" title="Gelişmiş Arama">⚙️</div>
         </div>
 
-        <!-- Ana kategori filtreleri buraya gelecek -->
+        <!-- Gelişmiş arama paneli -->
+        <div id="advanced-search" class="advanced-search">
+            <div class="search-filters">
+                <div class="filter-group">
+                    <label>Durum Filtresi:</label>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">Tümü</button>
+                        <button class="filter-btn" data-filter="supported">Desteklenen</button>
+                        <button class="filter-btn" data-filter="alternatives">Alternatifleri Olan</button>
+                        <button class="filter-btn" data-filter="unsupported">Desteklenmeyen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ana kategori filtreleri -->
         <div id="category-filters">
             <button class="filter-btn active" data-category="all">Tümü <span class="count">(0)</span></button>
         </div>
@@ -808,7 +862,7 @@
     <div id="popup" class="popup hidden">
         <div class="popup-content">
             <div class="popup-header">
-                <h2 id="popup-title">Başlık</h2>
+                <h2 id="popup-title" class="popup-title">Başlık</h2>
                 <button id="popup-close" class="popup-close">&times;</button>
             </div>
             <div class="popup-body">
