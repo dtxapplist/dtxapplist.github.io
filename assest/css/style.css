@@ -237,7 +237,7 @@ h1 {
 
 .advanced-search.active {
     opacity: 1;
-    max-height: 500px;
+    max-height: 800px; /* Kategori filtreleri için daha yüksek */
     margin-bottom: 40px;
 }
 
@@ -265,21 +265,19 @@ h1 {
     flex-wrap: wrap;
 }
 
-/* Kategori Filtreleri Özel Konteyner */
+/* Kategori Filtreleri - Advanced Search içinde */
+.category-filter-group .filter-buttons {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    border: 1px solid var(--border-muted);
+}
+
+/* Ana sayfadaki kategori filtreleri konteynerini gizle */
 #category-filters {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 40px;
-    padding: 24px;
-    background: var(--bg-secondary);
-    backdrop-filter: var(--backdrop-blur);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
+    display: none !important;
 }
 
 .filter-btn {
@@ -611,6 +609,56 @@ h1 {
     box-shadow: 0 8px 24px rgba(6, 182, 212, 0.4);
 }
 
+/* Show More Button Styles */
+.show-more-container {
+    display: flex;
+    justify-content: center;
+    margin: 40px 0;
+    grid-column: 1 / -1;
+}
+
+.show-more-btn {
+    padding: 16px 32px;
+    border: 2px solid var(--accent-primary);
+    border-radius: 25px;
+    background: var(--bg-secondary);
+    backdrop-filter: var(--backdrop-blur);
+    color: var(--accent-primary);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 24px var(--shadow-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.show-more-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.show-more-btn:hover::before {
+    left: 100%;
+}
+
+.show-more-btn:hover {
+    background: var(--accent-primary);
+    color: white;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 12px 32px rgba(139, 92, 246, 0.4);
+}
+
+.show-more-btn:active {
+    transform: translateY(-1px) scale(1.02);
+}
+
 /* Copy Button */
 .copy-btn {
     position: absolute;
@@ -926,13 +974,14 @@ h1 {
         justify-content: center;
     }
 
-    #category-filters {
+    .advanced-search {
+        margin: 0 16px 30px;
         padding: 16px;
-        margin-bottom: 30px;
-        gap: 6px;
-        justify-content: flex-start;
-        max-height: 200px;
-        overflow-y: auto;
+    }
+
+    .category-filter-group .filter-buttons {
+        max-height: 150px;
+        padding: 6px;
     }
 
     .filter-btn {
@@ -1018,6 +1067,11 @@ h1 {
     .toast.show {
         transform: translateY(0);
     }
+
+    .show-more-btn {
+        padding: 14px 28px;
+        font-size: 15px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1048,11 +1102,15 @@ h1 {
         font-size: 14px;
     }
 
-    #category-filters {
+    .advanced-search {
+        margin: 0 8px 20px;
         padding: 12px;
-        margin-bottom: 20px;
+    }
+
+    .category-filter-group .filter-buttons {
+        max-height: 120px;
+        padding: 4px;
         gap: 4px;
-        max-height: 150px;
     }
 
     .filter-btn {
@@ -1111,6 +1169,11 @@ h1 {
         height: 44px;
         font-size: 18px;
     }
+
+    .show-more-btn {
+        padding: 12px 24px;
+        font-size: 14px;
+    }
 }
 
 /* Scrollbar styling */
@@ -1138,16 +1201,17 @@ h1 {
 }
 
 /* Kategori filtresi scrollbar */
-#category-filters::-webkit-scrollbar {
+.category-filter-group .filter-buttons::-webkit-scrollbar {
     height: 6px;
+    width: 6px;
 }
 
-#category-filters::-webkit-scrollbar-track {
+.category-filter-group .filter-buttons::-webkit-scrollbar-track {
     background: rgba(139, 92, 246, 0.1);
     border-radius: 3px;
 }
 
-#category-filters::-webkit-scrollbar-thumb {
+.category-filter-group .filter-buttons::-webkit-scrollbar-thumb {
     background: var(--accent-primary);
     border-radius: 3px;
 }
@@ -1177,21 +1241,20 @@ h1 {
     }
 }
 
-/* Kategori filtresi giriş animasyonu */
-@keyframes filterEnter {
+/* Show More Button entrance animation */
+@keyframes showMoreEnter {
     from {
         opacity: 0;
-        transform: scale(0.8) translateY(10px);
+        transform: translateY(20px) scale(0.9);
     }
     to {
         opacity: 1;
-        transform: scale(1) translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
-#category-filters .filter-btn {
-    animation: filterEnter 0.3s ease-out forwards;
-    animation-delay: calc(var(--index, 0) * 0.05s);
+.show-more-container {
+    animation: showMoreEnter 0.4s ease-out forwards;
 }
 
 /* Focus styles for accessibility */
@@ -1214,41 +1277,26 @@ h1 {
     outline-offset: 2px;
 }
 
+.show-more-btn:focus {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
 /* Kategori butonları için özel hover efektleri */
 .filter-btn:focus-visible {
     outline: 2px solid var(--accent-primary);
     outline-offset: 2px;
 }
 
-/* Kategori konteynerinin masaüstü için özel stilleri */
-@media (min-width: 769px) {
-    #category-filters {
-        padding: 32px;
-        border-radius: 24px;
-        margin-bottom: 50px;
-    }
-    
-    .filter-btn {
-        padding: 10px 18px;
-        font-size: 0.9rem;
-        border-radius: 22px;
-    }
-    
-    .filter-btn .count {
-        font-size: 0.8rem;
-        padding: 3px 7px;
-        border-radius: 12px;
-    }
+/* Kategori konteynerinin advanced search için özel stilleri */
+.category-filter-group {
+    margin-top: 8px;
 }
 
-/* Kategori başlığı (opsiyonel) */
-.category-title {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 1.1rem;
-    font-weight: 600;
+.category-filter-group label {
     color: var(--text-primary);
-    opacity: 0.8;
+    font-weight: 600;
+    margin-bottom: 8px;
 }
 
 /* Aktif kategori için özel vurgu */
@@ -1277,4 +1325,42 @@ h1 {
 
 .filter-btn.active:hover .count {
     background: rgba(255, 255, 255, 0.5);
-    }
+}
+
+/* Advanced search başlık ekleme */
+.advanced-search::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 2px;
+}
+
+/* Loading indicator improvements */
+.loading-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-radius: 50%;
+    border-top-color: var(--accent-primary);
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
