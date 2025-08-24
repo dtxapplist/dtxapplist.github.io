@@ -419,6 +419,31 @@
             color: var(--text-muted);
         }
 
+        /* Loading indicator */
+        .loading-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--accent-primary);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .container { padding: 20px 16px; }
@@ -517,6 +542,12 @@
             </div>
         </div>
 
+        <!-- Loading indicator -->
+        <div id="loading-indicator" class="loading-indicator">
+            <div class="spinner"></div>
+            <span>Yükleniyor...</span>
+        </div>
+
         <div id="app-list"></div>
     </div>
 
@@ -526,399 +557,20 @@
         <span class="toast-message">Test mesajı!</span>
     </div>
 
-    <script>
-        // Global değişken kontrolleri
-        if (typeof apps === 'undefined') {
-            console.error('❌ apps verisi bulunamadı! apps.js dosyası yüklü değil.');
-        }
-        
-        if (typeof window.applyCategoriesTo !== 'function') {
-            console.error('❌ applyCategoriesTo fonksiyonu bulunamadı! categories.js dosyası yüklü değil.');
-        }
-        
-        if (typeof window.getAvailableCategories !== 'function') {
-            console.error('❌ getAvailableCategories fonksiyonu bulunamadı! categories.js dosyası yüklü değil.');
-        }
-        
-        if (typeof window.getCategoryCounts !== 'function') {
-            console.error('❌ getCategoryCounts fonksiyonu bulunamadı! categories.js dosyası yüklü değil.');
-        }
+    <!-- Popup Modal -->
+    <div id="popup" class="popup hidden">
+        <div class="popup-content">
+            <div class="popup-header">
+                <h2 id="popup-title">Başlık</h2>
+                <button id="popup-close" class="popup-close">&times;</button>
+            </div>
+            <div class="popup-body">
+                <div id="popup-instructions"></div>
+            </div>
+        </div>
+    </div>
 
-        // Global değişkenler
-        let currentFilters = {
-            category: 'all',
-            search: ''
-        };
-
-        // DOM elementleri
-        const appList = document.getElementById("app-list");
-        const searchInput = document.getElementById("search");
-        const categoryFilters = document.getElementById("category-filters");
-        const themeToggle = document.getElementById("theme-toggle");
-        const toast = document.getElementById("toast");
-        const supportedCount = document.getElementById("supported-count");
-        const unsupportedCount = document.getElementById("unsupported-count");
-        const totalCount = document.getElementById("total-count");
-
-        // Tema yönetimi
-        function initTheme() {
-            const savedTheme = window.localStorage?.getItem('theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            updateThemeIcon(savedTheme);
-        }
-
-        function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            document.documentElement.setAttribute('data-theme', newTheme);
-            if (window.localStorage) {
-                window.localStorage.setItem('theme', newTheme);
-            }
-            updateThemeIcon(newTheme);
-        }
-
-        function updateThemeIcon(theme) {
-            const themeIcon = themeToggle.querySelector('.theme-icon');
-            themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
-            themeToggle.title = theme === 'dark' ? 'Açık Tema' : 'Koyu Tema';
-        }
-
-        // Toast gösterimi
-        function showToast(message, icon = '✅') {
-            const toastIcon = toast.querySelector('.toast-icon');
-            const toastMessage = toast.querySelector('.toast-message');
-            
-            toastIcon.textContent = icon;
-            toastMessage.textContent = message;
-            
-            toast.classList.add('show');
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        // Kategori filtrelerini başlat
-        function initCategoryFilters() {
-            console.log('🏷️ Kategori filtreleri başlatılıyor...');
-            
-            // Veri kontrolü
-            if (typeof apps === 'undefined') {
-                console.error('❌ apps verisi bulunamadı, kategori filtreleri başlatılamıyor');
-                return;
-            }
-            
-            // Mevcut kategori butonlarını temizle (Tümü hariç)
-            const existingButtons = categoryFilters.querySelectorAll('[data-category]:not([data-category="all"])');
-            existingButtons.forEach(btn => btn.remove());
-            
-            let categories = [];
-            let categoryCounts = {};
-            
-            // Global fonksiyonları kontrol et
-            if (typeof window.getAvailableCategories === 'function') {
-                try {
-                    categories = window.getAvailableCategories();
-                } catch (error) {
-                    console.warn('⚠️ getAvailableCategories hata verdi:', error);
-                }
-            }
-            
-            if (typeof window.getCategoryCounts === 'function') {
-                try {
-                    categoryCounts = window.getCategoryCounts(window.apps || apps);
-                } catch (error) {
-                    console.warn('⚠️ getCategoryCounts hata verdi:', error);
-                }
-            }
-            
-            // Fallback: manuel kategori çıkarma
-            if (categories.length === 0) {
-                console.log('📂 Fallback kategori çıkarma kullanılıyor');
-                const categorySet = new Set();
-                (window.apps || apps).forEach(app => {
-                    if (app.category) {
-                        categorySet.add(app.category);
-                    }
-                });
-                categories = Array.from(categorySet).sort((a, b) => a.localeCompare(b, 'tr'));
-            }
-            
-            // Fallback: manuel sayım
-            if (Object.keys(categoryCounts).length === 0) {
-                console.log('📊 Fallback kategori sayım kullanılıyor');
-                (window.apps || apps).forEach(app => {
-                    const category = app.category || 'Diğer';
-                    categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-                });
-            }
-            
-            // "Tümü" butonunu güncelle
-            const allButton = categoryFilters.querySelector('[data-category="all"]');
-            if (allButton) {
-                allButton.innerHTML = `Tümü <span class="count">(${(window.apps || apps).length})</span>`;
-            }
-            
-            // Diğer kategorileri ekle
-            categories.forEach((category, index) => {
-                const count = categoryCounts[category] || 0;
-                if (count > 0) {
-                    const button = document.createElement('button');
-                    button.className = 'filter-btn';
-                    button.setAttribute('data-category', category.toLowerCase().replace(/\s+/g, '-'));
-                    button.innerHTML = `${category} <span class="count">(${count})</span>`;
-                    button.addEventListener('click', () => filterByCategory(category));
-                    categoryFilters.appendChild(button);
-                }
-            });
-            
-            console.log(`✅ ${categories.length} kategori filtresi oluşturuldu`);
-        }
-
-        // Kategori filtresi
-        function filterByCategory(category) {
-            console.log('🔍 Kategori filtresi uygulanıyor:', category);
-            currentFilters.category = category;
-            
-            // Buton durumlarını güncelle
-            document.querySelectorAll('[data-category]').forEach(btn => {
-                const btnCategory = btn.dataset.category;
-                const isActive = (category === 'all' && btnCategory === 'all') || 
-                               (category !== 'all' && btnCategory === category.toLowerCase().replace(/\s+/g, '-'));
-                btn.classList.toggle('active', isActive);
-            });
-            
-            renderApps();
-        }
-
-        // İstatistikleri güncelle
-        function updateStats(filteredApps = (window.apps || apps || [])) {
-            const supported = filteredApps.filter(app => app.supported).length;
-            const unsupported = filteredApps.filter(app => !app.supported).length;
-            const total = filteredApps.length;
-
-            animateNumber(supportedCount, supported);
-            animateNumber(unsupportedCount, unsupported);
-            animateNumber(totalCount, total);
-        }
-
-        function animateNumber(element, targetValue) {
-            const startValue = parseInt(element.textContent) || 0;
-            const duration = 500;
-            const startTime = performance.now();
-
-            function update(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                const currentValue = Math.floor(startValue + (targetValue - startValue) * progress);
-                element.textContent = currentValue;
-
-                if (progress < 1) {
-                    requestAnimationFrame(update);
-                }
-            }
-
-            requestAnimationFrame(update);
-        }
-
-        // Filtrelenmiş uygulamaları al
-        function getFilteredApps() {
-            // Veri kontrolü
-            if (typeof apps === 'undefined') {
-                return [];
-            }
-            
-            let filteredApps = (window.apps || apps).slice();
-
-            // Arama filtresi
-            if (currentFilters.search) {
-                const searchTerm = currentFilters.search.toLowerCase();
-                filteredApps = filteredApps.filter(app => {
-                    const searchableText = [
-                        app.name,
-                        app.description || '',
-                        app.category || ''
-                    ].join(' ').toLowerCase();
-                    
-                    return searchableText.includes(searchTerm);
-                });
-            }
-
-            // Kategori filtresi
-            if (currentFilters.category !== 'all') {
-                filteredApps = filteredApps.filter(app => {
-                    const appCategory = app.category || 'Diğer';
-                    return appCategory === currentFilters.category;
-                });
-            }
-
-            return filteredApps;
-        }
-
-        // Uygulamaları render et
-        function renderApps() {
-            console.log('🔄 Uygulamalar render ediliyor...');
-            appList.innerHTML = "";
-
-            let filteredApps = getFilteredApps();
-            console.log(`📋 ${filteredApps.length} uygulama gösterilecek`);
-
-            // A-Z sıralama
-            filteredApps.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-
-            // İstatistikleri güncelle
-            updateStats(filteredApps);
-
-            if (filteredApps.length === 0) {
-                appList.innerHTML = `
-                    <div class="no-results">
-                        <div class="no-results-icon">🔍</div>
-                        <h3>Aradığınız kriterlere uygun uygulama bulunamadı</h3>
-                        <p>Farklı filtreler veya arama terimi deneyin</p>
-                    </div>
-                `;
-                return;
-            }
-
-            filteredApps.forEach((app, index) => {
-                const card = document.createElement("div");
-                card.className = "card";
-
-                // Icon elementi
-                const iconElement = (app.icon && (app.icon.includes('.png') || app.icon.includes('.svg')))
-                    ? `<img src="${app.icon}" alt="${app.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` 
-                    : '';
-                
-                const fallbackIcon = `<div class="card-icon" ${iconElement ? 'style="display:none;"' : ''}>${app.name.charAt(0).toUpperCase()}</div>`;
-
-                // Status rengini ve iconunu belirle
-                let statusClass = "green";
-                let statusText = "Destekleniyor";
-                let statusIcon = "✓";
-                
-                if (!app.supported) {
-                    if (app.alternatives && app.alternatives.length > 0) {
-                        statusClass = "orange";
-                        statusText = "Alternatifler Mevcut";
-                        statusIcon = "⚠";
-                    } else {
-                        statusClass = "red";
-                        statusText = "Desteklenmiyor";
-                        statusIcon = "✗";
-                    }
-                }
-
-                // Category display
-                const categoryDisplay = app.category ? `<div class="app-category">${app.category}</div>` : '';
-
-                card.innerHTML = `
-                    <div class="card-header">
-                        ${iconElement}
-                        ${fallbackIcon}
-                        <div class="card-info">
-                            <div class="app-name">${app.name}</div>
-                            ${categoryDisplay}
-                            <div class="status ${statusClass}">
-                                <span class="status-icon">${statusIcon}</span>
-                                ${statusText}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        ${app.supported ? `<button class="action-btn install-btn" data-action="install" title="Kurulum Talimatları">📦</button>` : ''}
-                        <button class="action-btn about-btn" data-action="about" title="${app.supported ? 'Hakkında' : (app.alternatives ? 'Alternatifler' : 'Neden Desteklenmiyor?')}">ℹ️</button>
-                    </div>
-                `;
-
-                // Event listeners
-                if (app.supported) {
-                    const installBtn = card.querySelector('.install-btn');
-                    installBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        showToast(`${app.name} kurulum bilgileri gösterildi!`, '📦');
-                    });
-                }
-
-                const aboutBtn = card.querySelector('.about-btn');
-                aboutBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (app.supported) {
-                        showToast(`${app.name} hakkında bilgi gösterildi!`, 'ℹ️');
-                    } else if (app.alternatives) {
-                        showToast(`${app.name} alternatifleri gösterildi!`, '⚠️');
-                    } else {
-                        showToast(`${app.name} desteklenmeme sebebi gösterildi!`, '❌');
-                    }
-                });
-
-                appList.appendChild(card);
-            });
-        }
-
-        // Event Listeners
-        themeToggle.addEventListener('click', toggleTheme);
-
-        searchInput.addEventListener("input", e => {
-            currentFilters.search = e.target.value;
-            renderApps();
-        });
-
-        // "Tümü" butonuna event listener ekle
-        const allButton = categoryFilters.querySelector('[data-category="all"]');
-        if (allButton) {
-            allButton.addEventListener('click', () => filterByCategory('all'));
-        }
-
-        // Başlangıç fonksiyonu
-        function init() {
-            console.log('🚀 Linux App Hub başlatılıyor...');
-            
-            // Veri kontrolleri
-            if (typeof apps === 'undefined') {
-                appList.innerHTML = `
-                    <div class="no-results">
-                        <div class="no-results-icon">⚠️</div>
-                        <h3>Uygulama verileri yüklenemedi</h3>
-                        <p>apps.js dosyası bulunamadı veya yüklenemedi</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            if (typeof window.applyCategoriesTo !== 'function') {
-                console.warn('⚠️ applyCategoriesTo fonksiyonu bulunamadı, kategoriler uygulanmayacak');
-                window.apps = apps; // Kategorisiz olarak devam et
-            } else {
-                // Kategorileri uygula
-                window.apps = window.applyCategoriesTo(apps);
-                console.log('✅ Kategoriler başarıyla uygulandı');
-            }
-            
-            initTheme();
-            initCategoryFilters();
-            renderApps();
-            
-            // İlk yüklemede istatistikleri animasyonlu göster
-            setTimeout(() => {
-                updateStats();
-            }, 300);
-            
-            console.log('✅ Linux App Hub başarıyla başlatıldı!');
-            console.log(`📊 ${apps.length} uygulama yüklendi`);
-            
-            if (typeof window.getAvailableCategories === 'function') {
-                console.log(`📂 ${window.getAvailableCategories().length} kategori mevcut`);
-            }
-        }
-
-        // Sayfa yüklendiğinde başlat
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
-    </script>
+    <!-- Load the optimized loader script -->
+    <script src="assest/loader.js"></script>
 </body>
 </html>
