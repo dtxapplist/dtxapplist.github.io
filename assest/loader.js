@@ -91,21 +91,46 @@
         return false;
     }
 
-    // Load data files (apps.js ve categories.js)
+    // Load data files (categories.js ve apps.js)
     async function loadDataFiles() {
         console.log('📊 Loading data files');
         
-        // Önce categories.js'yi yükle, sonra apps.js'yi yükle
-        const priorityModules = ['categories', 'apps'];
-        
-        // Öncelikli dosyaları sırayla yükle
-        for (const module of priorityModules) {
-            const appPath = `assest/app/${module}.js`;
-            await loadJS(appPath, `${module}.js (data)`);
+        // ÖNEMLİ: Önce categories.js'yi yükle, sonra apps.js'yi yükle
+        try {
+            // 1. Önce categories.js'yi yükle
+            console.log('📂 categories.js yükleniyor...');
+            await loadJS('assest/app/categories.js', 'categories.js (data)');
+            
+            // Kategorilerin yüklendiğini kontrol et
+            if (typeof window.appCategories !== 'undefined') {
+                console.log('✅ Kategoriler başarıyla yüklendi:', Object.keys(window.appCategories).length, 'kategori');
+            } else {
+                console.warn('⚠️ Kategoriler yüklenemedi!');
+            }
+            
+            // 2. Sonra apps.js'yi yükle
+            console.log('📊 apps.js yükleniyor...');
+            await loadJS('assest/app/apps.js', 'apps.js (data)');
+            
+            // Apps'in yüklendiğini kontrol et
+            if (typeof window.apps !== 'undefined' || typeof apps !== 'undefined') {
+                const appsArray = window.apps || apps;
+                console.log('✅ Apps başarıyla yüklendi:', appsArray.length, 'uygulama');
+                
+                // Apps'i global yap
+                if (typeof window.apps === 'undefined') {
+                    window.apps = apps;
+                }
+            } else {
+                console.error('❌ Apps yüklenemedi!');
+            }
+            
+        } catch (error) {
+            console.error('❌ Veri dosyalarını yüklerken hata:', error);
         }
         
         // Diğer modülleri paralel yükle
-        const otherModules = modules.filter(m => !priorityModules.includes(m));
+        const otherModules = modules.filter(m => !['categories', 'apps'].includes(m));
         const dataPromises = otherModules.map(async (module) => {
             const appPath = `assest/app/${module}.js`;
             return await loadJS(appPath, `${module}.js (data)`);
@@ -131,10 +156,44 @@
         console.log(`⚡ Total loading time: ${Math.round(perfEnd - perfStart)}ms`);
         
         // Kategorileri apps verisine uygula
-        if (typeof window.applyCategoriesTo === 'function' && typeof apps !== 'undefined') {
-            console.log('📂 Kategoriler apps verisine uygulanıyor...');
-            window.apps = window.applyCategoriesTo(apps);
-            console.log('✅ Kategoriler başarıyla uygulandı');
+        console.log('🔍 Kategori uygulama işlemi başlatılıyor...');
+        
+        // Gerekli fonksiyonların varlığını kontrol et
+        const hasApplyFunction = typeof window.applyCategoriesTo === 'function';
+        const hasAppsData = typeof window.apps !== 'undefined' || typeof apps !== 'undefined';
+        const hasCategoriesData = typeof window.appCategories === 'object';
+        
+        console.log('📋 Kontrol sonuçları:');
+        console.log(`- applyCategoriesTo fonksiyonu: ${hasApplyFunction ? '✅' : '❌'}`);
+        console.log(`- apps verisi: ${hasAppsData ? '✅' : '❌'}`);
+        console.log(`- appCategories verisi: ${hasCategoriesData ? '✅' : '❌'}`);
+        
+        if (hasApplyFunction && hasAppsData) {
+            try {
+                // Apps verisini al
+                const appsArray = window.apps || apps;
+                console.log(`📊 ${appsArray.length} uygulama kategorize edilecek`);
+                
+                // Kategorileri uygula
+                window.apps = window.applyCategoriesTo(appsArray);
+                console.log('✅ Kategoriler başarıyla uygulandı');
+                
+                // Sonuçları kontrol et
+                const categorizedCount = window.apps.filter(app => app.category && app.category !== 'Diğer').length;
+                const totalCount = window.apps.length;
+                console.log(`📈 Kategorizasyon sonucu: ${categorizedCount}/${totalCount} uygulama kategorize edildi`);
+                
+                // Kategori dağılımını göster
+                if (typeof window.getCategoryCounts === 'function') {
+                    const counts = window.getCategoryCounts(window.apps);
+                    console.log('📊 Kategori dağılımı:', counts);
+                }
+                
+            } catch (error) {
+                console.error('❌ Kategorileri uygularken hata:', error);
+            }
+        } else {
+            console.warn('⚠️ Kategorizasyon atlandı - gerekli veriler eksik');
         }
         
         // Hide loading indicator if exists
@@ -169,8 +228,15 @@
             // 1. Load CSS first (parallel)
             await loadAllCSS();
             
-            // 2. Load data files (categories.js önce, sonra apps.js)
+            // 2. Load data files (categories.js önce, sonra apps.js - SIRALI)
             await loadDataFiles();
+            
+            // Veri yükleme sonrası kontrol
+            console.log('🔍 Yüklenen veriler kontrolü:');
+            console.log('- window.appCategories:', typeof window.appCategories);
+            console.log('- window.applyCategoriesTo:', typeof window.applyCategoriesTo);
+            console.log('- apps:', typeof apps !== 'undefined' ? apps.length + ' uygulama' : 'undefined');
+            console.log('- window.apps:', typeof window.apps !== 'undefined' ? window.apps.length + ' uygulama' : 'undefined');
             
             // 3. Load script files
             await loadScriptFiles();
