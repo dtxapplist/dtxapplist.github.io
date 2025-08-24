@@ -6,9 +6,8 @@
     <title>dtxapplist ⁉️</title>
     <meta name="description" content="Popüler uygulamaların Linux desteğini keşfedin">
     
-    <!-- Critical CSS - Inline olarak ekle -->
     <style>
-        /* Critical Above-the-fold CSS */
+        /* Critical CSS */
         * {
             margin: 0;
             padding: 0;
@@ -23,6 +22,7 @@
             --text-secondary: #a1a1aa;
             --text-muted: #71717a;
             --border-color: rgba(255, 255, 255, 0.12);
+            --border-muted: rgba(255, 255, 255, 0.1);
             --accent-primary: #8b5cf6;
             --accent-secondary: #06b6d4;
             --accent-success: #10b981;
@@ -38,6 +38,7 @@
             --text-secondary: #475569;
             --text-muted: #64748b;
             --border-color: rgba(0, 0, 0, 0.1);
+            --border-muted: rgba(0, 0, 0, 0.05);
             --accent-primary: #7c3aed;
             --accent-secondary: #0284c7;
             --accent-success: #059669;
@@ -51,6 +52,7 @@
             color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
+            transition: all 0.3s ease;
         }
 
         .container {
@@ -88,6 +90,13 @@
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
+            box-shadow: 0 8px 24px var(--shadow-color);
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px) scale(1.05);
+            border-color: var(--accent-primary);
+            box-shadow: 0 12px 32px var(--shadow-color);
         }
 
         h1 {
@@ -99,6 +108,7 @@
             -webkit-text-fill-color: transparent;
             margin-bottom: 16px;
             letter-spacing: -0.02em;
+            text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
         }
 
         .subtitle {
@@ -125,6 +135,12 @@
             font-size: 16px;
             outline: none;
             transition: all 0.3s ease;
+            box-shadow: 0 8px 32px var(--shadow-color);
+        }
+
+        #search:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1), 0 12px 40px var(--shadow-color);
         }
 
         .search-icon {
@@ -136,85 +152,336 @@
             font-size: 20px;
         }
 
-        /* Loading indicator styles */
-        .loading-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg-primary);
+        /* Kategori Filtreleri - Ana konteyner */
+        #category-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 40px;
+            padding: 24px;
+            background: var(--bg-secondary);
+            backdrop-filter: var(--backdrop-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-muted);
+            border-radius: 20px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-btn:hover {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+        }
+
+        .filter-btn.active {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .filter-btn .count {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            margin-left: 4px;
+        }
+
+        .filter-btn.active .count {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 50px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 16px 24px;
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            backdrop-filter: var(--backdrop-blur);
+            border: 1px solid var(--border-muted);
+            width: 100px;
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            z-index: 9999;
+            gap: 8px;
         }
 
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid var(--border-color);
-            border-radius: 50%;
-            border-top-color: var(--accent-primary);
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+        .stat-icon {
+            font-size: 1.5rem;
+            line-height: 1;
         }
 
-        .loading-text {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            font-weight: 500;
-            margin-bottom: 10px;
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            display: block;
+            line-height: 1;
         }
 
-        .loading-subtext {
+        #app-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            backdrop-filter: var(--backdrop-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.25);
+            border-color: rgba(139, 92, 246, 0.4);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card img, .card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            margin-right: 16px;
+            box-shadow: 0 8px 24px var(--shadow-color);
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .card:hover img, .card:hover .card-icon {
+            transform: scale(1.1);
+        }
+
+        .card-icon {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .card-info {
+            flex: 1;
+        }
+
+        .app-name {
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .app-category {
+            font-size: 0.8rem;
             color: var(--text-muted);
-            font-size: 0.9rem;
-            opacity: 0.8;
+            margin-bottom: 8px;
+            font-weight: 500;
+            padding: 2px 8px;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 12px;
+            display: inline-block;
+            border: 1px solid rgba(139, 92, 246, 0.2);
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
         }
 
-        /* Loading dots animation */
-        .loading-dots::after {
-            content: '';
-            animation: dots 1.5s steps(4, end) infinite;
+        .status.green {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            color: var(--accent-success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
-        @keyframes dots {
-            0%, 20% { content: ''; }
-            40% { content: '.'; }
-            60% { content: '..'; }
-            80%, 100% { content: '...'; }
+        .status.red {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status.orange {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.1));
+            color: #f97316;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .install-btn {
+            background: linear-gradient(135deg, var(--accent-success), #059669);
+            color: white;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+        }
+
+        .install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+        }
+
+        .about-btn {
+            background: linear-gradient(135deg, var(--accent-secondary), #0891b2);
+            color: white;
+            box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
+        }
+
+        .about-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(6, 182, 212, 0.4);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-secondary);
+            grid-column: 1 / -1;
+        }
+
+        .no-results-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .no-results h3 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: var(--text-muted);
         }
 
         /* Responsive */
         @media (max-width: 768px) {
             .container { padding: 20px 16px; }
-            .header-controls { position: relative; margin-bottom: 20px; justify-content: center; }
+            .header-controls { 
+                position: relative; 
+                margin-bottom: 20px; 
+                justify-content: center; 
+            }
+            #category-filters {
+                padding: 16px;
+                margin-bottom: 30px;
+                gap: 6px;
+                justify-content: flex-start;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+            .filter-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+            #app-list {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .card {
+                padding: 20px;
+                border-radius: 16px;
+            }
+            .stats {
+                gap: 16px;
+            }
+            .stat-item {
+                width: 80px;
+                padding: 12px 16px;
+            }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--bg-secondary);
+            backdrop-filter: var(--backdrop-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 12px 40px var(--shadow-color);
+            transform: translateX(400px);
+            transition: all 0.4s ease;
+            z-index: 1001;
+        }
+
+        .toast.show {
+            transform: translateX(0);
         }
     </style>
-    
-    <!-- Preload en önemli CSS dosyası -->
-    <link rel="preload" href="assest/css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="assest/css/style.css"></noscript>
-    
-    <!-- DNS prefetch -->
-    <link rel="dns-prefetch" href="//fonts.googleapis.com">
-    <link rel="dns-prefetch" href="//via.placeholder.com">
 </head>
 <body>
-    <!-- Loading indicator -->
-    <div id="loading-indicator" class="loading-container">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Linux App Hub Yükleniyor<span class="loading-dots"></span></div>
-        <div class="loading-subtext">Uygulama verileri hazırlanıyor</div>
-    </div>
-
-    <div class="container" style="opacity: 0; transition: opacity 0.5s ease;" id="main-content">
+    <div class="container">
         <div class="header">
             <div class="header-controls">
                 <button id="theme-toggle" class="theme-toggle" title="Tema Değiştir">
@@ -228,41 +495,23 @@
         <div class="search-container">
             <div class="search-icon">🔍</div>
             <input type="text" id="search" placeholder="Uygulama, açıklama veya tag ara...">
-            <div class="advanced-search-toggle" id="advanced-toggle" title="Gelişmiş Arama">
-                <span>⚙️</span>
-            </div>
         </div>
 
-        <div class="advanced-search" id="advanced-search">
-            <div class="search-filters">
-                <div class="filter-group">
-                    <label>Durum:</label>
-                    <div class="filter-buttons">
-                        <button class="filter-btn active" data-filter="all">Tümü</button>
-                        <button class="filter-btn" data-filter="supported">Desteklenen</button>
-                        <button class="filter-btn" data-filter="alternatives">Alternatifli</button>
-                        <button class="filter-btn" data-filter="unsupported">Desteklenmeyen</button>
-                    </div>
-                </div>
-                <div class="filter-group">
-                    <label>Kategori:</label>
-                    <div class="filter-buttons" id="category-filters">
-                        <button class="filter-btn active" data-category="all">Tümü</button>
-                    </div>
-                </div>
-            </div>
+        <!-- Ana kategori filtreleri buraya gelecek -->
+        <div id="category-filters">
+            <button class="filter-btn active" data-category="all">Tümü <span class="count">(0)</span></button>
         </div>
 
         <div class="stats" id="stats">
-            <div class="stat-item" role="presentation">
+            <div class="stat-item">
                 <span class="stat-icon">✅</span>
                 <span class="stat-number" id="supported-count">0</span>
             </div>
-            <div class="stat-item" role="presentation">
+            <div class="stat-item">
                 <span class="stat-icon">❌</span>
                 <span class="stat-number" id="unsupported-count">0</span>
             </div>
-            <div class="stat-item" role="presentation">
+            <div class="stat-item">
                 <span class="stat-icon">🗄️</span>
                 <span class="stat-number" id="total-count">0</span>
             </div>
@@ -271,64 +520,405 @@
         <div id="app-list"></div>
     </div>
 
-    <!-- Pop-up -->
-    <div id="popup" class="popup hidden">
-        <div class="popup-content">
-            <span id="popup-close">&times;</span>
-            <h2 id="popup-title"></h2>
-            <div id="popup-instructions"></div>
-        </div>
-    </div>
-
     <!-- Toast Bildirimi -->
     <div id="toast" class="toast">
         <span class="toast-icon">✅</span>
-        <span class="toast-message">Komut kopyalandı!</span>
+        <span class="toast-message">Test mesajı!</span>
     </div>
 
-    <!-- Optimized Asset Loader -->
     <script>
-        // İyileştirilmiş loader
-        (function() {
-            const loadingIndicator = document.getElementById('loading-indicator');
-            const mainContent = document.getElementById('main-content');
+        // Global değişken kontrolleri
+        if (typeof apps === 'undefined') {
+            console.error('❌ apps verisi bulunamadı! apps.js dosyası yüklü değil.');
+        }
+        
+        if (typeof window.applyCategoriesTo !== 'function') {
+            console.error('❌ applyCategoriesTo fonksiyonu bulunamadı! categories.js dosyası yüklü değil.');
+        }
+        
+        if (typeof window.getAvailableCategories !== 'function') {
+            console.error('❌ getAvailableCategories fonksiyonu bulunamadı! categories.js dosyası yüklü değil.');
+        }
+        
+        if (typeof window.getCategoryCounts !== 'function') {
+            console.error('❌ getCategoryCounts fonksiyonu bulunamadı! categories.js dosyası yüklü değil.');
+        }
+
+        // Global değişkenler
+        let currentFilters = {
+            category: 'all',
+            search: ''
+        };
+
+        // DOM elementleri
+        const appList = document.getElementById("app-list");
+        const searchInput = document.getElementById("search");
+        const categoryFilters = document.getElementById("category-filters");
+        const themeToggle = document.getElementById("theme-toggle");
+        const toast = document.getElementById("toast");
+        const supportedCount = document.getElementById("supported-count");
+        const unsupportedCount = document.getElementById("unsupported-count");
+        const totalCount = document.getElementById("total-count");
+
+        // Tema yönetimi
+        function initTheme() {
+            const savedTheme = window.localStorage?.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             
-            // CSS dosyalarını hemen yükle
-            const criticalCSS = [
-                'assest/css/style.css'
-            ];
+            document.documentElement.setAttribute('data-theme', newTheme);
+            if (window.localStorage) {
+                window.localStorage.setItem('theme', newTheme);
+            }
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const themeIcon = themeToggle.querySelector('.theme-icon');
+            themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+            themeToggle.title = theme === 'dark' ? 'Açık Tema' : 'Koyu Tema';
+        }
+
+        // Toast gösterimi
+        function showToast(message, icon = '✅') {
+            const toastIcon = toast.querySelector('.toast-icon');
+            const toastMessage = toast.querySelector('.toast-message');
             
-            let cssLoaded = 0;
-            const totalCSS = criticalCSS.length;
+            toastIcon.textContent = icon;
+            toastMessage.textContent = message;
             
-            criticalCSS.forEach(css => {
-                if (!document.querySelector(`link[href="${css}"]`)) {
-                    const link = document.createElement('link');
-                    link.rel = 'stylesheet';
-                    link.href = css;
-                    link.onload = () => {
-                        cssLoaded++;
-                        if (cssLoaded === totalCSS) {
-                            // CSS yüklendi, içeriği göster
-                            setTimeout(() => {
-                                mainContent.style.opacity = '1';
-                                loadingIndicator.style.opacity = '0';
-                                setTimeout(() => {
-                                    loadingIndicator.style.display = 'none';
-                                }, 500);
-                            }, 200); // Kısa bir gecikme ekle
-                        }
-                    };
-                    document.head.appendChild(link);
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Kategori filtrelerini başlat
+        function initCategoryFilters() {
+            console.log('🏷️ Kategori filtreleri başlatılıyor...');
+            
+            // Veri kontrolü
+            if (typeof apps === 'undefined') {
+                console.error('❌ apps verisi bulunamadı, kategori filtreleri başlatılamıyor');
+                return;
+            }
+            
+            // Mevcut kategori butonlarını temizle (Tümü hariç)
+            const existingButtons = categoryFilters.querySelectorAll('[data-category]:not([data-category="all"])');
+            existingButtons.forEach(btn => btn.remove());
+            
+            let categories = [];
+            let categoryCounts = {};
+            
+            // Global fonksiyonları kontrol et
+            if (typeof window.getAvailableCategories === 'function') {
+                try {
+                    categories = window.getAvailableCategories();
+                } catch (error) {
+                    console.warn('⚠️ getAvailableCategories hata verdi:', error);
+                }
+            }
+            
+            if (typeof window.getCategoryCounts === 'function') {
+                try {
+                    categoryCounts = window.getCategoryCounts(window.apps || apps);
+                } catch (error) {
+                    console.warn('⚠️ getCategoryCounts hata verdi:', error);
+                }
+            }
+            
+            // Fallback: manuel kategori çıkarma
+            if (categories.length === 0) {
+                console.log('📂 Fallback kategori çıkarma kullanılıyor');
+                const categorySet = new Set();
+                (window.apps || apps).forEach(app => {
+                    if (app.category) {
+                        categorySet.add(app.category);
+                    }
+                });
+                categories = Array.from(categorySet).sort((a, b) => a.localeCompare(b, 'tr'));
+            }
+            
+            // Fallback: manuel sayım
+            if (Object.keys(categoryCounts).length === 0) {
+                console.log('📊 Fallback kategori sayım kullanılıyor');
+                (window.apps || apps).forEach(app => {
+                    const category = app.category || 'Diğer';
+                    categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+                });
+            }
+            
+            // "Tümü" butonunu güncelle
+            const allButton = categoryFilters.querySelector('[data-category="all"]');
+            if (allButton) {
+                allButton.innerHTML = `Tümü <span class="count">(${(window.apps || apps).length})</span>`;
+            }
+            
+            // Diğer kategorileri ekle
+            categories.forEach((category, index) => {
+                const count = categoryCounts[category] || 0;
+                if (count > 0) {
+                    const button = document.createElement('button');
+                    button.className = 'filter-btn';
+                    button.setAttribute('data-category', category.toLowerCase().replace(/\s+/g, '-'));
+                    button.innerHTML = `${category} <span class="count">(${count})</span>`;
+                    button.addEventListener('click', () => filterByCategory(category));
+                    categoryFilters.appendChild(button);
                 }
             });
             
-            // Ana loader'ı sonra yükle
-            const script = document.createElement('script');
-            script.src = 'assest/loader.js';
-            script.async = true;
-            document.head.appendChild(script);
-        })();
+            console.log(`✅ ${categories.length} kategori filtresi oluşturuldu`);
+        }
+
+        // Kategori filtresi
+        function filterByCategory(category) {
+            console.log('🔍 Kategori filtresi uygulanıyor:', category);
+            currentFilters.category = category;
+            
+            // Buton durumlarını güncelle
+            document.querySelectorAll('[data-category]').forEach(btn => {
+                const btnCategory = btn.dataset.category;
+                const isActive = (category === 'all' && btnCategory === 'all') || 
+                               (category !== 'all' && btnCategory === category.toLowerCase().replace(/\s+/g, '-'));
+                btn.classList.toggle('active', isActive);
+            });
+            
+            renderApps();
+        }
+
+        // İstatistikleri güncelle
+        function updateStats(filteredApps = (window.apps || apps || [])) {
+            const supported = filteredApps.filter(app => app.supported).length;
+            const unsupported = filteredApps.filter(app => !app.supported).length;
+            const total = filteredApps.length;
+
+            animateNumber(supportedCount, supported);
+            animateNumber(unsupportedCount, unsupported);
+            animateNumber(totalCount, total);
+        }
+
+        function animateNumber(element, targetValue) {
+            const startValue = parseInt(element.textContent) || 0;
+            const duration = 500;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const currentValue = Math.floor(startValue + (targetValue - startValue) * progress);
+                element.textContent = currentValue;
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        // Filtrelenmiş uygulamaları al
+        function getFilteredApps() {
+            // Veri kontrolü
+            if (typeof apps === 'undefined') {
+                return [];
+            }
+            
+            let filteredApps = (window.apps || apps).slice();
+
+            // Arama filtresi
+            if (currentFilters.search) {
+                const searchTerm = currentFilters.search.toLowerCase();
+                filteredApps = filteredApps.filter(app => {
+                    const searchableText = [
+                        app.name,
+                        app.description || '',
+                        app.category || ''
+                    ].join(' ').toLowerCase();
+                    
+                    return searchableText.includes(searchTerm);
+                });
+            }
+
+            // Kategori filtresi
+            if (currentFilters.category !== 'all') {
+                filteredApps = filteredApps.filter(app => {
+                    const appCategory = app.category || 'Diğer';
+                    return appCategory === currentFilters.category;
+                });
+            }
+
+            return filteredApps;
+        }
+
+        // Uygulamaları render et
+        function renderApps() {
+            console.log('🔄 Uygulamalar render ediliyor...');
+            appList.innerHTML = "";
+
+            let filteredApps = getFilteredApps();
+            console.log(`📋 ${filteredApps.length} uygulama gösterilecek`);
+
+            // A-Z sıralama
+            filteredApps.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+
+            // İstatistikleri güncelle
+            updateStats(filteredApps);
+
+            if (filteredApps.length === 0) {
+                appList.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">🔍</div>
+                        <h3>Aradığınız kriterlere uygun uygulama bulunamadı</h3>
+                        <p>Farklı filtreler veya arama terimi deneyin</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredApps.forEach((app, index) => {
+                const card = document.createElement("div");
+                card.className = "card";
+
+                // Icon elementi
+                const iconElement = (app.icon && (app.icon.includes('.png') || app.icon.includes('.svg')))
+                    ? `<img src="${app.icon}" alt="${app.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` 
+                    : '';
+                
+                const fallbackIcon = `<div class="card-icon" ${iconElement ? 'style="display:none;"' : ''}>${app.name.charAt(0).toUpperCase()}</div>`;
+
+                // Status rengini ve iconunu belirle
+                let statusClass = "green";
+                let statusText = "Destekleniyor";
+                let statusIcon = "✓";
+                
+                if (!app.supported) {
+                    if (app.alternatives && app.alternatives.length > 0) {
+                        statusClass = "orange";
+                        statusText = "Alternatifler Mevcut";
+                        statusIcon = "⚠";
+                    } else {
+                        statusClass = "red";
+                        statusText = "Desteklenmiyor";
+                        statusIcon = "✗";
+                    }
+                }
+
+                // Category display
+                const categoryDisplay = app.category ? `<div class="app-category">${app.category}</div>` : '';
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        ${iconElement}
+                        ${fallbackIcon}
+                        <div class="card-info">
+                            <div class="app-name">${app.name}</div>
+                            ${categoryDisplay}
+                            <div class="status ${statusClass}">
+                                <span class="status-icon">${statusIcon}</span>
+                                ${statusText}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        ${app.supported ? `<button class="action-btn install-btn" data-action="install" title="Kurulum Talimatları">📦</button>` : ''}
+                        <button class="action-btn about-btn" data-action="about" title="${app.supported ? 'Hakkında' : (app.alternatives ? 'Alternatifler' : 'Neden Desteklenmiyor?')}">ℹ️</button>
+                    </div>
+                `;
+
+                // Event listeners
+                if (app.supported) {
+                    const installBtn = card.querySelector('.install-btn');
+                    installBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showToast(`${app.name} kurulum bilgileri gösterildi!`, '📦');
+                    });
+                }
+
+                const aboutBtn = card.querySelector('.about-btn');
+                aboutBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (app.supported) {
+                        showToast(`${app.name} hakkında bilgi gösterildi!`, 'ℹ️');
+                    } else if (app.alternatives) {
+                        showToast(`${app.name} alternatifleri gösterildi!`, '⚠️');
+                    } else {
+                        showToast(`${app.name} desteklenmeme sebebi gösterildi!`, '❌');
+                    }
+                });
+
+                appList.appendChild(card);
+            });
+        }
+
+        // Event Listeners
+        themeToggle.addEventListener('click', toggleTheme);
+
+        searchInput.addEventListener("input", e => {
+            currentFilters.search = e.target.value;
+            renderApps();
+        });
+
+        // "Tümü" butonuna event listener ekle
+        const allButton = categoryFilters.querySelector('[data-category="all"]');
+        if (allButton) {
+            allButton.addEventListener('click', () => filterByCategory('all'));
+        }
+
+        // Başlangıç fonksiyonu
+        function init() {
+            console.log('🚀 Linux App Hub başlatılıyor...');
+            
+            // Veri kontrolleri
+            if (typeof apps === 'undefined') {
+                appList.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">⚠️</div>
+                        <h3>Uygulama verileri yüklenemedi</h3>
+                        <p>apps.js dosyası bulunamadı veya yüklenemedi</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            if (typeof window.applyCategoriesTo !== 'function') {
+                console.warn('⚠️ applyCategoriesTo fonksiyonu bulunamadı, kategoriler uygulanmayacak');
+                window.apps = apps; // Kategorisiz olarak devam et
+            } else {
+                // Kategorileri uygula
+                window.apps = window.applyCategoriesTo(apps);
+                console.log('✅ Kategoriler başarıyla uygulandı');
+            }
+            
+            initTheme();
+            initCategoryFilters();
+            renderApps();
+            
+            // İlk yüklemede istatistikleri animasyonlu göster
+            setTimeout(() => {
+                updateStats();
+            }, 300);
+            
+            console.log('✅ Linux App Hub başarıyla başlatıldı!');
+            console.log(`📊 ${apps.length} uygulama yüklendi`);
+            
+            if (typeof window.getAvailableCategories === 'function') {
+                console.log(`📂 ${window.getAvailableCategories().length} kategori mevcut`);
+            }
+        }
+
+        // Sayfa yüklendiğinde başlat
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
     </script>
 </body>
-                    </html>
+</html>
