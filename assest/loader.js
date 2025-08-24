@@ -1,5 +1,5 @@
 // Optimized Asset Loader for Linux App Hub
-// CSS'i önce yükler, performansı artırır
+// CSS'i önce yükler, kategori sistemini daha güvenilir yapar
 
 (function() {
     const modules = [
@@ -18,9 +18,14 @@
     // Cache for loaded files
     const loadedFiles = new Set();
     
+    // Debug logging
+    function debugLog(message, data = null) {
+        console.log(`🔧 [LOADER] ${message}`, data || '');
+    }
+    
     // Batch load CSS files immediately
     async function loadAllCSS() {
-        console.log('🎨 CSS batch loading started');
+        debugLog('CSS batch loading started');
         const cssPromises = modules.map(async (module) => {
             const cssPath = `assest/css/${module}.css`;
             
@@ -36,13 +41,13 @@
                         link.href = cssPath;
                         
                         link.onload = () => {
-                            console.log(`✅ ${module}.css loaded`);
+                            debugLog(`${module}.css loaded`);
                             loadedFiles.add(cssPath);
                             resolve();
                         };
                         
                         link.onerror = () => {
-                            console.log(`⚠️ ${module}.css failed to load`);
+                            debugLog(`${module}.css failed to load`);
                             reject();
                         };
                         
@@ -50,13 +55,13 @@
                     });
                 }
             } catch (error) {
-                console.log(`📄 ${module}.css not found`);
+                debugLog(`${module}.css not found`);
             }
         });
 
         // Wait for all CSS to load
         await Promise.allSettled(cssPromises);
-        console.log('🎨 All CSS files processed');
+        debugLog('All CSS files processed');
     }
 
     // Load JS files
@@ -71,13 +76,13 @@
                     script.src = modulePath;
                     
                     script.onload = () => {
-                        console.log(`✅ ${moduleName} loaded`);
+                        debugLog(`${moduleName} loaded`);
                         loadedFiles.add(modulePath);
                         resolve(true);
                     };
                     
                     script.onerror = () => {
-                        console.log(`⚠️ ${moduleName} failed to load`);
+                        debugLog(`${moduleName} failed to load`);
                         reject(false);
                     };
                     
@@ -85,48 +90,62 @@
                 });
             }
         } catch (error) {
-            console.log(`📄 ${moduleName} not found`);
+            debugLog(`${moduleName} not found`);
             return false;
         }
         return false;
     }
 
-    // Load data files (categories.js ve apps.js)
+    // Load data files (categories.js ve apps.js) - GELİŞTİRİLDİ
     async function loadDataFiles() {
-        console.log('📊 Loading data files');
+        debugLog('Loading data files');
         
-        // ÖNEMLİ: Önce categories.js'yi yükle, sonra apps.js'yi yükle
         try {
             // 1. Önce categories.js'yi yükle - assest/app/ klasöründen
-            console.log('📂 categories.js yükleniyor...');
+            debugLog('Loading categories.js...');
             await loadJS('assest/app/categories.js', 'categories.js (data)');
             
-            // Kategorilerin yüklendiğini kontrol et
+            // Kategorilerin yüklendiğini kontrol et - DAHA DETAYLI
+            await new Promise(resolve => setTimeout(resolve, 100)); // Kısa bekle
+            
             if (typeof window.appCategories !== 'undefined') {
-                console.log('✅ Kategoriler başarıyla yüklendi:', Object.keys(window.appCategories).length, 'kategori');
+                debugLog('Categories loaded successfully', {
+                    count: Object.keys(window.appCategories).length,
+                    hasApplyFunction: typeof window.applyCategoriesTo === 'function'
+                });
+                
+                // Bazı örnek kategorileri logla
+                const sampleCategories = Object.keys(window.appCategories).slice(0, 5);
+                debugLog('Sample categories:', sampleCategories);
             } else {
-                console.warn('⚠️ Kategoriler yüklenemedi!');
+                console.warn('⚠️ Categories loading failed!');
             }
             
             // 2. Sonra apps.js'yi yükle - assest/app/ klasöründen
-            console.log('📊 apps.js yükleniyor...');
+            debugLog('Loading apps.js...');
             await loadJS('assest/app/apps.js', 'apps.js (data)');
             
-            // Apps'in yüklendiğini kontrol et
+            // Apps'in yüklendiğini kontrol et - DAHA DETAYLI
+            await new Promise(resolve => setTimeout(resolve, 100)); // Kısa bekle
+            
             if (typeof window.apps !== 'undefined' || typeof apps !== 'undefined') {
                 const appsArray = window.apps || apps;
-                console.log('✅ Apps başarıyla yüklendi:', appsArray.length, 'uygulama');
+                debugLog('Apps loaded successfully', {
+                    count: appsArray.length,
+                    firstApp: appsArray[0]?.name || 'undefined'
+                });
                 
                 // Apps'i global yap
                 if (typeof window.apps === 'undefined') {
                     window.apps = apps;
+                    debugLog('Apps made global');
                 }
             } else {
-                console.error('❌ Apps yüklenemedi!');
+                console.error('❌ Apps loading failed!');
             }
             
         } catch (error) {
-            console.error('❌ Veri dosyalarını yüklerken hata:', error);
+            console.error('❌ Error loading data files:', error);
         }
         
         // Diğer modülleri paralel yükle - assest/app/ klasöründen
@@ -141,7 +160,7 @@
 
     // Load script files
     async function loadScriptFiles() {
-        console.log('⚡ Loading script files');
+        debugLog('Loading script files');
         const scriptPromises = modules.map(async (module) => {
             const jsPath = `assest/js/${module}.js`;
             return await loadJS(jsPath, `${module}.js`);
@@ -150,50 +169,83 @@
         await Promise.allSettled(scriptPromises);
     }
 
-    // Initialize app with category processing
-    function initializeApp() {
-        const perfEnd = performance.now();
-        console.log(`⚡ Total loading time: ${Math.round(perfEnd - perfStart)}ms`);
+    // Apply categories to apps data - YENİ FONKSİYON
+    function applyCategoriesWithValidation() {
+        debugLog('Applying categories with validation...');
         
-        // Kategorileri apps verisine uygula
-        console.log('🔍 Kategori uygulama işlemi başlatılıyor...');
-        
-        // Gerekli fonksiyonların varlığını kontrol et
         const hasApplyFunction = typeof window.applyCategoriesTo === 'function';
         const hasAppsData = typeof window.apps !== 'undefined' || typeof apps !== 'undefined';
         const hasCategoriesData = typeof window.appCategories === 'object';
         
-        console.log('📋 Kontrol sonuçları:');
-        console.log(`- applyCategoriesTo fonksiyonu: ${hasApplyFunction ? '✅' : '❌'}`);
-        console.log(`- apps verisi: ${hasAppsData ? '✅' : '❌'}`);
-        console.log(`- appCategories verisi: ${hasCategoriesData ? '✅' : '❌'}`);
+        debugLog('Pre-application check:', {
+            applyCategoriesTo: hasApplyFunction,
+            appsData: hasAppsData,
+            categoriesData: hasCategoriesData
+        });
         
         if (hasApplyFunction && hasAppsData) {
             try {
                 // Apps verisini al
                 const appsArray = window.apps || apps;
-                console.log(`📊 ${appsArray.length} uygulama kategorize edilecek`);
+                debugLog(`Applying categories to ${appsArray.length} apps`);
                 
                 // Kategorileri uygula
-                window.apps = window.applyCategoriesTo(appsArray);
-                console.log('✅ Kategoriler başarıyla uygulandı');
+                const categorizedApps = window.applyCategoriesTo(appsArray);
+                window.apps = categorizedApps;
+                
+                debugLog('Categories applied successfully');
                 
                 // Sonuçları kontrol et
                 const categorizedCount = window.apps.filter(app => app.category && app.category !== 'Diğer').length;
                 const totalCount = window.apps.length;
-                console.log(`📈 Kategorizasyon sonucu: ${categorizedCount}/${totalCount} uygulama kategorize edildi`);
+                
+                debugLog('Categorization results:', {
+                    total: totalCount,
+                    categorized: categorizedCount,
+                    percentage: Math.round((categorizedCount / totalCount) * 100) + '%'
+                });
                 
                 // Kategori dağılımını göster
                 if (typeof window.getCategoryCounts === 'function') {
                     const counts = window.getCategoryCounts(window.apps);
-                    console.log('📊 Kategori dağılımı:', counts);
+                    debugLog('Category distribution:', counts);
                 }
                 
+                // İlk 5 uygulamanın kategorilerini kontrol et
+                debugLog('Sample categorized apps:');
+                window.apps.slice(0, 5).forEach(app => {
+                    console.log(`  📱 ${app.name}: ${app.category || 'No category'}`);
+                });
+                
+                return true;
+                
             } catch (error) {
-                console.error('❌ Kategorileri uygularken hata:', error);
+                console.error('❌ Error applying categories:', error);
+                return false;
             }
         } else {
-            console.warn('⚠️ Kategorizasyon atlandı - gerekli veriler eksik');
+            console.warn('⚠️ Cannot apply categories - missing dependencies:', {
+                applyCategoriesTo: hasApplyFunction,
+                appsData: hasAppsData,
+                categoriesData: hasCategoriesData
+            });
+            return false;
+        }
+    }
+
+    // Initialize app with category processing
+    function initializeApp() {
+        const perfEnd = performance.now();
+        debugLog(`Total loading time: ${Math.round(perfEnd - perfStart)}ms`);
+        
+        // Apply categories with validation
+        debugLog('Starting category application process');
+        const categoriesApplied = applyCategoriesWithValidation();
+        
+        if (categoriesApplied) {
+            debugLog('✅ Categories successfully applied');
+        } else {
+            debugLog('⚠️ Category application failed or skipped');
         }
         
         // Hide loading indicator if exists
@@ -210,52 +262,67 @@
         
         // Initialize main app
         if (typeof window.initLinuxAppHub === 'function') {
+            debugLog('Initializing main app');
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', window.initLinuxAppHub);
             } else {
-                setTimeout(window.initLinuxAppHub, 100);
+                // Biraz daha bekle ki her şey hazır olsun
+                setTimeout(() => {
+                    debugLog('Calling initLinuxAppHub');
+                    window.initLinuxAppHub();
+                }, 200);
             }
         } else {
             console.warn('⚠️ initLinuxAppHub function not found');
         }
     }
 
-    // Main loading sequence
+    // Main loading sequence - GELİŞTİRİLDİ
     async function loadAll() {
-        console.log('📦 Optimized asset loading started');
+        debugLog('Optimized asset loading started');
         
         try {
             // 1. Load CSS first (parallel)
+            debugLog('Phase 1: Loading CSS files');
             await loadAllCSS();
             
             // 2. Load data files (categories.js önce, sonra apps.js - SIRALI)
+            debugLog('Phase 2: Loading data files');
             await loadDataFiles();
             
-            // Veri yükleme sonrası kontrol
-            console.log('🔍 Yüklenen veriler kontrolü:');
-            console.log('- window.appCategories:', typeof window.appCategories);
-            console.log('- window.applyCategoriesTo:', typeof window.applyCategoriesTo);
-            console.log('- apps:', typeof apps !== 'undefined' ? apps.length + ' uygulama' : 'undefined');
-            console.log('- window.apps:', typeof window.apps !== 'undefined' ? window.apps.length + ' uygulama' : 'undefined');
+            // Veri yükleme sonrası detaylı kontrol
+            debugLog('Post-data-loading check:');
+            console.log('🔍 Loaded data status:');
+            console.log('  - window.appCategories:', typeof window.appCategories, 
+                typeof window.appCategories === 'object' ? `(${Object.keys(window.appCategories).length} items)` : '');
+            console.log('  - window.applyCategoriesTo:', typeof window.applyCategoriesTo);
+            console.log('  - apps:', typeof apps !== 'undefined' ? `(${apps.length} items)` : 'undefined');
+            console.log('  - window.apps:', typeof window.apps !== 'undefined' ? `(${window.apps.length} items)` : 'undefined');
             
             // 3. Load script files
+            debugLog('Phase 3: Loading script files');
             await loadScriptFiles();
             
             // 4. Initialize with category processing
+            debugLog('Phase 4: Initializing app');
             initializeApp();
             
         } catch (error) {
             console.error('❌ Loading error:', error);
             
             // Fallback: still try to initialize
+            debugLog('Attempting fallback initialization');
             setTimeout(initializeApp, 1000);
         }
     }
 
     // Start loading when DOM is ready
+    debugLog('DOM ready check');
     if (document.readyState === 'loading') {
+        debugLog('DOM still loading, waiting for DOMContentLoaded');
         document.addEventListener('DOMContentLoaded', loadAll);
     } else {
+        debugLog('DOM already ready, starting load immediately');
         loadAll();
     }
     
