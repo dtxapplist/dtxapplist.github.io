@@ -1,8 +1,8 @@
-// Linux App Hub - Sayfalama Sistemi ile Güncellenmiş
-// Kategori filtreleri advanced search'e taşındı, sayfalama eklendi
+// assest/js/script.js - Analytics entegrasyonlu güncellenmiş versiyon
+// Linux App Hub - Sayfalama Sistemi ile Güncellenmiş + Analytics
 
 window.initLinuxAppHub = function() {
-    console.log('🚀 Linux App Hub başlatılıyor - Sayfalama sistemi ile');
+    console.log('🚀 Linux App Hub başlatılıyor - Analytics ile güncellenmiş');
     
     // DOM elementlerini güvenli şekilde al
     function safeGetElement(id) {
@@ -39,6 +39,10 @@ window.initLinuxAppHub = function() {
 
     console.log(`📊 ${apps.length} uygulama yüklendi`);
 
+    // Analytics integration check
+    const hasAnalytics = typeof window.AnalyticsSystem !== 'undefined';
+    console.log('📊 Analytics sistem:', hasAnalytics ? 'Aktif' : 'Pasif');
+
     // Sayfalama ayarları
     const APPS_PER_PAGE = 10;
     let currentPage = 1;
@@ -50,7 +54,7 @@ window.initLinuxAppHub = function() {
         search: ''
     };
 
-    // Basit kategori eşleştirme
+    // Basit kategori eşleştirme (Varsa external categories.js kullanılır)
     const APP_CATEGORIES = {
         // İletişim
         "Discord": "İletişim",
@@ -156,11 +160,17 @@ window.initLinuxAppHub = function() {
         apps.forEach(app => {
             let category = null;
             
-            // 1. Direkt eşleşme
+            // 1. External categories.js varsa kullan
+            if (typeof window.applyCategoriesTo === 'function') {
+                // Bu durumda categories.js tarafından handle edilir
+                return;
+            }
+            
+            // 2. Direkt eşleşme
             if (APP_CATEGORIES[app.name]) {
                 category = APP_CATEGORIES[app.name];
             }
-            // 2. Kısmi eşleşme
+            // 3. Kısmi eşleşme
             else {
                 for (const [appName, cat] of Object.entries(APP_CATEGORIES)) {
                     if (app.name.toLowerCase().includes(appName.toLowerCase()) || 
@@ -474,7 +484,7 @@ window.initLinuxAppHub = function() {
         return showMoreBtn;
     }
 
-    // Uygulamaları render et (sayfalama ile)
+    // Uygulamaları render et (sayfalama ile) - Analytics entegrasyonlu
     function renderApps() {
         console.log('🎨 Apps render ediliyor... (sayfalama ile)');
         
@@ -555,12 +565,18 @@ window.initLinuxAppHub = function() {
                 </div>
             `;
 
-            // Event listeners
+            // Event listeners - Analytics entegrasyonlu
             if (app.supported) {
                 const installBtn = card.querySelector('.install-btn');
                 if (installBtn) {
                     installBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
+                        
+                        // Analytics tracking
+                        if (hasAnalytics && window.AnalyticsSystem) {
+                            window.AnalyticsSystem.trackAppView(app.name, 'install');
+                        }
+                        
                         showInstallPopup(app);
                     });
                 }
@@ -570,9 +586,22 @@ window.initLinuxAppHub = function() {
             if (aboutBtn) {
                 aboutBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    
+                    // Analytics tracking
+                    if (hasAnalytics && window.AnalyticsSystem) {
+                        window.AnalyticsSystem.trackAppView(app.name, 'about');
+                    }
+                    
                     showAboutPopup(app);
                 });
             }
+
+            // Card click analytics - görüntüleme track'i
+            card.addEventListener('click', () => {
+                if (hasAnalytics && window.AnalyticsSystem) {
+                    window.AnalyticsSystem.trackAppView(app.name, 'view');
+                }
+            });
 
             appList.appendChild(card);
         });
@@ -586,9 +615,14 @@ window.initLinuxAppHub = function() {
         console.log(`✅ ${appsToShow.length}/${filteredApps.length} kart render edildi ${shouldShowMoreButton ? '(daha fazla göster butonu ile)' : ''}`);
     }
 
-    // Kurulum popup'ını göster
+    // Kurulum popup'ını göster - Analytics entegrasyonlu
     function showInstallPopup(app) {
         if (!popup || !popupTitle || !popupInstructions) return;
+        
+        // Analytics tracking
+        if (hasAnalytics && window.AnalyticsSystem) {
+            window.AnalyticsSystem.trackAppView(app.name, 'install_popup_opened');
+        }
         
         window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/p`);
         
@@ -642,14 +676,24 @@ window.initLinuxAppHub = function() {
         copyBtn.title = 'Kopyala';
         copyBtn.addEventListener('click', () => {
             copyToClipboard(command);
+            
+            // Analytics tracking
+            if (hasAnalytics && window.AnalyticsSystem) {
+                window.AnalyticsSystem.trackAppView('copy_command', 'action');
+            }
         });
         
         tabContent.appendChild(copyBtn);
     }
 
-    // Hakkında popup'ını göster (aynı kalıyor)
+    // Hakkında popup'ını göster - Analytics entegrasyonlu
     function showAboutPopup(app) {
         if (!popup || !popupTitle || !popupInstructions) return;
+        
+        // Analytics tracking
+        if (hasAnalytics && window.AnalyticsSystem) {
+            window.AnalyticsSystem.trackAppView(app.name, 'about_popup_opened');
+        }
         
         window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/h`);
         
@@ -856,6 +900,15 @@ window.initLinuxAppHub = function() {
         }
     }
 
+    // Global popup functions for Analytics System
+    window.showAppPopup = function(app, type) {
+        if (type === 'install' && app.supported) {
+            showInstallPopup(app);
+        } else {
+            showAboutPopup(app);
+        }
+    };
+
     // Event listeners
     if (themeToggle) {
         themeToggle.addEventListener('click', toggleTheme);
@@ -909,6 +962,10 @@ window.initLinuxAppHub = function() {
                 popup.classList.add("hidden");
                 window.history.pushState({}, '', window.location.pathname);
             }
+            // Popüler uygulamalar popup'ını da kapat
+            else if (hasAnalytics && window.AnalyticsSystem) {
+                window.AnalyticsSystem.closePopularAppsPopup();
+            }
         }
     });
 
@@ -920,6 +977,33 @@ window.initLinuxAppHub = function() {
         }
         checkHashOnLoad();
     });
+
+    // Analytics event listeners
+    if (hasAnalytics) {
+        console.log('📊 Analytics event listeners ekleniyor...');
+        
+        // Popular apps updated event
+        window.addEventListener('popularAppsUpdated', (e) => {
+            console.log('📊 Popüler uygulamalar güncellendi:', e.detail.popularApps.length);
+        });
+        
+        // Page visibility change tracking
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('📊 Sayfa gizlendi');
+            } else {
+                console.log('📊 Sayfa görünür hale geldi');
+                if (window.AnalyticsSystem) {
+                    // Sayfaya geri dönüldüğünde popüler uygulamaları güncelle
+                    setTimeout(() => {
+                        if (typeof window.AnalyticsSystem.calculatePopularApps === 'function') {
+                            window.AnalyticsSystem.calculatePopularApps();
+                        }
+                    }, 1000);
+                }
+            }
+        });
+    }
 
     // Başlat
     console.log('🚀 Sistem başlatılıyor...');
@@ -938,5 +1022,34 @@ window.initLinuxAppHub = function() {
     // URL hash kontrolü
     checkHashOnLoad();
     
-    console.log('✅ Linux App Hub hazır! (Sayfalama sistemi ile)');
+    // Analytics integration check and setup
+    if (hasAnalytics) {
+        console.log('✅ Analytics entegrasyonu aktif');
+        
+        // Örnek veri oluştur (development için)
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            setTimeout(() => {
+                console.log('🧪 Development mode - Örnek analytics verisi oluşturuluyor...');
+                const sampleApps = ['Discord', 'Visual Studio Code', 'Spotify', 'Steam', 'Google Chrome'];
+                sampleApps.forEach((appName, index) => {
+                    setTimeout(() => {
+                        if (window.AnalyticsSystem) {
+                            // Farklı tipte etkileşimler simüle et
+                            window.AnalyticsSystem.trackAppView(appName, 'view');
+                            if (index % 2 === 0) {
+                                window.AnalyticsSystem.trackAppView(appName, 'about');
+                            }
+                            if (index % 3 === 0) {
+                                window.AnalyticsSystem.trackAppView(appName, 'install');
+                            }
+                        }
+                    }, index * 200);
+                });
+            }, 2000);
+        }
+    } else {
+        console.log('⚠️ Analytics sistemi yüklenemedi - temel fonksiyonalite devam ediyor');
+    }
+    
+    console.log('✅ Linux App Hub hazır! (Analytics entegrasyonlu)');
 };
