@@ -237,7 +237,7 @@ h1 {
 
 .advanced-search.active {
     opacity: 1;
-    max-height: 300px;
+    max-height: 500px;
     margin-bottom: 40px;
 }
 
@@ -265,6 +265,23 @@ h1 {
     flex-wrap: wrap;
 }
 
+/* Kategori Filtreleri Özel Konteyner */
+#category-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 40px;
+    padding: 24px;
+    background: var(--bg-secondary);
+    backdrop-filter: var(--backdrop-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .filter-btn {
     padding: 8px 16px;
     border: 1px solid var(--border-muted);
@@ -275,12 +292,19 @@ h1 {
     font-size: 0.875rem;
     font-weight: 500;
     transition: all 0.3s ease;
+    white-space: nowrap;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .filter-btn:hover {
     background: rgba(139, 92, 246, 0.1);
     color: var(--accent-primary);
     border-color: var(--accent-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
 }
 
 .filter-btn.active {
@@ -288,6 +312,40 @@ h1 {
     color: white;
     border-color: var(--accent-primary);
     box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Kategori butonlarındaki sayı göstergeleri için stil */
+.filter-btn .count {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    margin-left: 4px;
+}
+
+.filter-btn.active .count {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* "Tümü" butonu için özel stil */
+.filter-btn[data-category="all"] {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    border-color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.filter-btn[data-category="all"]:not(.active) {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+.filter-btn[data-category="all"].active {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    transform: translateY(-2px);
 }
 
 .stats {
@@ -455,6 +513,11 @@ h1 {
     color: var(--text-muted);
     margin-bottom: 8px;
     font-weight: 500;
+    padding: 2px 8px;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: 12px;
+    display: inline-block;
+    border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
 .status {
@@ -863,6 +926,25 @@ h1 {
         justify-content: center;
     }
 
+    #category-filters {
+        padding: 16px;
+        margin-bottom: 30px;
+        gap: 6px;
+        justify-content: flex-start;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .filter-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+
+    .filter-btn .count {
+        font-size: 0.7rem;
+        padding: 1px 4px;
+    }
+
     #app-list {
         grid-template-columns: 1fr;
         gap: 16px;
@@ -922,11 +1004,6 @@ h1 {
         gap: 6px;
     }
 
-    .filter-btn {
-        padding: 6px 12px;
-        font-size: 0.8rem;
-    }
-
     #search {
         padding: 16px 80px 16px 50px;
     }
@@ -971,6 +1048,25 @@ h1 {
         font-size: 14px;
     }
 
+    #category-filters {
+        padding: 12px;
+        margin-bottom: 20px;
+        gap: 4px;
+        max-height: 150px;
+    }
+
+    .filter-btn {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        border-radius: 16px;
+    }
+
+    .filter-btn .count {
+        font-size: 0.65rem;
+        padding: 1px 3px;
+        margin-left: 2px;
+    }
+
     .stats {
         flex-direction: row;
         justify-content: center;
@@ -993,6 +1089,11 @@ h1 {
 
     .app-name {
         font-size: 1.1rem;
+    }
+
+    .app-category {
+        font-size: 0.75rem;
+        padding: 1px 6px;
     }
 
     .popup-content {
@@ -1036,6 +1137,21 @@ h1 {
     background: rgba(0, 0, 0, 0.1);
 }
 
+/* Kategori filtresi scrollbar */
+#category-filters::-webkit-scrollbar {
+    height: 6px;
+}
+
+#category-filters::-webkit-scrollbar-track {
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: 3px;
+}
+
+#category-filters::-webkit-scrollbar-thumb {
+    background: var(--accent-primary);
+    border-radius: 3px;
+}
+
 /* Card entrance animation - Optimized */
 @keyframes cardEnter {
     from {
@@ -1061,6 +1177,23 @@ h1 {
     }
 }
 
+/* Kategori filtresi giriş animasyonu */
+@keyframes filterEnter {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+#category-filters .filter-btn {
+    animation: filterEnter 0.3s ease-out forwards;
+    animation-delay: calc(var(--index, 0) * 0.05s);
+}
+
 /* Focus styles for accessibility */
 .action-btn:focus,
 .tab-button:focus,
@@ -1079,4 +1212,69 @@ h1 {
 .copy-btn:focus {
     outline: 2px solid var(--accent-primary);
     outline-offset: 2px;
-                                                     }
+}
+
+/* Kategori butonları için özel hover efektleri */
+.filter-btn:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* Kategori konteynerinin masaüstü için özel stilleri */
+@media (min-width: 769px) {
+    #category-filters {
+        padding: 32px;
+        border-radius: 24px;
+        margin-bottom: 50px;
+    }
+    
+    .filter-btn {
+        padding: 10px 18px;
+        font-size: 0.9rem;
+        border-radius: 22px;
+    }
+    
+    .filter-btn .count {
+        font-size: 0.8rem;
+        padding: 3px 7px;
+        border-radius: 12px;
+    }
+}
+
+/* Kategori başlığı (opsiyonel) */
+.category-title {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    opacity: 0.8;
+}
+
+/* Aktif kategori için özel vurgu */
+.filter-btn.active::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0.3;
+}
+
+.filter-btn {
+    position: relative;
+}
+
+/* Kategori istatistikleri için daha iyi görünüm */
+.filter-btn:hover .count {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
+}
+
+.filter-btn.active:hover .count {
+    background: rgba(255, 255, 255, 0.5);
+    }
