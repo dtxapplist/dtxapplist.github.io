@@ -1,30 +1,43 @@
-// Linux App Hub Ana Script Dosyası
-// Loader tarafından dinamik olarak yüklenir
+// Linux App Hub Ana Script Dosyası - Güvenli Versiyon
+// Null check'ler eklendi
 
 window.initLinuxAppHub = function() {
-    // DOM elementlerini al
-    const appList = document.getElementById("app-list");
-    const searchInput = document.getElementById("search");
-    const advancedToggle = document.getElementById("advanced-toggle");
-    const advancedSearch = document.getElementById("advanced-search");
-    const categoryFilters = document.getElementById("category-filters");
-    const themeToggle = document.getElementById("theme-toggle");
-    const toast = document.getElementById("toast");
+    console.log('🚀 Linux App Hub başlatılıyor...');
+    
+    // DOM elementlerini güvenli şekilde al
+    function safeGetElement(id) {
+        const element = document.getElementById(id);
+        if (!element) {
+            console.warn(`⚠️ Element bulunamadı: #${id}`);
+        }
+        return element;
+    }
 
-    const popup = document.getElementById("popup");
-    const popupTitle = document.getElementById("popup-title");
-    const popupInstructions = document.getElementById("popup-instructions");
-    const popupClose = document.getElementById("popup-close");
+    // DOM elementlerini al
+    const appList = safeGetElement("app-list");
+    const searchInput = safeGetElement("search");
+    const advancedToggle = safeGetElement("advanced-toggle");
+    const advancedSearch = safeGetElement("advanced-search");
+    const categoryFilters = safeGetElement("category-filters");
+    const themeToggle = safeGetElement("theme-toggle");
+    const toast = safeGetElement("toast");
+
+    const popup = safeGetElement("popup");
+    const popupTitle = safeGetElement("popup-title");
+    const popupInstructions = safeGetElement("popup-instructions");
+    const popupClose = safeGetElement("popup-close");
 
     // Stats elements
-    const supportedCount = document.getElementById("supported-count");
-    const unsupportedCount = document.getElementById("unsupported-count");
-    const totalCount = document.getElementById("total-count");
+    const supportedCount = safeGetElement("supported-count");
+    const unsupportedCount = safeGetElement("unsupported-count");
+    const totalCount = safeGetElement("total-count");
 
     // apps.js'den gelen veri kontrolü
     if (typeof apps === 'undefined' || !Array.isArray(apps)) {
         console.error('❌ apps verisi bulunamadı! apps.js dosyası doğru yüklendi mi?');
-        appList.innerHTML = '<div class="error-message">Uygulama verileri yüklenemedi. Lütfen sayfayı yenileyin.</div>';
+        if (appList) {
+            appList.innerHTML = '<div class="error-message">Uygulama verileri yüklenemedi. Lütfen sayfayı yenileyin.</div>';
+        }
         return;
     }
 
@@ -54,18 +67,24 @@ window.initLinuxAppHub = function() {
     }
 
     function updateThemeIcon(theme) {
+        if (!themeToggle) return;
+        
         const themeIcon = themeToggle.querySelector('.theme-icon');
-        themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
-        themeToggle.title = theme === 'dark' ? 'Açık Tema' : 'Koyu Tema';
+        if (themeIcon) {
+            themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+            themeToggle.title = theme === 'dark' ? 'Açık Tema' : 'Koyu Tema';
+        }
     }
 
     // Toast notification
     function showToast(message, icon = '✅') {
+        if (!toast) return;
+        
         const toastIcon = toast.querySelector('.toast-icon');
         const toastMessage = toast.querySelector('.toast-message');
         
-        toastIcon.textContent = icon;
-        toastMessage.textContent = message;
+        if (toastIcon) toastIcon.textContent = icon;
+        if (toastMessage) toastMessage.textContent = message;
         
         toast.classList.add('show');
         
@@ -218,12 +237,14 @@ window.initLinuxAppHub = function() {
         const total = filteredApps.length;
 
         // Animated counter effect
-        animateNumber(supportedCount, supported);
-        animateNumber(unsupportedCount, unsupported);
-        animateNumber(totalCount, total);
+        if (supportedCount) animateNumber(supportedCount, supported);
+        if (unsupportedCount) animateNumber(unsupportedCount, unsupported);
+        if (totalCount) animateNumber(totalCount, total);
     }
 
     function animateNumber(element, targetValue) {
+        if (!element) return;
+        
         const startValue = parseInt(element.textContent) || 0;
         const duration = 500;
         const startTime = performance.now();
@@ -295,6 +316,11 @@ window.initLinuxAppHub = function() {
     }
 
     function renderApps() {
+        if (!appList) {
+            console.error('❌ appList elementi bulunamadı!');
+            return;
+        }
+        
         console.log('🔄 Uygulamalar render ediliyor...');
         appList.innerHTML = "";
 
@@ -372,23 +398,29 @@ window.initLinuxAppHub = function() {
             // Event listeners
             if (app.supported) {
                 const installBtn = card.querySelector('.install-btn');
-                installBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    showInstallPopup(app);
-                });
+                if (installBtn) {
+                    installBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showInstallPopup(app);
+                    });
+                }
             }
 
             const aboutBtn = card.querySelector('.about-btn');
-            aboutBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                showAboutPopup(app);
-            });
+            if (aboutBtn) {
+                aboutBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showAboutPopup(app);
+                });
+            }
 
             appList.appendChild(card);
         });
     }
 
     function showInstallPopup(app) {
+        if (!popup || !popupTitle || !popupInstructions) return;
+        
         // URL hash güncelle - paket yükleme için /p eki
         window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/p`);
         
@@ -435,6 +467,8 @@ window.initLinuxAppHub = function() {
     }
 
     function updateTabContentWithCopy(tabContent, command) {
+        if (!tabContent) return;
+        
         tabContent.innerHTML = '';
         tabContent.textContent = command;
         
@@ -451,6 +485,8 @@ window.initLinuxAppHub = function() {
     }
 
     function showAboutPopup(app) {
+        if (!popup || !popupTitle || !popupInstructions) return;
+        
         // URL hash güncelle - hakkında için /h eki
         window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/h`);
         
@@ -666,18 +702,24 @@ window.initLinuxAppHub = function() {
     // Event Listeners
     
     // Theme toggle
-    themeToggle.addEventListener('click', toggleTheme);
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
 
     // Advanced search toggle
-    advancedToggle.addEventListener('click', () => {
-        advancedSearch.classList.toggle('active');
-    });
+    if (advancedToggle && advancedSearch) {
+        advancedToggle.addEventListener('click', () => {
+            advancedSearch.classList.toggle('active');
+        });
+    }
 
     // Search functionality
-    searchInput.addEventListener("input", e => {
-        currentFilters.search = e.target.value;
-        renderApps();
-    });
+    if (searchInput) {
+        searchInput.addEventListener("input", e => {
+            currentFilters.search = e.target.value;
+            renderApps();
+        });
+    }
 
     // Status filter buttons
     document.querySelectorAll('[data-filter]').forEach(btn => {
@@ -687,29 +729,31 @@ window.initLinuxAppHub = function() {
     });
 
     // Popup close handlers
-    popupClose.addEventListener("click", () => {
-        popup.classList.remove("visible");
-        popup.classList.add("hidden");
-        currentApp = null;
-        // URL hash temizle
-        window.history.pushState({}, '', window.location.pathname);
-    });
-
-    popup.addEventListener("click", (e) => {
-        if (e.target === popup) {
+    if (popupClose && popup) {
+        popupClose.addEventListener("click", () => {
             popup.classList.remove("visible");
             popup.classList.add("hidden");
             currentApp = null;
             // URL hash temizle
             window.history.pushState({}, '', window.location.pathname);
-        }
-    });
+        });
+
+        popup.addEventListener("click", (e) => {
+            if (e.target === popup) {
+                popup.classList.remove("visible");
+                popup.classList.add("hidden");
+                currentApp = null;
+                // URL hash temizle
+                window.history.pushState({}, '', window.location.pathname);
+            }
+        });
+    }
 
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
-            if (advancedSearch.classList.contains('active')) {
+            if (advancedSearch && advancedSearch.classList.contains('active')) {
                 advancedSearch.classList.remove('active');
-            } else if (popup.classList.contains("visible")) {
+            } else if (popup && popup.classList.contains("visible")) {
                 popup.classList.remove("visible");
                 popup.classList.add("hidden");
                 currentApp = null;
@@ -752,7 +796,7 @@ window.initLinuxAppHub = function() {
 
     // Browser back/forward butonları için
     window.addEventListener('popstate', () => {
-        if (popup.classList.contains('visible')) {
+        if (popup && popup.classList.contains('visible')) {
             popup.classList.remove("visible");
             popup.classList.add("hidden");
             currentApp = null;
