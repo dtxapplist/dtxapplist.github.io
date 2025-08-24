@@ -93,57 +93,96 @@ window.initLinuxAppHub = function() {
         }
     }
 
-    // Extract categories from apps data (güncellenmiş kategori sistemini kullan)
+    // Extract categories from apps data (düzeltilmiş versiyon)
     function getAvailableCategories() {
+        // Önce global fonksiyonu kontrol et
         if (typeof window.getAvailableCategories === 'function') {
-            return window.getAvailableCategories();
+            try {
+                return window.getAvailableCategories();
+            } catch (error) {
+                console.warn('⚠️ Global getAvailableCategories fonksiyonu hata verdi:', error);
+            }
         }
         
         // Fallback: apps verisinden kategorileri çıkar
+        console.log('📂 Fallback kategori çıkarma kullanılıyor');
         const categories = new Set();
         apps.forEach(app => {
             if (app.category) {
                 categories.add(app.category);
             }
         });
-        return Array.from(categories).sort((a, b) => a.localeCompare(b, 'tr', { sensitivity: 'base' }));
+        
+        const categoryArray = Array.from(categories).sort((a, b) => a.localeCompare(b, 'tr', { sensitivity: 'base' }));
+        console.log('📂 Çıkarılan kategoriler:', categoryArray);
+        return categoryArray;
     }
 
-    // Initialize category filters
+    // Initialize category filters (düzeltilmiş versiyon)
     function initCategoryFilters() {
+        console.log('🏷️ Kategori filtreleri başlatılıyor...');
+        
+        if (!categoryFilters) {
+            console.error('❌ categoryFilters DOM elementi bulunamadı!');
+            return;
+        }
+
+        // Mevcut kategori butonlarını temizle (Tümü hariç)
+        const existingButtons = categoryFilters.querySelectorAll('[data-category]:not([data-category="all"])');
+        existingButtons.forEach(btn => btn.remove());
+        
         const categories = getAvailableCategories();
+        console.log('📂 Bulunan kategoriler:', categories);
         
         // Kategori sayılarını hesapla
         let categoryCounts = {};
         if (typeof window.getCategoryCounts === 'function') {
-            categoryCounts = window.getCategoryCounts(apps);
-        } else {
-            // Fallback
+            try {
+                categoryCounts = window.getCategoryCounts(apps);
+            } catch (error) {
+                console.warn('⚠️ Global getCategoryCounts fonksiyonu hata verdi:', error);
+            }
+        }
+        
+        // Fallback: manuel hesaplama
+        if (Object.keys(categoryCounts).length === 0) {
+            console.log('📊 Fallback kategori sayım kullanılıyor');
             apps.forEach(app => {
                 const category = app.category || 'Diğer';
                 categoryCounts[category] = (categoryCounts[category] || 0) + 1;
             });
         }
         
-        // Tümünü göster butonu
-        const allButton = document.createElement('button');
-        allButton.className = 'filter-btn active';
-        allButton.setAttribute('data-category', 'all');
-        allButton.innerHTML = `Tümü <span class="count">(${apps.length})</span>`;
-        allButton.addEventListener('click', () => filterByCategory('all'));
-        categoryFilters.appendChild(allButton);
+        console.log('📊 Kategori sayıları:', categoryCounts);
         
-        categories.forEach(category => {
+        // "Tümü" butonu zaten var mı kontrol et
+        let allButton = categoryFilters.querySelector('[data-category="all"]');
+        if (!allButton) {
+            allButton = document.createElement('button');
+            allButton.className = 'filter-btn active';
+            allButton.setAttribute('data-category', 'all');
+            allButton.addEventListener('click', () => filterByCategory('all'));
+            categoryFilters.appendChild(allButton);
+        }
+        
+        // "Tümü" butonunu güncelle
+        allButton.innerHTML = `Tümü <span class="count">(${apps.length})</span>`;
+        
+        // Diğer kategorileri ekle
+        categories.forEach((category, index) => {
             const count = categoryCounts[category] || 0;
             if (count > 0) {
                 const button = document.createElement('button');
                 button.className = 'filter-btn';
                 button.setAttribute('data-category', category.toLowerCase().replace(/\s+/g, '-'));
                 button.innerHTML = `${category} <span class="count">(${count})</span>`;
+                button.style.setProperty('--index', index);
                 button.addEventListener('click', () => filterByCategory(category));
                 categoryFilters.appendChild(button);
             }
         });
+        
+        console.log(`✅ ${categories.length} kategori filtresi oluşturuldu`);
     }
 
     // Filter functions
@@ -159,6 +198,7 @@ window.initLinuxAppHub = function() {
     }
 
     function filterByCategory(category) {
+        console.log('🔍 Kategori filtresi uygulanıyor:', category);
         currentFilters.category = category;
         
         // Update button states
@@ -236,20 +276,30 @@ window.initLinuxAppHub = function() {
             }
         }
 
-        // Category filter
+        // Category filter - DÜZELTİLDİ
         if (currentFilters.category !== 'all') {
-            filteredApps = filteredApps.filter(app => 
-                app.category && app.category === currentFilters.category
-            );
+            console.log('🔍 Kategori filtresi uygulanıyor:', currentFilters.category);
+            const beforeCount = filteredApps.length;
+            filteredApps = filteredApps.filter(app => {
+                const appCategory = app.category || 'Diğer';
+                const matches = appCategory === currentFilters.category;
+                if (!matches) {
+                    console.log(`❌ ${app.name}: "${appCategory}" !== "${currentFilters.category}"`);
+                }
+                return matches;
+            });
+            console.log(`🔍 Filtreleme: ${beforeCount} -> ${filteredApps.length} uygulama`);
         }
 
         return filteredApps;
     }
 
     function renderApps() {
+        console.log('🔄 Uygulamalar render ediliyor...');
         appList.innerHTML = "";
 
         let filteredApps = getFilteredApps();
+        console.log(`📋 ${filteredApps.length} uygulama gösterilecek`);
 
         // Uygulamaları A-Z sıralama
         filteredApps.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
@@ -712,6 +762,37 @@ window.initLinuxAppHub = function() {
 
     // Initialize everything
     initTheme();
+    
+    // Kategorileri kontrol et ve uygula
+    console.log('🔍 Kategori sistemi kontrolü yapılıyor...');
+    
+    // Global apps değişkenini kontrol et
+    if (typeof window.apps !== 'undefined') {
+        console.log('✅ Global apps değişkeni mevcut');
+    } else {
+        console.log('⚠️ Global apps değişkeni bulunamadı, apps değişkenini global yap');
+        window.apps = apps;
+    }
+    
+    // Kategorileri uygula
+    if (typeof window.applyCategoriesTo === 'function') {
+        console.log('📂 Kategoriler apps verisine uygulanıyor...');
+        window.apps = window.applyCategoriesTo(apps);
+        console.log('✅ Kategoriler başarıyla uygulandı');
+        
+        // Kategorizasyon sonuçlarını kontrol et
+        const categorizedCount = window.apps.filter(app => app.category && app.category !== 'Diğer').length;
+        console.log(`📊 ${categorizedCount}/${window.apps.length} uygulama kategorize edildi`);
+        
+        // Birkaç örnek logla
+        console.log('📝 İlk 5 uygulamanın kategorileri:');
+        window.apps.slice(0, 5).forEach(app => {
+            console.log(`- ${app.name}: ${app.category || 'Kategori yok'}`);
+        });
+    } else {
+        console.warn('⚠️ applyCategoriesTo fonksiyonu bulunamadı!');
+    }
+    
     initCategoryFilters();
     renderApps();
     
