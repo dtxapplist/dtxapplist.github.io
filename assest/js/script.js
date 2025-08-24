@@ -193,7 +193,7 @@ window.initLinuxAppHub = function() {
             if (count > 0) {
                 const button = document.createElement('button');
                 button.className = 'filter-btn';
-                button.setAttribute('data-category', category.toLowerCase().replace(/\s+/g, '-'));
+                button.setAttribute('data-category', category);
                 button.innerHTML = `${category} <span class="count">(${count})</span>`;
                 button.style.setProperty('--index', index);
                 button.addEventListener('click', () => filterByCategory(category));
