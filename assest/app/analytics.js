@@ -70,40 +70,47 @@ window.AnalyticsSystem = (function() {
         }
     }
     
-    // Uygulama görüntüleme sayacı
-    function trackAppView(appName, action = 'view') {
-        if (!appName) return;
-        
-        const viewData = getStoredData(STORAGE_KEYS.appViews, {});
-        const today = new Date().toISOString().split('T')[0];
-        
-        if (!viewData[today]) {
-            viewData[today] = {};
-        }
-        
-        if (!viewData[today][appName]) {
-            viewData[today][appName] = { view: 0, install: 0, about: 0 };
-        }
-        
-        viewData[today][appName][action]++;
-        
-        setStoredData(STORAGE_KEYS.appViews, viewData);
-        
-        // Vercel Analytics'e gönder
-        if (typeof window.va !== 'undefined') {
-            window.va('track', `app_${action}`, {
-                app: appName,
-                session: sessionId,
-                timestamp: Date.now()
-            });
-        }
-        
-        console.log(`📊 ${appName} - ${action} tracked`);
-        
-        // Popüler uygulamaları güncelle
-        updatePopularApps();
-        updatePopularButton();
+function trackAppView(appName, action = 'view') {
+    if (!appName) return;
+    
+    const viewData = getStoredData(STORAGE_KEYS.appViews, {});
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (!viewData[today]) {
+        viewData[today] = {};
     }
+    
+    if (!viewData[today][appName]) {
+        viewData[today][appName] = { view: 0, install: 0, about: 0 };
+    }
+    
+    viewData[today][appName][action]++;
+    
+    setStoredData(STORAGE_KEYS.appViews, viewData);
+    
+    // 🔥 YENİ EKLEME: Enhanced Vercel tracking
+    if (typeof window.va !== 'undefined') {
+        window.va('track', 'app_interaction', {
+            app_name: appName,
+            action: action,
+            session_id: getSessionId(),
+            user_id: getUserId(),
+            timestamp: Date.now()
+        });
+        
+        // Ayrıca genel tracking
+        window.va('track', `app_${action}`, {
+            app: appName,
+            session: getSessionId()
+        });
+    }
+    
+    console.log(`📊 ${appName} - ${action} tracked (Local + Vercel)`);
+    
+    // Popüler uygulamaları güncelle
+    updatePopularApps();
+    updatePopularButton();
+}
     
     // Popüler uygulamaları hesapla
     function calculatePopularApps(days = 7) {
