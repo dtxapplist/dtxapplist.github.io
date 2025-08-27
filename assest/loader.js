@@ -6,10 +6,6 @@
         'style',
         'apps', 
         'script',
-        'copyp',
-        'theme',
-        'search',
-        'categories', // Kategori modülü
         'analytics'   // YENİ: Analytics modülü eklendi
     ];
 
