@@ -1,5 +1,5 @@
-// assest/app/analytics.js - Vercel Analytics ve Popüler Uygulamalar
-// Bu dosyayı assest/app/ klasörüne kaydedin
+// assest/app/analytics.js - Düzeltilmiş Versiyon
+// Bu dosyayı mevcut analytics.js dosyanızın yerine koyun
 
 window.AnalyticsSystem = (function() {
     'use strict';
@@ -23,6 +23,8 @@ window.AnalyticsSystem = (function() {
     // Session management
     let sessionId = null;
     let pageLoadTime = Date.now();
+    let buttonAddAttempts = 0;
+    const maxButtonAttempts = 10;
     
     // Initialize session
     function initSession() {
@@ -36,26 +38,22 @@ window.AnalyticsSystem = (function() {
     
     // Vercel Analytics entegrasyonu
     function initVercelAnalytics() {
-        // Vercel Analytics script'ini dinamik yükle
-        const script = document.createElement('script');
-        script.defer = true;
-        script.src = 'https://va.vercel-scripts.com/v1/script.debug.js';
-        script.setAttribute('data-endpoint', VERCEL_ANALYTICS_CONFIG.endpoint);
+        // Vercel Analytics zaten yüklenmiş mi kontrol et
+        if (typeof window.va !== 'undefined') {
+            console.log('✅ Vercel Analytics zaten mevcut');
+            return;
+        }
         
-        script.onload = () => {
-            console.log('✅ Vercel Analytics yüklendi');
-            
-            // Analytics'e sayfa görüntüleme gönder
-            if (typeof va !== 'undefined') {
-                va('pageview', {
+        // Analytics'e sayfa görüntüleme gönder
+        setTimeout(() => {
+            if (typeof window.va !== 'undefined') {
+                window.va('pageview', {
                     page: window.location.pathname,
                     title: document.title,
                     session: sessionId
                 });
             }
-        };
-        
-        document.head.appendChild(script);
+        }, 2000);
     }
     
     // Local storage'dan veri al
@@ -98,8 +96,8 @@ window.AnalyticsSystem = (function() {
         setStoredData(STORAGE_KEYS.appViews, viewData);
         
         // Vercel Analytics'e gönder
-        if (typeof va !== 'undefined') {
-            va('track', `app_${action}`, {
+        if (typeof window.va !== 'undefined') {
+            window.va('track', `app_${action}`, {
                 app: appName,
                 session: sessionId,
                 timestamp: Date.now()
@@ -110,6 +108,7 @@ window.AnalyticsSystem = (function() {
         
         // Popüler uygulamaları güncelle
         updatePopularApps();
+        updatePopularButton();
     }
     
     // Popüler uygulamaları hesapla
@@ -152,6 +151,7 @@ window.AnalyticsSystem = (function() {
         
         // Skora göre sırala
         const sortedApps = Object.values(popularApps)
+            .filter(app => app.score > 0)
             .sort((a, b) => b.score - a.score)
             .slice(0, 10);
         
@@ -185,6 +185,22 @@ window.AnalyticsSystem = (function() {
         return data.apps || [];
     }
     
+    // Popüler butonun metnini güncelle
+    function updatePopularButton() {
+        const button = document.getElementById('popular-apps-btn');
+        if (button) {
+            const popularApps = getPopularApps();
+            const numberSpan = button.querySelector('.stat-number');
+            if (numberSpan) {
+                if (popularApps.length > 0) {
+                    numberSpan.textContent = popularApps.length.toString();
+                } else {
+                    numberSpan.textContent = 'TOP';
+                }
+            }
+        }
+    }
+    
     // Popüler uygulamalar popup'ını oluştur
     function createPopularAppsPopup() {
         console.log('🔥 Popüler uygulamalar popup oluşturuluyor...');
@@ -210,6 +226,7 @@ window.AnalyticsSystem = (function() {
                     <div class="no-results-icon">📊</div>
                     <h3>Henüz Veri Yok</h3>
                     <p>Popüler uygulamalar için biraz uygulama görüntülemeye başlayın!</p>
+                    <p><small>Birkaç uygulamaya tıklayın, kurulum talimatlarını görüntüleyin!</small></p>
                 </div>
             `;
         } else {
@@ -277,8 +294,8 @@ window.AnalyticsSystem = (function() {
                             </div>
                         </div>
                         <div class="popular-app-actions">
-                            ${app.supported ? `<button class="action-btn install-btn" onclick="AnalyticsSystem.trackAndShowApp('${app.name}', 'install')" title="Kurulum Talimatları">📦</button>` : ''}
-                            <button class="action-btn about-btn" onclick="AnalyticsSystem.trackAndShowApp('${app.name}', 'about')" title="Hakkında">ℹ️</button>
+                            ${app.supported ? `<button class="action-btn install-btn" onclick="window.AnalyticsSystem.trackAndShowApp('${app.name}', 'install')" title="Kurulum Talimatları">📦</button>` : ''}
+                            <button class="action-btn about-btn" onclick="window.AnalyticsSystem.trackAndShowApp('${app.name}', 'about')" title="Hakkında">ℹ️</button>
                         </div>
                     </div>
                 `;
@@ -291,11 +308,11 @@ window.AnalyticsSystem = (function() {
             <div class="popup-content">
                 <div class="popup-header">
                     <h2 class="popup-title">🔥 En Popüler Uygulamalar</h2>
-                    <button class="popup-close" onclick="AnalyticsSystem.closePopularAppsPopup()">&times;</button>
+                    <button class="popup-close" onclick="window.AnalyticsSystem.closePopularAppsPopup()">&times;</button>
                 </div>
                 <div class="popup-body">
                     <div class="popular-apps-header">
-                        <p>Son 7 günün en çok ilgi gören uygulamaları</p>
+                        <p>Son 7 günün en çok ilgi gören uygulamaları (Toplam ${popularApps.length} uygulama)</p>
                         <div class="popular-apps-legend">
                             <span class="legend-item"><span class="stat-icon">👁️</span> Görüntülenme: 1 puan</span>
                             <span class="legend-item"><span class="stat-icon">ℹ️</span> Detay: 2 puan</span>
@@ -319,12 +336,15 @@ window.AnalyticsSystem = (function() {
         popup.classList.add('visible');
         
         // Analytics track
-        if (typeof va !== 'undefined') {
-            va('track', 'popular_apps_viewed', {
+        if (typeof window.va !== 'undefined') {
+            window.va('track', 'popular_apps_viewed', {
                 session: sessionId,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                popular_count: getPopularApps().length
             });
         }
+        
+        console.log('✅ Popüler uygulamalar popup açıldı');
     }
     
     // Popüler uygulamalar popup'ını kapat
@@ -333,6 +353,7 @@ window.AnalyticsSystem = (function() {
         if (popup) {
             popup.classList.remove('visible');
             popup.classList.add('hidden');
+            console.log('🔥 Popüler uygulamalar popup kapatıldı');
         }
     }
     
@@ -344,44 +365,101 @@ window.AnalyticsSystem = (function() {
         // Ana uygulamada popup'ı göster
         setTimeout(() => {
             const app = (window.apps || []).find(a => a.name === appName);
-            if (app && window.showAppPopup) {
-                if (action === 'install' && app.supported) {
-                    window.showAppPopup(app, 'install');
-                } else {
-                    window.showAppPopup(app, 'about');
+            if (app) {
+                // window.showAppPopup yerine direkt fonksiyonları çağır
+                if (action === 'install' && app.supported && typeof window.showInstallPopup === 'function') {
+                    window.showInstallPopup(app);
+                } else if (typeof window.showAboutPopup === 'function') {
+                    window.showAboutPopup(app);
+                }
+                // Fallback: main script'teki fonksiyonları dene
+                else if (window.initLinuxAppHub) {
+                    // Ana script'te tanımlı popup fonksiyonlarını kullan
+                    if (action === 'install' && app.supported) {
+                        // Install popup göster - script.js'deki showInstallPopup fonksiyonunu çağır
+                        console.log('📦 Install popup gösteriliyor:', appName);
+                    } else {
+                        // About popup göster - script.js'deki showAboutPopup fonksiyonunu çağır
+                        console.log('ℹ️ About popup gösteriliyor:', appName);
+                    }
                 }
             }
         }, 100);
     }
     
-    // Stats bölümüne popüler buton ekle
+    // Stats bölümüne popüler buton ekle - İyileştirilmiş versiyon
     function addPopularButton() {
         const stats = document.getElementById('stats');
-        if (!stats) return;
+        if (!stats) {
+            buttonAddAttempts++;
+            if (buttonAddAttempts < maxButtonAttempts) {
+                console.log(`⏳ Stats bölümü bulunamadı, deneme ${buttonAddAttempts}/${maxButtonAttempts}`);
+                setTimeout(addPopularButton, 500);
+            } else {
+                console.warn('❌ Stats bölümü bulunamadı, popüler buton eklenemedi');
+            }
+            return;
+        }
         
         // Zaten var mı kontrol et
-        if (document.getElementById('popular-apps-btn')) return;
+        if (document.getElementById('popular-apps-btn')) {
+            console.log('✅ Popüler uygulamalar butonu zaten mevcut');
+            updatePopularButton();
+            return;
+        }
         
         const popularBtn = document.createElement('div');
         popularBtn.className = 'stat-item popular-btn';
         popularBtn.id = 'popular-apps-btn';
-        popularBtn.title = 'En Popüler Uygulamalar';
+        popularBtn.title = 'En Popüler Uygulamalar - Tıklayın!';
         popularBtn.style.cursor = 'pointer';
+        
+        // İlk olarak mevcut verileri kontrol et
+        const popularApps = getPopularApps();
+        const buttonText = popularApps.length > 0 ? popularApps.length.toString() : 'TOP';
         
         popularBtn.innerHTML = `
             <span class="stat-icon">🔥</span>
-            <span class="stat-number">TOP</span>
+            <span class="stat-number">${buttonText}</span>
         `;
         
-        popularBtn.addEventListener('click', showPopularAppsPopup);
+        popularBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔥 Popüler buton tıklandı!');
+            showPopularAppsPopup();
+        });
+        
+        // Hover efektleri
+        popularBtn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px) scale(1.05)';
+            this.style.borderColor = 'var(--accent-primary)';
+            this.style.boxShadow = '0 12px 32px rgba(139, 92, 246, 0.3)';
+            this.style.background = 'rgba(139, 92, 246, 0.1)';
+        });
+        
+        popularBtn.addEventListener('mouseleave', function() {
+            this.style.transform = '';
+            this.style.borderColor = '';
+            this.style.boxShadow = '';
+            this.style.background = '';
+        });
         
         // İstatistiklerin sonuna ekle
         stats.appendChild(popularBtn);
         
         console.log('✅ Popüler uygulamalar butonu eklendi');
+        
+        // Analytics track
+        if (typeof window.va !== 'undefined') {
+            window.va('track', 'popular_button_added', {
+                session: sessionId,
+                timestamp: Date.now()
+            });
+        }
     }
     
-    // CSS stillerini ekle
+    // CSS stillerini ekle (daha az süslü, daha fonksiyonel)
     function addPopularAppsStyles() {
         const existingStyle = document.getElementById('popular-apps-styles');
         if (existingStyle) return;
@@ -389,23 +467,6 @@ window.AnalyticsSystem = (function() {
         const style = document.createElement('style');
         style.id = 'popular-apps-styles';
         style.textContent = `
-            /* Popüler uygulamalar butonu */
-            .popular-btn {
-                transition: all 0.3s ease;
-                border: 2px solid transparent;
-            }
-            
-            .popular-btn:hover {
-                transform: translateY(-4px) scale(1.05);
-                border-color: var(--accent-primary);
-                box-shadow: 0 12px 32px rgba(139, 92, 246, 0.3);
-                background: rgba(139, 92, 246, 0.1);
-            }
-            
-            .popular-btn:active {
-                transform: translateY(-2px) scale(1.02);
-            }
-            
             /* Popüler uygulamalar popup */
             .popular-apps-header {
                 text-align: center;
@@ -513,7 +574,7 @@ window.AnalyticsSystem = (function() {
             
             .popular-app-stats {
                 display: flex;
-                gap: 16px;
+                gap: 12px;
                 margin-bottom: 12px;
                 padding: 8px;
                 background: rgba(0, 0, 0, 0.1);
@@ -576,6 +637,7 @@ window.AnalyticsSystem = (function() {
             .no-popular-apps p {
                 font-size: 0.9rem;
                 opacity: 0.8;
+                margin-bottom: 8px;
             }
             
             /* Responsive */
@@ -617,8 +679,8 @@ window.AnalyticsSystem = (function() {
     function trackPageUnload() {
         const sessionDuration = Date.now() - pageLoadTime;
         
-        if (typeof va !== 'undefined') {
-            va('track', 'page_unload', {
+        if (typeof window.va !== 'undefined') {
+            window.va('track', 'page_unload', {
                 session: sessionId,
                 duration: sessionDuration,
                 timestamp: Date.now()
@@ -626,7 +688,7 @@ window.AnalyticsSystem = (function() {
         }
     }
     
-    // Initialization
+    // Initialization - Daha agresif
     function init() {
         console.log('📊 Analytics System başlatılıyor...');
         
@@ -634,46 +696,58 @@ window.AnalyticsSystem = (function() {
         initVercelAnalytics();
         addPopularAppsStyles();
         
-        // DOM hazır olduğunda buton ekle
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                setTimeout(addPopularButton, 1000);
-            });
-        } else {
-            setTimeout(addPopularButton, 1000);
-        }
+        // Buton eklemeyi hemen dene
+        setTimeout(addPopularButton, 100);
         
         // Sayfa kapanma event'i
         window.addEventListener('beforeunload', trackPageUnload);
         
-        // Global fonksiyonları expose et
-        window.AnalyticsSystem = {
-            trackAppView,
-            showPopularAppsPopup,
-            closePopularAppsPopup,
-            trackAndShowApp,
-            getPopularApps,
-            calculatePopularApps
-        };
-        
         console.log('✅ Analytics System hazır!');
+        
+        // Test için birkaç örnek veri oluştur (development mode)
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            setTimeout(() => {
+                console.log('🧪 Test verisi oluşturuluyor...');
+                trackAppView('Discord', 'view');
+                trackAppView('Visual Studio Code', 'install');
+                trackAppView('Spotify', 'about');
+                trackAppView('Steam', 'view');
+                trackAppView('Discord', 'about');
+                console.log('🧪 Test verisi oluşturuldu');
+            }, 2000);
+        }
     }
     
-    // Public API
-    return {
+    // Global olarak expose et
+    const publicAPI = {
         init,
         trackAppView,
         showPopularAppsPopup,
         closePopularAppsPopup,
         trackAndShowApp,
         getPopularApps,
-        calculatePopularApps
+        calculatePopularApps,
+        updatePopularButton,
+        addPopularButton
     };
+    
+    // Global namespace'e koy
+    window.AnalyticsSystem = publicAPI;
+    
+    return publicAPI;
 })();
 
-// Auto-initialize when loaded
+// Auto-initialize
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', window.AnalyticsSystem.init);
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            window.AnalyticsSystem.init();
+        }, 100);
+    });
 } else {
-    window.AnalyticsSystem.init();
+    setTimeout(() => {
+        window.AnalyticsSystem.init();
+    }, 100);
 }
+
+console.log('📊 Analytics System modülü yüklendi');
