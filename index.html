@@ -975,5 +975,130 @@
             document.title += ' (Dev Mode)';
         }
     </script>
+    <script>
+   // Debug ve test fonksiyonları
+   document.addEventListener('DOMContentLoaded', function() {
+       console.log('🔧 DOM yüklendi, popüler buton kontrolü başlatılıyor...');
+       
+       // 2 saniye sonra buton kontrolü
+       setTimeout(() => {
+           const button = document.getElementById('popular-apps-btn');
+           console.log('🔍 Popüler buton durumu:', {
+               found: !!button,
+               className: button?.className,
+               clickable: button?.style.cursor,
+               visible: button ? window.getComputedStyle(button).visibility : 'N/A'
+           });
+           
+           if (button) {
+               console.log('✅ Buton bulundu, test tıklamaya hazır');
+               console.log('🧪 Konsola "testPopularButton()" yazarak test edebilirsiniz');
+           } else {
+               console.warn('❌ Popüler buton bulunamadı, manuel başlatma deneyin:');
+               console.log('🔧 Konsola "manualInitPopularButton()" yazın');
+           }
+       }, 2000);
+       
+       // 5 saniye sonra analytics verilerini kontrol et
+       setTimeout(() => {
+           if (window.AnalyticsSystem) {
+               const popularApps = window.AnalyticsSystem.getPopularApps();
+               console.log('📊 Analytics durumu:', {
+                   system: 'loaded',
+                   popularAppsCount: popularApps.length,
+                   apps: popularApps.slice(0, 3).map(app => app.name)
+               });
+               
+               // Eğer test modunda ise ve popüler app yoksa, test verisi oluştur
+               if (popularApps.length === 0 && 
+                   (window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1')) {
+                   
+                   console.log('🧪 Test verisi oluşturuluyor...');
+                   window.AnalyticsSystem.trackAppView('Discord', 'view');
+                   window.AnalyticsSystem.trackAppView('Visual Studio Code', 'install');
+                   window.AnalyticsSystem.trackAppView('Spotify', 'about');
+                   
+                   setTimeout(() => {
+                       window.AnalyticsSystem.updatePopularButton();
+                       console.log('🧪 Test verisi oluşturuldu ve buton güncellendi');
+                   }, 1000);
+               }
+           } else {
+               console.warn('❌ Analytics System yüklenmedi');
+           }
+       }, 5000);
+   });
+   
+   // Keyboard shortcuts for testing
+   document.addEventListener('keydown', function(e) {
+       // Ctrl + Shift + P: Show popular apps
+       if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+           e.preventDefault();
+           console.log('🔥 Keyboard shortcut: Popüler uygulamalar');
+           if (window.AnalyticsSystem) {
+               window.AnalyticsSystem.showPopularAppsPopup();
+           }
+       }
+       
+       // Ctrl + Shift + T: Test popular button
+       if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+           e.preventDefault();
+           console.log('🧪 Keyboard shortcut: Test buton');
+           const button = document.getElementById('popular-apps-btn');
+           if (button) {
+               button.click();
+           } else {
+               console.warn('❌ Buton bulunamadı');
+           }
+       }
+   });
+   
+   // Click tracking for all elements (debug)
+   document.addEventListener('click', function(e) {
+       if (e.target.id === 'popular-apps-btn' || e.target.closest('#popular-apps-btn')) {
+           console.log('🎯 Popüler buton tıklandı!', {
+               target: e.target,
+               closest: e.target.closest('#popular-apps-btn'),
+               timestamp: Date.now()
+           });
+       }
+   }, true); // Use capture phase to catch all clicks
+   
+   // Manual functions for console testing
+   window.testPopularButton = function() {
+       const button = document.getElementById('popular-apps-btn');
+       if (button) {
+           console.log('🧪 Test tıklama başlatılıyor...');
+           button.click();
+       } else {
+           console.error('❌ Popüler buton bulunamadı');
+       }
+   };
+   
+   window.debugPopularSystem = function() {
+       console.log('🔍 Popüler sistem debug:', {
+           analytics: !!window.AnalyticsSystem,
+           button: !!document.getElementById('popular-apps-btn'),
+           popularApps: window.AnalyticsSystem?.getPopularApps?.()?.length || 0,
+           stats: document.getElementById('stats'),
+           popup: document.getElementById('popular-apps-popup')
+       });
+   };
+   
+   window.forceShowPopular = function() {
+       if (window.AnalyticsSystem) {
+           console.log('🔧 Force show popular apps...');
+           window.AnalyticsSystem.showPopularAppsPopup();
+       }
+   };
+   
+   console.log('🔧 Debug sistemi yüklendi. Test komutları:');
+   console.log('   testPopularButton() - Butonu test et');
+   console.log('   debugPopularSystem() - Sistem durumunu kontrol et');
+   console.log('   forceShowPopular() - Popüler popup\'ı zorla aç');
+   console.log('   Ctrl+Shift+P - Popüler uygulamaları aç');
+   console.log('   Ctrl+Shift+T - Butonu test et');
+    </script>
 </body>
 </html>
