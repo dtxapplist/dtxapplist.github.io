@@ -373,40 +373,217 @@ window.AnalyticsSystem = (function() {
                     window.showAboutPopup(app);
                 }
                 // Fallback: main script'teki fonksiyonları dene
-                else if (window.initLinuxAppHub) {
-                    // Ana script'te tanımlı popup fonksiyonlarını kullan
-                    if (action === 'install' && app.supported) {
-                        // Install popup göster - script.js'deki showInstallPopup fonksiyonunu çağır
-                        console.log('📦 Install popup gösteriliyor:', appName);
-                    } else {
-                        // About popup göster - script.js'deki showAboutPopup fonksiyonunu çağır
-                        console.log('ℹ️ About popup gösteriliyor:', appName);
-                    }
-                }
-            }
-        }, 100);
+// analytics.js için düzeltme - addPopularButton fonksiyonunun iyileştirilmiş versiyonu
+
+// Stats bölümüne popüler buton ekle - Çalışan versiyon
+function addPopularButton() {
+    const stats = document.getElementById('stats');
+    if (!stats) {
+        buttonAddAttempts++;
+        if (buttonAddAttempts < maxButtonAttempts) {
+            console.log(`⏳ Stats bölümü bulunamadı, deneme ${buttonAddAttempts}/${maxButtonAttempts}`);
+            setTimeout(addPopularButton, 500);
+        } else {
+            console.warn('❌ Stats bölümü bulunamadı, popüler buton eklenemedi');
+        }
+        return;
     }
     
-    // Stats bölümüne popüler buton ekle - İyileştirilmiş versiyon
-    function addPopularButton() {
-        const stats = document.getElementById('stats');
-        if (!stats) {
-            buttonAddAttempts++;
-            if (buttonAddAttempts < maxButtonAttempts) {
-                console.log(`⏳ Stats bölümü bulunamadı, deneme ${buttonAddAttempts}/${maxButtonAttempts}`);
-                setTimeout(addPopularButton, 500);
-            } else {
-                console.warn('❌ Stats bölümü bulunamadı, popüler buton eklenemedi');
-            }
-            return;
-        }
+    // Zaten var mı kontrol et
+    if (document.getElementById('popular-apps-btn')) {
+        console.log('✅ Popüler uygulamalar butonu zaten mevcut');
+        updatePopularButton();
+        return;
+    }
+    
+    const popularBtn = document.createElement('div');
+    popularBtn.className = 'stat-item popular-btn';
+    popularBtn.id = 'popular-apps-btn';
+    popularBtn.title = 'En Popüler Uygulamalar - Tıklayın!';
+    popularBtn.style.cursor = 'pointer';
+    popularBtn.setAttribute('role', 'button');
+    popularBtn.setAttribute('tabindex', '0');
+    
+    // İlk olarak mevcut verileri kontrol et
+    const popularApps = getPopularApps();
+    const buttonText = popularApps.length > 0 ? popularApps.length.toString() : 'TOP';
+    
+    popularBtn.innerHTML = `
+        <span class="stat-icon">🔥</span>
+        <span class="stat-number">${buttonText}</span>
+    `;
+    
+    // Click event listener - Bu çok önemli!
+    popularBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('🔥 Popüler buton tıklandı!');
         
-        // Zaten var mı kontrol et
-        if (document.getElementById('popular-apps-btn')) {
-            console.log('✅ Popüler uygulamalar butonu zaten mevcut');
-            updatePopularButton();
-            return;
+        // Feedback için kısa titreşim efekti
+        this.style.transform = 'translateY(-2px) scale(0.95)';
+        setTimeout(() => {
+            this.style.transform = '';
+        }, 150);
+        
+        showPopularAppsPopup();
+    });
+    
+    // Keyboard accessibility
+    popularBtn.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.click();
         }
+    });
+    
+    // Touch events for mobile
+    let touchStartTime = 0;
+    popularBtn.addEventListener('touchstart', function(e) {
+        touchStartTime = Date.now();
+        this.style.transform = 'translateY(-2px) scale(0.98)';
+    });
+    
+    popularBtn.addEventListener('touchend', function(e) {
+        const touchDuration = Date.now() - touchStartTime;
+        this.style.transform = '';
+        
+        // Prevent double-firing with click event
+        if (touchDuration < 500) {
+            e.preventDefault();
+            this.click();
+        }
+    });
+    
+    // Hover efektleri (CSS ile de tanımlı ama JS ile de destekleyelim)
+    popularBtn.addEventListener('mouseenter', function() {
+        console.log('🔥 Popüler buton hover - in');
+    });
+    
+    popularBtn.addEventListener('mouseleave', function() {
+        console.log('🔥 Popüler buton hover - out');
+    });
+    
+    // İstatistiklerin sonuna ekle
+    stats.appendChild(popularBtn);
+    
+    // Force reflow to ensure the element is rendered
+    popularBtn.offsetHeight;
+    
+    console.log('✅ Popüler uygulamalar butonu eklendi');
+    console.log('📊 Button element:', popularBtn);
+    console.log('📊 Button events:', {
+        click: !!popularBtn.onclick,
+        listeners: 'added'
+    });
+    
+    // Analytics track
+    if (typeof window.va !== 'undefined') {
+        window.va('track', 'popular_button_added', {
+            session: sessionId,
+            timestamp: Date.now(),
+            popular_count: popularApps.length
+        });
+    }
+    
+    // Test button click programmatically (for debugging)
+    window.testPopularButton = function() {
+        popularBtn.click();
+    };
+    
+    return popularBtn;
+}
+
+// Popüler uygulamalar popup'ını göster - Geliştirilmiş versiyon
+function showPopularAppsPopup() {
+    console.log('🔥 Popüler uygulamalar popup gösteriliyor...');
+    
+    // Mevcut popup'ı kapat
+    const existingPopup = document.getElementById('popular-apps-popup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+    
+    const popup = createPopularAppsPopup();
+    popup.classList.remove('hidden');
+    popup.classList.add('visible');
+    
+    // ESC tuşu ile kapatma
+    const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+            closePopularAppsPopup();
+            document.removeEventListener('keydown', handleKeyDown);
+        }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    
+    // Backdrop click ile kapatma
+    popup.addEventListener('click', function(e) {
+        if (e.target === popup) {
+            closePopularAppsPopup();
+        }
+    });
+    
+    // Analytics track
+    if (typeof window.va !== 'undefined') {
+        window.va('track', 'popular_apps_viewed', {
+            session: sessionId,
+            timestamp: Date.now(),
+            popular_count: getPopularApps().length
+        });
+    }
+    
+    console.log('✅ Popüler uygulamalar popup açıldı');
+}
+
+// Popüler uygulamalar popup'ını kapat - Geliştirilmiş versiyon
+function closePopularAppsPopup() {
+    const popup = document.getElementById('popular-apps-popup');
+    if (popup) {
+        popup.classList.remove('visible');
+        popup.classList.add('hidden');
+        
+        // Animation tamamlandıktan sonra elementi kaldır
+        setTimeout(() => {
+            if (popup.parentNode) {
+                popup.parentNode.removeChild(popup);
+            }
+        }, 400);
+        
+        console.log('🔥 Popüler uygulamalar popup kapatıldı');
+    }
+}
+
+// Debug fonksiyonları
+window.debugPopularButton = function() {
+    const button = document.getElementById('popular-apps-btn');
+    console.log('🔍 Debug Popüler Buton:', {
+        element: button,
+        className: button?.className,
+        style: button?.style.cssText,
+        events: {
+            click: button?.onclick,
+            listeners: 'check console'
+        },
+        position: button?.getBoundingClientRect(),
+        visible: button ? window.getComputedStyle(button).display !== 'none' : false
+    });
+    
+    if (button) {
+        console.log('📊 Buton test tıklama...');
+        button.click();
+    }
+};
+
+// Manual initialization için
+window.manualInitPopularButton = function() {
+    console.log('🔧 Manual popüler buton başlatma...');
+    const existingButton = document.getElementById('popular-apps-btn');
+    if (existingButton) {
+        existingButton.remove();
+    }
+    buttonAddAttempts = 0;
+    addPopularButton();
+};
         
         const popularBtn = document.createElement('div');
         popularBtn.className = 'stat-item popular-btn';
