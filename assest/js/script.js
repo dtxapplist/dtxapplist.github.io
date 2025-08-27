@@ -1,528 +1,714 @@
-// assest/js/script.js - Analytics entegrasyonlu güncellenmiş versiyon
-// Linux App Hub - Sayfalama Sistemi ile Güncellenmiş + Analytics
+// assets/js/script.js - Optimize edilmiş versiyon
+// Linux App Hub - Analytics entegrasyonlu ve performans optimizasyonlu
 
 window.initLinuxAppHub = function() {
-    console.log('🚀 Linux App Hub başlatılıyor - Analytics ile güncellenmiş');
+    console.log('🚀 Linux App Hub başlatılıyor - Optimize edilmiş versiyon');
     
-    // DOM elementlerini güvenli şekilde al
-    function safeGetElement(id) {
-        const element = document.getElementById(id);
-        if (!element) {
-            console.warn(`⚠️ Element bulunamadı: #${id}`);
+    // ============ KONFIGÜRASYON ============
+    const CONFIG = {
+        APPS_PER_PAGE: 12,
+        ANIMATION_DELAY: 0.05, // Daha hızlı animasyon
+        LOAD_DELAY: 50, // Daha hızlı yükleme
+        SEARCH_DEBOUNCE: 300, // Arama gecikme
+        MAX_BUTTON_ATTEMPTS: 5,
+        IMAGE_LOAD_TIMEOUT: 5000
+    };
+
+    // ============ UTILITY FUNCTIONS ============
+    const utils = {
+        // Güvenli DOM element getter
+        getElement: (id) => {
+            const element = document.getElementById(id);
+            if (!element) console.warn(`⚠️ Element bulunamadı: #${id}`);
+            return element;
+        },
+
+        // Debounce function
+        debounce: (func, wait) => {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        },
+
+        // Animate number utility
+        animateNumber: (element, targetValue, duration = 500) => {
+            if (!element) return;
+            const startValue = parseInt(element.textContent) || 0;
+            const startTime = performance.now();
+
+            const update = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+                const currentValue = Math.floor(startValue + (targetValue - startValue) * easeOutQuart);
+                element.textContent = currentValue;
+                if (progress < 1) requestAnimationFrame(update);
+            };
+            requestAnimationFrame(update);
+        },
+
+        // Safe image loader
+        loadImage: (src, timeout = CONFIG.IMAGE_LOAD_TIMEOUT) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const timer = setTimeout(() => {
+                    reject(new Error('Image load timeout'));
+                }, timeout);
+                
+                img.onload = () => {
+                    clearTimeout(timer);
+                    resolve(img);
+                };
+                img.onerror = () => {
+                    clearTimeout(timer);
+                    reject(new Error('Image load failed'));
+                };
+                img.src = src;
+            });
         }
-        return element;
-    }
+    };
 
-    // DOM elementleri
-    const appList = safeGetElement("app-list");
-    const searchInput = safeGetElement("search");
-    const advancedToggle = safeGetElement("advanced-toggle");
-    const advancedSearch = safeGetElement("advanced-search");
-    const themeToggle = safeGetElement("theme-toggle");
-    const toast = safeGetElement("toast");
-    const popup = safeGetElement("popup");
-    const popupTitle = safeGetElement("popup-title");
-    const popupInstructions = safeGetElement("popup-instructions");
-    const popupClose = safeGetElement("popup-close");
-    const supportedCount = safeGetElement("supported-count");
-    const unsupportedCount = safeGetElement("unsupported-count");
-    const totalCount = safeGetElement("total-count");
+    // ============ DOM ELEMENTS - CACHED ============
+    const DOM = {
+        appList: utils.getElement("app-list"),
+        searchInput: utils.getElement("search"),
+        advancedToggle: utils.getElement("advanced-toggle"),
+        advancedSearch: utils.getElement("advanced-search"),
+        themeToggle: utils.getElement("theme-toggle"),
+        toast: utils.getElement("toast"),
+        popup: utils.getElement("popup"),
+        popupTitle: utils.getElement("popup-title"),
+        popupInstructions: utils.getElement("popup-instructions"),
+        popupClose: utils.getElement("popup-close"),
+        supportedCount: utils.getElement("supported-count"),
+        unsupportedCount: utils.getElement("unsupported-count"),
+        totalCount: utils.getElement("total-count")
+    };
 
-    // Veri kontrolü
+    // ============ STATE MANAGEMENT ============
+    const state = {
+        currentPage: 1,
+        showingAll: false,
+        filters: {
+            status: 'all',
+            category: 'all',
+            search: ''
+        },
+        cache: {
+            filteredApps: null,
+            categories: null,
+            categoryCounts: null
+        }
+    };
+
+    // ============ ANALYTICS INTEGRATION ============
+    const analytics = {
+        available: typeof window.AnalyticsSystem !== 'undefined',
+        
+        track: (appName, action, data = {}) => {
+            if (analytics.available && window.AnalyticsSystem?.trackAppView) {
+                window.AnalyticsSystem.trackAppView(appName, action);
+                console.log(`📊 Analytics: ${appName} - ${action}`);
+            }
+        },
+
+        init: () => {
+            if (analytics.available) {
+                console.log('📊 Analytics entegrasyonu aktif');
+                analytics.setupEventListeners();
+                analytics.setupDevelopmentData();
+            } else {
+                console.log('⚠️ Analytics sistemi bulunamadı - temel fonksiyonalite devam ediyor');
+            }
+        },
+
+        setupEventListeners: () => {
+            window.addEventListener('popularAppsUpdated', (e) => {
+                console.log('📊 Popüler uygulamalar güncellendi:', e.detail.popularApps.length);
+            });
+
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && window.AnalyticsSystem?.calculatePopularApps) {
+                    setTimeout(() => window.AnalyticsSystem.calculatePopularApps(), 1000);
+                }
+            });
+        },
+
+        setupDevelopmentData: () => {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                setTimeout(() => {
+                    console.log('🧪 Development mode - Örnek analytics verisi oluşturuluyor...');
+                    const sampleApps = ['Discord', 'Visual Studio Code', 'Spotify', 'Steam', 'Google Chrome'];
+                    sampleApps.forEach((appName, index) => {
+                        setTimeout(() => {
+                            analytics.track(appName, 'view');
+                            if (index % 2 === 0) analytics.track(appName, 'about');
+                            if (index % 3 === 0) analytics.track(appName, 'install');
+                        }, index * 100);
+                    });
+                }, 2000);
+            }
+        }
+    };
+
+    // ============ DATA VALIDATION ============
     if (typeof apps === 'undefined' || !Array.isArray(apps)) {
         console.error('❌ apps verisi bulunamadı!');
-        if (appList) {
-            appList.innerHTML = '<div class="error-message">Uygulama verileri yüklenemedi. Lütfen sayfayı yenileyin.</div>';
+        if (DOM.appList) {
+            DOM.appList.innerHTML = '<div class="error-message">❌ Uygulama verileri yüklenemedi. Lütfen sayfayı yenileyin.</div>';
         }
         return;
     }
 
     console.log(`📊 ${apps.length} uygulama yüklendi`);
 
-    // Analytics integration check
-    const hasAnalytics = typeof window.AnalyticsSystem !== 'undefined';
-    console.log('📊 Analytics sistem:', hasAnalytics ? 'Aktif' : 'Pasif');
-
-    // Sayfalama ayarları
-    const APPS_PER_PAGE = 10;
-    let currentPage = 1;
-    let showingAll = false;
-
-    let currentFilters = {
-        status: 'all',
-        category: 'all',
-        search: ''
-    };
-
-    // Basit kategori eşleştirme (Varsa external categories.js kullanılır)
-    const APP_CATEGORIES = {
-        // İletişim
-        "Discord": "İletişim",
-        "Telegram": "İletişim", 
-        "WhatsApp": "İletişim",
-        "TeamSpeak": "İletişim",
-        "Zoom": "İletişim",
-        "Skype": "İletişim",
-        "Revolt": "İletişim",
-        
-        // Tarayıcılar
-        "Google Chrome": "İnternet",
-        "Mozilla Firefox": "İnternet",
-        "Chromium": "İnternet",
-        "Opera": "İnternet",
-        "Brave": "İnternet",
-        "Microsoft Edge": "İnternet",
-        "LibreWolf": "İnternet",
-        "Vivaldi": "İnternet",
-        "Zen Browser": "İnternet",
-        "Tor Browser": "İnternet",
-        
-        // Geliştirme
-        "Visual Studio Code": "Geliştirme",
-        "IntelliJ IDEA": "Geliştirme",
-        "PyCharm": "Geliştirme",
-        "Atom": "Geliştirme",
-        "Sublime Text": "Geliştirme",
-        "GitHub Desktop": "Geliştirme",
-        "CLion": "Geliştirme",
-        "WebStorm": "Geliştirme",
-        "Rider": "Geliştirme",
-        "Unity Hub": "Geliştirme",
-        
-        // Multimedya
-        "VLC": "Multimedya",
-        "Spotify": "Multimedya",
-        "OBS Studio": "Multimedya",
-        "Audacity": "Multimedya",
-        "GIMP": "Multimedya",
-        "Adobe Photoshop": "Multimedya",
-        "Adobe Premiere Pro": "Multimedya",
-        "Adobe Illustrator": "Multimedya",
-        "Adobe Lightroom": "Multimedya",
-        "Blender": "Multimedya",
-        "TIDAL Hi-Fi": "Multimedya",
-        "Krita": "Multimedya",
-        "darktable": "Multimedya",
-        "RawTherapee": "Multimedya",
-        
-        // Oyun
-        "Steam": "Oyun",
-        "Epic Games Launcher": "Oyun",
-        "Heroic Games Launcher": "Oyun",
-        "Minecraft": "Oyun",
-        "Riot Games": "Oyun",
-        
-        // Ofis
-        "LibreOffice": "Ofis",
-        "Microsoft Office": "Ofis",
-        "OnlyOffice": "Ofis",
-        "Adobe Dreamweaver": "Ofis",
-        "Figma Desktop": "Ofis",
-        "Obsidian": "Ofis",
-        "RemNote": "Ofis",
-        
-        // Sistem & Araçlar
-        "VirtualBox": "Sistem",
-        "VMware Workstation": "Sistem",
-        "7-Zip": "Sistem",
-        "WinRAR": "Sistem",
-        "PeaZip": "Sistem",
-        "AutoCAD": "Sistem",
-        "FreeCAD": "Sistem",
-        "LibreCAD": "Sistem",
-        "Syncthing": "Sistem",
-        "UBinary": "Sistem",
-        "Scratch": "Sistem",
-        
-        // Güvenlik
-        "1Password": "Güvenlik",
-        "KeePass": "Güvenlik",
-        "Bitwarden": "Güvenlik",
-        "Proton VPN": "Güvenlik",
-        
-        // Uzaktan Erişim
-        "TeamViewer": "Uzaktan Erişim",
-        "AnyDesk": "Uzaktan Erişim",
-        "RustDesk": "Uzaktan Erişim",
-        
-        // E-posta
-        "Thunderbird": "E-posta",
-        
-        // Framework/Runtime
-        "Electron": "Geliştirme",
-        "Adobe AIR": "Geliştirme"
-    };
-
-    // Apps'e kategori ata
-    function assignCategories() {
-        console.log('📂 Kategoriler atanıyor...');
-        
-        apps.forEach(app => {
-            let category = null;
+    // ============ CATEGORY MANAGEMENT ============
+    const categories = {
+        // Optimized category mapping
+        APP_CATEGORIES: {
+            // İletişim
+            "Discord": "İletişim", "Telegram": "İletişim", "WhatsApp": "İletişim", "TeamSpeak": "İletişim",
+            "Zoom": "İletişim", "Skype": "İletişim", "Revolt": "İletişim",
             
-            // 1. External categories.js varsa kullan
+            // İnternet
+            "Google Chrome": "İnternet", "Mozilla Firefox": "İnternet", "Chromium": "İnternet", 
+            "Opera": "İnternet", "Brave": "İnternet", "Microsoft Edge": "İnternet",
+            "LibreWolf": "İnternet", "Vivaldi": "İnternet", "Zen Browser": "İnternet", "Tor Browser": "İnternet",
+            
+            // Geliştirme
+            "Visual Studio Code": "Geliştirme", "IntelliJ IDEA": "Geliştirme", "PyCharm": "Geliştirme",
+            "Atom": "Geliştirme", "Sublime Text": "Geliştirme", "GitHub Desktop": "Geliştirme",
+            "CLion": "Geliştirme", "WebStorm": "Geliştirme", "Rider": "Geliştirme", "Unity Hub": "Geliştirme",
+            "Electron": "Geliştirme", "Adobe AIR": "Geliştirme",
+            
+            // Multimedya
+            "VLC": "Multimedya", "Spotify": "Multimedya", "OBS Studio": "Multimedya", "Audacity": "Multimedya",
+            "GIMP": "Multimedya", "Adobe Photoshop": "Multimedya", "Adobe Premiere Pro": "Multimedya",
+            "Adobe Illustrator": "Multimedya", "Adobe Lightroom": "Multimedya", "Blender": "Multimedya",
+            "TIDAL Hi-Fi": "Multimedya", "Krita": "Multimedya", "darktable": "Multimedya", "RawTherapee": "Multimedya",
+            
+            // Oyun
+            "Steam": "Oyun", "Epic Games Launcher": "Oyun", "Heroic Games Launcher": "Oyun",
+            "Minecraft": "Oyun", "Riot Games": "Oyun",
+            
+            // Ofis
+            "LibreOffice": "Ofis", "Microsoft Office": "Ofis", "OnlyOffice": "Ofis",
+            "Adobe Dreamweaver": "Ofis", "Figma Desktop": "Ofis", "Obsidian": "Ofis", "RemNote": "Ofis",
+            
+            // Sistem
+            "VirtualBox": "Sistem", "VMware Workstation": "Sistem", "7-Zip": "Sistem", "WinRAR": "Sistem",
+            "PeaZip": "Sistem", "AutoCAD": "Sistem", "FreeCAD": "Sistem", "LibreCAD": "Sistem",
+            "Syncthing": "Sistem", "UBinary": "Sistem", "Scratch": "Sistem",
+            
+            // Güvenlik
+            "1Password": "Güvenlik", "KeePass": "Güvenlik", "Bitwarden": "Güvenlik", "Proton VPN": "Güvenlik",
+            
+            // Uzaktan Erişim
+            "TeamViewer": "Uzaktan Erişim", "AnyDesk": "Uzaktan Erişim", "RustDesk": "Uzaktan Erişim",
+            
+            // E-posta
+            "Thunderbird": "E-posta"
+        },
+
+        assign: () => {
+            console.log('📂 Kategoriler atanıyor...');
+            
+            // External categories.js varsa kullan
             if (typeof window.applyCategoriesTo === 'function') {
-                // Bu durumda categories.js tarafından handle edilir
                 return;
             }
             
-            // 2. Direkt eşleşme
-            if (APP_CATEGORIES[app.name]) {
-                category = APP_CATEGORIES[app.name];
-            }
-            // 3. Kısmi eşleşme
-            else {
-                for (const [appName, cat] of Object.entries(APP_CATEGORIES)) {
-                    if (app.name.toLowerCase().includes(appName.toLowerCase()) || 
-                        appName.toLowerCase().includes(app.name.toLowerCase())) {
-                        category = cat;
-                        break;
+            apps.forEach(app => {
+                // Direkt eşleşme
+                let category = categories.APP_CATEGORIES[app.name];
+                
+                // Kısmi eşleşme
+                if (!category) {
+                    for (const [appName, cat] of Object.entries(categories.APP_CATEGORIES)) {
+                        if (app.name.toLowerCase().includes(appName.toLowerCase()) || 
+                            appName.toLowerCase().includes(app.name.toLowerCase())) {
+                            category = cat;
+                            break;
+                        }
                     }
+                }
+                
+                app.category = category || 'Diğer';
+            });
+            
+            const categorized = apps.filter(app => app.category !== 'Diğer').length;
+            console.log(`✅ ${categorized}/${apps.length} uygulama kategorize edildi`);
+        },
+
+        get: () => {
+            if (!state.cache.categories) {
+                state.cache.categories = [...new Set(apps.map(app => app.category).filter(Boolean))].sort();
+            }
+            return state.cache.categories;
+        },
+
+        getCounts: () => {
+            if (!state.cache.categoryCounts) {
+                state.cache.categoryCounts = apps.reduce((counts, app) => {
+                    const category = app.category || 'Diğer';
+                    counts[category] = (counts[category] || 0) + 1;
+                    return counts;
+                }, {});
+            }
+            return state.cache.categoryCounts;
+        }
+    };
+
+    // ============ THEME MANAGEMENT ============
+    const theme = {
+        init: () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            theme.updateIcon(savedTheme);
+        },
+
+        toggle: () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            theme.updateIcon(newTheme);
+        },
+
+        updateIcon: (themeName) => {
+            if (!DOM.themeToggle) return;
+            const themeIcon = DOM.themeToggle.querySelector('.theme-icon');
+            if (themeIcon) {
+                themeIcon.textContent = themeName === 'dark' ? '☀️' : '🌙';
+                DOM.themeToggle.title = themeName === 'dark' ? 'Açık Tema' : 'Koyu Tema';
+            }
+        }
+    };
+
+    // ============ TOAST SYSTEM ============
+    const toast = {
+        show: (message, icon = '✅') => {
+            if (!DOM.toast) return;
+            
+            const toastIcon = DOM.toast.querySelector('.toast-icon');
+            const toastMessage = DOM.toast.querySelector('.toast-message');
+            
+            if (toastIcon) toastIcon.textContent = icon;
+            if (toastMessage) toastMessage.textContent = message;
+            
+            DOM.toast.classList.add('show');
+            setTimeout(() => DOM.toast.classList.remove('show'), 3000);
+        }
+    };
+
+    // ============ CLIPBOARD UTILITY ============
+    const clipboard = {
+        copy: async (text) => {
+            try {
+                await navigator.clipboard.writeText(text);
+                toast.show('Komut kopyalandı!', '📋');
+                analytics.track('copy_command', 'action');
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.cssText = 'position:fixed;opacity:0;';
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                toast.show('Komut kopyalandı!', '📋');
+                analytics.track('copy_command', 'action');
+            }
+        }
+    };
+
+    // ============ FILTERING SYSTEM ============
+    const filters = {
+        reset: () => {
+            state.currentPage = 1;
+            state.showingAll = false;
+            state.cache.filteredApps = null;
+        },
+
+        byStatus: (status) => {
+            console.log('🔍 Durum filtresi:', status);
+            state.filters.status = status;
+            document.querySelectorAll('[data-filter]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === status);
+            });
+            filters.reset();
+            render.apps();
+        },
+
+        byCategory: (category) => {
+            console.log('🔍 Kategori filtresi:', category);
+            state.filters.category = category;
+            
+            document.querySelectorAll('#category-filter-buttons [data-category]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.category === category);
+            });
+            
+            filters.reset();
+            render.apps();
+        },
+
+        getFiltered: () => {
+            if (state.cache.filteredApps) return state.cache.filteredApps;
+            
+            console.log('🔍 Filtreleme yapılıyor:', state.filters);
+            
+            let filtered = apps.slice();
+            
+            // Arama filtresi
+            if (state.filters.search) {
+                const searchTerm = state.filters.search.toLowerCase();
+                filtered = filtered.filter(app => {
+                    const searchText = [
+                        app.name,
+                        app.description || '',
+                        app.category || ''
+                    ].join(' ').toLowerCase();
+                    return searchText.includes(searchTerm);
+                });
+            }
+            
+            // Durum filtresi
+            if (state.filters.status !== 'all') {
+                switch (state.filters.status) {
+                    case 'supported':
+                        filtered = filtered.filter(app => app.supported);
+                        break;
+                    case 'alternatives':
+                        filtered = filtered.filter(app => !app.supported && app.alternatives?.length > 0);
+                        break;
+                    case 'unsupported':
+                        filtered = filtered.filter(app => !app.supported && (!app.alternatives || app.alternatives.length === 0));
+                        break;
                 }
             }
             
-            app.category = category || 'Diğer';
-        });
-        
-        const categorized = apps.filter(app => app.category !== 'Diğer').length;
-        console.log(`✅ ${categorized}/${apps.length} uygulama kategorize edildi`);
-    }
-
-    // Mevcut kategorileri çıkar
-    function getCategories() {
-        const categories = new Set();
-        apps.forEach(app => {
-            if (app.category) {
-                categories.add(app.category);
+            // Kategori filtresi
+            if (state.filters.category !== 'all') {
+                filtered = filtered.filter(app => app.category === state.filters.category);
             }
-        });
-        return Array.from(categories).sort();
-    }
-
-    // Kategori sayılarını hesapla
-    function getCategoryCounts() {
-        const counts = {};
-        apps.forEach(app => {
-            const category = app.category || 'Diğer';
-            counts[category] = (counts[category] || 0) + 1;
-        });
-        return counts;
-    }
-
-    // Kategori filtrelerini advanced search içine oluştur
-    function initCategoryFilters() {
-        console.log('🏷️ Kategori filtreleri oluşturuluyor (advanced search içinde)...');
-        
-        if (!advancedSearch) return;
-        
-        // Kategori filtreleri için yeni bir grup ekle
-        let categoryFilterGroup = advancedSearch.querySelector('.category-filter-group');
-        if (!categoryFilterGroup) {
-            const searchFilters = advancedSearch.querySelector('.search-filters');
-            if (searchFilters) {
-                categoryFilterGroup = document.createElement('div');
-                categoryFilterGroup.className = 'filter-group category-filter-group';
-                
-                const label = document.createElement('label');
-                label.textContent = 'Kategori Filtresi:';
-                
-                const filterButtons = document.createElement('div');
-                filterButtons.className = 'filter-buttons';
-                filterButtons.id = 'category-filter-buttons';
-                
-                categoryFilterGroup.appendChild(label);
-                categoryFilterGroup.appendChild(filterButtons);
-                searchFilters.appendChild(categoryFilterGroup);
-            }
+            
+            // Alfabetik sıralama
+            filtered.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+            
+            state.cache.filteredApps = filtered;
+            console.log(`📋 Filtreleme sonucu: ${filtered.length} uygulama`);
+            return filtered;
         }
-        
-        const categoryButtons = document.getElementById('category-filter-buttons');
-        if (!categoryButtons) return;
-        
-        categoryButtons.innerHTML = '';
-        
-        const categories = getCategories();
-        const counts = getCategoryCounts();
-        
-        console.log('📊 Bulunan kategoriler:', categories);
-        
-        // Tümü butonu
-        const allButton = document.createElement('button');
-        allButton.className = 'filter-btn active';
-        allButton.setAttribute('data-category', 'all');
-        allButton.innerHTML = `Tümü <span class="count">(${apps.length})</span>`;
-        allButton.addEventListener('click', () => filterByCategory('all'));
-        categoryButtons.appendChild(allButton);
-        
-        // Kategori butonları
-        categories.forEach(category => {
-            const count = counts[category] || 0;
-            if (count > 0) {
+    };
+
+    // ============ STATISTICS ============
+    const stats = {
+        update: (filteredApps = apps) => {
+            const supported = filteredApps.filter(app => app.supported).length;
+            const unsupported = filteredApps.filter(app => !app.supported).length;
+            const total = filteredApps.length;
+
+            if (DOM.supportedCount) utils.animateNumber(DOM.supportedCount, supported);
+            if (DOM.unsupportedCount) utils.animateNumber(DOM.unsupportedCount, unsupported);
+            if (DOM.totalCount) utils.animateNumber(DOM.totalCount, total);
+        }
+    };
+
+    // ============ POPUP SYSTEM ============
+    const popup = {
+        show: (app, type = 'auto') => {
+            if (!DOM.popup || !DOM.popupTitle || !DOM.popupInstructions) return;
+            
+            // Auto-determine popup type
+            if (type === 'auto') {
+                type = (app.supported) ? 'install' : 'about';
+            }
+            
+            // Analytics tracking
+            analytics.track(app.name, `${type}_popup_opened`);
+            
+            // URL hash update
+            const hashType = type === 'install' ? 'p' : 'h';
+            window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/${hashType}`);
+            
+            if (type === 'install' && app.supported) {
+                popup.showInstall(app);
+            } else {
+                popup.showAbout(app);
+            }
+            
+            DOM.popup.classList.remove("hidden");
+            DOM.popup.classList.add("visible");
+        },
+
+        showInstall: (app) => {
+            DOM.popupTitle.textContent = `${app.name} - Kurulum`;
+            DOM.popupInstructions.innerHTML = '';
+            
+            const tabContainer = document.createElement('div');
+            const tabButtons = document.createElement('div');
+            tabButtons.className = 'tab-buttons';
+            
+            const tabContent = document.createElement('div');
+            tabContent.className = 'tab-content';
+            
+            const distros = Object.keys(app.install);
+            let activeDistro = distros[0];
+            
+            // Tab buttons
+            distros.forEach((distro, index) => {
                 const button = document.createElement('button');
-                button.className = 'filter-btn';
-                button.setAttribute('data-category', category);
-                button.innerHTML = `${category} <span class="count">(${count})</span>`;
-                button.addEventListener('click', () => filterByCategory(category));
-                categoryButtons.appendChild(button);
-            }
-        });
-        
-        console.log(`✅ ${categories.length + 1} kategori butonu oluşturuldu (advanced search içinde)`);
-    }
-
-    // Ana sayfadaki kategori filtrelerini kaldır
-    function removeCategoryFiltersFromMain() {
-        const categoryFilters = document.getElementById('category-filters');
-        if (categoryFilters) {
-            categoryFilters.style.display = 'none';
-            console.log('📋 Ana sayfadaki kategori filtreleri gizlendi');
-        }
-    }
-
-    // Tema yönetimi
-    function initTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        updateThemeIcon(savedTheme);
-    }
-
-    function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeIcon(newTheme);
-    }
-
-    function updateThemeIcon(theme) {
-        if (!themeToggle) return;
-        const themeIcon = themeToggle.querySelector('.theme-icon');
-        if (themeIcon) {
-            themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
-            themeToggle.title = theme === 'dark' ? 'Açık Tema' : 'Koyu Tema';
-        }
-    }
-
-    // Toast bildirim
-    function showToast(message, icon = '✅') {
-        if (!toast) return;
-        const toastIcon = toast.querySelector('.toast-icon');
-        const toastMessage = toast.querySelector('.toast-message');
-        if (toastIcon) toastIcon.textContent = icon;
-        if (toastMessage) toastMessage.textContent = message;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
-    }
-
-    // Panoya kopyala
-    async function copyToClipboard(text) {
-        try {
-            await navigator.clipboard.writeText(text);
-            showToast('Komut kopyalandı!', '📋');
-        } catch (err) {
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            textArea.style.position = 'fixed';
-            textArea.style.opacity = '0';
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            showToast('Komut kopyalandı!', '📋');
-        }
-    }
-
-    // Filtreleme fonksiyonları
-    function filterByStatus(status) {
-        console.log('🔍 Durum filtresi:', status);
-        currentFilters.status = status;
-        document.querySelectorAll('[data-filter]').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.filter === status);
-        });
-        resetPagination();
-        renderApps();
-    }
-
-    function filterByCategory(category) {
-        console.log('🔍 Kategori filtresi:', category);
-        currentFilters.category = category;
-        
-        // Buton durumlarını güncelle (advanced search içindeki butonlar)
-        document.querySelectorAll('#category-filter-buttons [data-category]').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.category === category);
-        });
-        
-        resetPagination();
-        renderApps();
-    }
-
-    // Sayfalamayı sıfırla
-    function resetPagination() {
-        currentPage = 1;
-        showingAll = false;
-    }
-
-    // Filtrelenmiş uygulamaları al
-    function getFilteredApps() {
-        console.log('🔍 Filtreleme yapılıyor:', currentFilters);
-        
-        let filtered = apps.slice();
-        
-        // Arama filtresi
-        if (currentFilters.search) {
-            const searchTerm = currentFilters.search.toLowerCase();
-            filtered = filtered.filter(app => {
-                const searchText = [
-                    app.name,
-                    app.description || '',
-                    app.category || ''
-                ].join(' ').toLowerCase();
-                return searchText.includes(searchTerm);
+                button.className = `tab-button ${index === 0 ? 'active' : ''}`;
+                button.textContent = distro;
+                
+                button.addEventListener('click', () => {
+                    tabButtons.querySelectorAll('.tab-button').forEach(btn => 
+                        btn.classList.remove('active')
+                    );
+                    button.classList.add('active');
+                    popup.updateTabContent(tabContent, app.install[distro]);
+                    activeDistro = distro;
+                });
+                
+                tabButtons.appendChild(button);
             });
-        }
-        
-        // Durum filtresi
-        if (currentFilters.status !== 'all') {
-            switch (currentFilters.status) {
-                case 'supported':
-                    filtered = filtered.filter(app => app.supported);
-                    break;
-                case 'alternatives':
-                    filtered = filtered.filter(app => !app.supported && app.alternatives?.length > 0);
-                    break;
-                case 'unsupported':
-                    filtered = filtered.filter(app => !app.supported && (!app.alternatives || app.alternatives.length === 0));
-                    break;
+            
+            popup.updateTabContent(tabContent, app.install[activeDistro]);
+            
+            tabContainer.appendChild(tabButtons);
+            tabContainer.appendChild(tabContent);
+            DOM.popupInstructions.appendChild(tabContainer);
+        },
+
+        showAbout: (app) => {
+            if (app.supported) {
+                popup.showSupportedAbout(app);
+            } else if (app.alternatives?.length > 0) {
+                popup.showAlternatives(app);
+            } else {
+                popup.showUnsupportedReason(app);
+            }
+        },
+
+        showSupportedAbout: (app) => {
+            DOM.popupTitle.textContent = `${app.name} - Hakkında`;
+            DOM.popupInstructions.innerHTML = '';
+            
+            const tabContainer = document.createElement('div');
+            const tabButtons = document.createElement('div');
+            tabButtons.className = 'tab-buttons';
+            
+            const tabContent = document.createElement('div');
+            tabContent.className = 'tab-content about-content';
+            
+            const screenshotBtn = popup.createTabButton('Ekran Görüntüsü', true);
+            const websiteBtn = popup.createTabButton('Web Sitesi', false);
+            
+            // Screenshot tab
+            screenshotBtn.addEventListener('click', () => {
+                popup.activateTab(tabButtons, screenshotBtn);
+                popup.loadScreenshot(tabContent, app.about.screenshot, app.name);
+            });
+            
+            // Website tab
+            websiteBtn.addEventListener('click', () => {
+                popup.activateTab(tabButtons, websiteBtn);
+                tabContent.innerHTML = `<a href="${app.about.website}" target="_blank" class="website-link">🌐 ${app.about.website}</a>`;
+            });
+            
+            tabButtons.appendChild(screenshotBtn);
+            tabButtons.appendChild(websiteBtn);
+            
+            // Load initial screenshot
+            popup.loadScreenshot(tabContent, app.about.screenshot, app.name);
+            
+            tabContainer.appendChild(tabButtons);
+            tabContainer.appendChild(tabContent);
+            DOM.popupInstructions.appendChild(tabContainer);
+        },
+
+        showAlternatives: (app) => {
+            DOM.popupTitle.textContent = `${app.name} - Alternatifler`;
+            DOM.popupInstructions.innerHTML = '';
+            
+            app.alternatives.forEach((alt, index) => {
+                const altContainer = document.createElement('div');
+                altContainer.className = 'alternative-container';
+                
+                const altHeader = document.createElement('div');
+                altHeader.className = 'alternative-header';
+                altHeader.innerHTML = `<h3>${alt.name}</h3><p>${alt.description}</p>`;
+                
+                const tabContainer = document.createElement('div');
+                const tabButtons = document.createElement('div');
+                tabButtons.className = 'tab-buttons';
+                
+                const tabContent = document.createElement('div');
+                tabContent.className = 'tab-content about-content';
+                
+                const screenshotBtn = popup.createTabButton('Ekran Görüntüsü', true);
+                const websiteBtn = popup.createTabButton('Web Sitesi', false);
+                
+                screenshotBtn.addEventListener('click', () => {
+                    popup.activateTab(tabButtons, screenshotBtn);
+                    popup.loadScreenshot(tabContent, alt.screenshot, alt.name);
+                });
+                
+                websiteBtn.addEventListener('click', () => {
+                    popup.activateTab(tabButtons, websiteBtn);
+                    tabContent.innerHTML = `<a href="${alt.website}" target="_blank" class="website-link">🌐 ${alt.website}</a>`;
+                });
+                
+                tabButtons.appendChild(screenshotBtn);
+                tabButtons.appendChild(websiteBtn);
+                
+                popup.loadScreenshot(tabContent, alt.screenshot, alt.name);
+                
+                tabContainer.appendChild(tabButtons);
+                tabContainer.appendChild(tabContent);
+                altContainer.appendChild(altHeader);
+                altContainer.appendChild(tabContainer);
+                DOM.popupInstructions.appendChild(altContainer);
+            });
+        },
+
+        showUnsupportedReason: (app) => {
+            DOM.popupTitle.textContent = `${app.name} - Desteklenmeme Sebebi`;
+            DOM.popupInstructions.innerHTML = '';
+            
+            const tabContainer = document.createElement('div');
+            const tabButtons = document.createElement('div');
+            tabButtons.className = 'tab-buttons';
+            
+            const tabContent = document.createElement('div');
+            tabContent.className = 'tab-content reason-content';
+            
+            const reasonBtn = popup.createTabButton('Desteklenmeme Sebebi', true);
+            tabButtons.appendChild(reasonBtn);
+            
+            tabContent.innerHTML = `<p>${app.unsupportedReason}</p>`;
+            if (app.about?.website) {
+                tabContent.innerHTML += `<br><a href="${app.about.website}" target="_blank" class="website-link">🌐 Resmi Web Sitesi</a>`;
+            }
+            
+            tabContainer.appendChild(tabButtons);
+            tabContainer.appendChild(tabContent);
+            DOM.popupInstructions.appendChild(tabContainer);
+        },
+
+        createTabButton: (text, active = false) => {
+            const button = document.createElement('button');
+            button.className = `tab-button ${active ? 'active' : ''}`;
+            button.textContent = text;
+            return button;
+        },
+
+        activateTab: (tabButtons, activeButton) => {
+            tabButtons.querySelectorAll('.tab-button').forEach(btn => 
+                btn.classList.remove('active')
+            );
+            activeButton.classList.add('active');
+        },
+
+        loadScreenshot: async (container, src, altText) => {
+            container.innerHTML = '<div class="loading-message">Yükleniyor...</div>';
+            
+            try {
+                await utils.loadImage(src);
+                container.innerHTML = `<img src="${src}" alt="${altText} ekran görüntüsü" class="screenshot">`;
+            } catch (error) {
+                container.innerHTML = '<div class="error-message">Görsel yüklenemedi</div>';
+                console.warn('Screenshot yüklenemedi:', src, error);
+            }
+        },
+
+        updateTabContent: (container, command) => {
+            if (!container) return;
+            
+            container.innerHTML = '';
+            container.textContent = command;
+            
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.innerHTML = '📋';
+            copyBtn.title = 'Kopyala';
+            copyBtn.addEventListener('click', () => clipboard.copy(command));
+            
+            container.appendChild(copyBtn);
+        },
+
+        hide: () => {
+            if (DOM.popup) {
+                DOM.popup.classList.remove("visible");
+                DOM.popup.classList.add("hidden");
+                window.history.pushState({}, '', window.location.pathname);
             }
         }
-        
-        // Kategori filtresi
-        if (currentFilters.category !== 'all') {
-            filtered = filtered.filter(app => app.category === currentFilters.category);
-        }
-        
-        console.log(`📋 Filtreleme sonucu: ${filtered.length} uygulama`);
-        return filtered;
-    }
+    };
 
-    // İstatistikleri güncelle
-    function updateStats(filteredApps = apps) {
-        const supported = filteredApps.filter(app => app.supported).length;
-        const unsupported = filteredApps.filter(app => !app.supported).length;
-        const total = filteredApps.length;
+    // ============ RENDERING SYSTEM ============
+    const render = {
+        apps: () => {
+            console.log('🎨 Apps render ediliyor...');
+            
+            if (!DOM.appList) return;
+            
+            DOM.appList.innerHTML = "";
+            const filteredApps = filters.getFiltered();
+            
+            stats.update(filteredApps);
 
-        if (supportedCount) animateNumber(supportedCount, supported);
-        if (unsupportedCount) animateNumber(unsupportedCount, unsupported);
-        if (totalCount) animateNumber(totalCount, total);
-    }
+            if (filteredApps.length === 0) {
+                DOM.appList.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">🔍</div>
+                        <h3>Sonuç bulunamadı</h3>
+                        <p>Filtreler: Kategori="${state.filters.category}", Durum="${state.filters.status}", Arama="${state.filters.search}"</p>
+                    </div>
+                `;
+                return;
+            }
 
-    function animateNumber(element, targetValue) {
-        if (!element) return;
-        const startValue = parseInt(element.textContent) || 0;
-        const duration = 500;
-        const startTime = performance.now();
+            // Pagination logic
+            let appsToShow = filteredApps;
+            let shouldShowMoreButton = false;
 
-        function update(currentTime) {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const currentValue = Math.floor(startValue + (targetValue - startValue) * progress);
-            element.textContent = currentValue;
-            if (progress < 1) requestAnimationFrame(update);
-        }
-        requestAnimationFrame(update);
-    }
+            if (!state.showingAll && filteredApps.length > CONFIG.APPS_PER_PAGE) {
+                appsToShow = filteredApps.slice(0, CONFIG.APPS_PER_PAGE);
+                shouldShowMoreButton = true;
+            }
 
-    // "Daha fazla göster" butonunu oluştur
-    function createShowMoreButton(filteredApps) {
-        const showMoreBtn = document.createElement('div');
-        showMoreBtn.className = 'show-more-container';
-        showMoreBtn.style.cssText = `
-            display: flex;
-            justify-content: center;
-            margin: 40px 0;
-            grid-column: 1 / -1;
-        `;
-        
-        const button = document.createElement('button');
-        button.className = 'show-more-btn';
-        button.textContent = `Daha Fazla Göster (${filteredApps.length - APPS_PER_PAGE} kaldı)`;
-        button.style.cssText = `
-            padding: 16px 32px;
-            border: 2px solid var(--accent-primary);
-            border-radius: 25px;
-            background: var(--bg-secondary);
-            backdrop-filter: var(--backdrop-blur);
-            color: var(--accent-primary);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 24px var(--shadow-color);
-        `;
-        
-        button.addEventListener('mouseenter', () => {
-            button.style.background = 'var(--accent-primary)';
-            button.style.color = 'white';
-            button.style.transform = 'translateY(-2px) scale(1.05)';
-            button.style.boxShadow = '0 12px 32px rgba(139, 92, 246, 0.4)';
-        });
-        
-        button.addEventListener('mouseleave', () => {
-            button.style.background = 'var(--bg-secondary)';
-            button.style.color = 'var(--accent-primary)';
-            button.style.transform = 'translateY(0) scale(1)';
-            button.style.boxShadow = '0 8px 24px var(--shadow-color)';
-        });
-        
-        button.addEventListener('click', () => {
-            showingAll = true;
-            renderApps();
-        });
-        
-        showMoreBtn.appendChild(button);
-        return showMoreBtn;
-    }
+            // Render app cards
+            const fragment = document.createDocumentFragment();
+            
+            appsToShow.forEach((app, index) => {
+                const card = render.createAppCard(app, index);
+                fragment.appendChild(card);
+            });
 
-    // Uygulamaları render et (sayfalama ile) - Analytics entegrasyonlu
-    function renderApps() {
-        console.log('🎨 Apps render ediliyor... (sayfalama ile)');
-        
-        if (!appList) return;
-        
-        appList.innerHTML = "";
-        const filteredApps = getFilteredApps();
-        
-        // Alfabetik sıralama
-        filteredApps.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-        
-        updateStats(filteredApps);
+            DOM.appList.appendChild(fragment);
 
-        if (filteredApps.length === 0) {
-            appList.innerHTML = `
-                <div class="no-results">
-                    <div class="no-results-icon">🔍</div>
-                    <h3>Sonuç bulunamadı</h3>
-                    <p>Filtreler: Kategori="${currentFilters.category}", Durum="${currentFilters.status}", Arama="${currentFilters.search}"</p>
-                </div>
-            `;
-            return;
-        }
+            // Show more button
+            if (shouldShowMoreButton) {
+                const showMoreButton = render.createShowMoreButton(filteredApps);
+                DOM.appList.appendChild(showMoreButton);
+            }
+            
+            console.log(`✅ ${appsToShow.length}/${filteredApps.length} kart render edildi`);
+        },
 
-        // Sayfalama logic'i
-        let appsToShow = filteredApps;
-        let shouldShowMoreButton = false;
-
-        if (!showingAll && filteredApps.length > APPS_PER_PAGE) {
-            appsToShow = filteredApps.slice(0, APPS_PER_PAGE);
-            shouldShowMoreButton = true;
-        }
-
-        // Uygulamaları render et
-        appsToShow.forEach((app, index) => {
+        createAppCard: (app, index) => {
             const card = document.createElement("div");
             card.className = "card";
-            card.style.animationDelay = `${index * 0.1}s`;
+            card.style.animationDelay = `${index * CONFIG.ANIMATION_DELAY}s`;
 
             // Icon
             const iconElement = app.icon ? 
@@ -531,19 +717,7 @@ window.initLinuxAppHub = function() {
             const fallbackIcon = `<div class="card-icon" ${iconElement ? 'style="display:none;"' : ''}>${app.name.charAt(0).toUpperCase()}</div>`;
 
             // Status
-            let statusClass = "green", statusText = "Destekleniyor", statusIcon = "✓";
-            if (!app.supported) {
-                if (app.alternatives?.length > 0) {
-                    statusClass = "orange";
-                    statusText = "Alternatifler Mevcut";
-                    statusIcon = "⚠";
-                } else {
-                    statusClass = "red";
-                    statusText = "Desteklenmiyor";
-                    statusIcon = "✗";
-                }
-            }
-
+            const status = render.getAppStatus(app);
             const categoryDisplay = app.category ? `<div class="app-category">${app.category}</div>` : '';
 
             card.innerHTML = `
@@ -553,31 +727,26 @@ window.initLinuxAppHub = function() {
                     <div class="card-info">
                         <div class="app-name">${app.name}</div>
                         ${categoryDisplay}
-                        <div class="status ${statusClass}">
-                            <span class="status-icon">${statusIcon}</span>
-                            ${statusText}
+                        <div class="status ${status.class}">
+                            <span class="status-icon">${status.icon}</span>
+                            ${status.text}
                         </div>
                     </div>
                 </div>
                 <div class="card-actions">
                     ${app.supported ? `<button class="action-btn install-btn" data-action="install" title="Kurulum Talimatları">📦</button>` : ''}
-                    <button class="action-btn about-btn" data-action="about" title="${app.supported ? 'Hakkında' : (app.alternatives ? 'Alternatifler' : 'Neden Desteklenmiyor?')}">ℹ️</button>
+                    <button class="action-btn about-btn" data-action="about" title="${status.aboutTitle}">ℹ️</button>
                 </div>
             `;
 
-            // Event listeners - Analytics entegrasyonlu
+            // Event listeners with analytics
             if (app.supported) {
                 const installBtn = card.querySelector('.install-btn');
                 if (installBtn) {
                     installBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        
-                        // Analytics tracking
-                        if (hasAnalytics && window.AnalyticsSystem) {
-                            window.AnalyticsSystem.trackAppView(app.name, 'install');
-                        }
-                        
-                        showInstallPopup(app);
+                        analytics.track(app.name, 'install');
+                        popup.show(app, 'install');
                     });
                 }
             }
@@ -586,297 +755,173 @@ window.initLinuxAppHub = function() {
             if (aboutBtn) {
                 aboutBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    
-                    // Analytics tracking
-                    if (hasAnalytics && window.AnalyticsSystem) {
-                        window.AnalyticsSystem.trackAppView(app.name, 'about');
-                    }
-                    
-                    showAboutPopup(app);
+                    analytics.track(app.name, 'about');
+                    popup.show(app, 'about');
                 });
             }
 
-            // Card click analytics - görüntüleme track'i
+            // Card click analytics
             card.addEventListener('click', () => {
-                if (hasAnalytics && window.AnalyticsSystem) {
-                    window.AnalyticsSystem.trackAppView(app.name, 'view');
+                analytics.track(app.name, 'view');
+            });
+
+            return card;
+        },
+
+        getAppStatus: (app) => {
+            if (app.supported) {
+                return {
+                    class: "green",
+                    text: "Destekleniyor",
+                    icon: "✓",
+                    aboutTitle: "Hakkında"
+                };
+            } else if (app.alternatives?.length > 0) {
+                return {
+                    class: "orange",
+                    text: "Alternatifler Mevcut",
+                    icon: "⚠",
+                    aboutTitle: "Alternatifler"
+                };
+            } else {
+                return {
+                    class: "red",
+                    text: "Desteklenmiyor",
+                    icon: "✗",
+                    aboutTitle: "Neden Desteklenmiyor?"
+                };
+            }
+        },
+
+        createShowMoreButton: (filteredApps) => {
+            const showMoreBtn = document.createElement('div');
+            showMoreBtn.className = 'show-more-container';
+            showMoreBtn.style.cssText = `
+                display: flex;
+                justify-content: center;
+                margin: 40px 0;
+                grid-column: 1 / -1;
+            `;
+            
+            const button = document.createElement('button');
+            button.className = 'show-more-btn';
+            button.textContent = `Daha Fazla Göster (${filteredApps.length - CONFIG.APPS_PER_PAGE} kaldı)`;
+            button.style.cssText = `
+                padding: 16px 32px;
+                border: 2px solid var(--accent-primary);
+                border-radius: 25px;
+                background: var(--bg-secondary);
+                backdrop-filter: var(--backdrop-blur);
+                color: var(--accent-primary);
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 8px 24px var(--shadow-color);
+            `;
+            
+            const hoverStyle = {
+                enter: () => {
+                    button.style.background = 'var(--accent-primary)';
+                    button.style.color = 'white';
+                    button.style.transform = 'translateY(-2px) scale(1.05)';
+                    button.style.boxShadow = '0 12px 32px rgba(139, 92, 246, 0.4)';
+                },
+                leave: () => {
+                    button.style.background = 'var(--bg-secondary)';
+                    button.style.color = 'var(--accent-primary)';
+                    button.style.transform = 'translateY(0) scale(1)';
+                    button.style.boxShadow = '0 8px 24px var(--shadow-color)';
+                }
+            };
+            
+            button.addEventListener('mouseenter', hoverStyle.enter);
+            button.addEventListener('mouseleave', hoverStyle.leave);
+            button.addEventListener('click', () => {
+                state.showingAll = true;
+                render.apps();
+                analytics.track('show_more_apps', 'action');
+            });
+            
+            showMoreBtn.appendChild(button);
+            return showMoreBtn;
+        }
+    };
+
+    // ============ CATEGORY FILTERS UI ============
+    const categoryFilters = {
+        init: () => {
+            console.log('🏷️ Kategori filtreleri oluşturuluyor...');
+            
+            if (!DOM.advancedSearch) return;
+            
+            let categoryFilterGroup = DOM.advancedSearch.querySelector('.category-filter-group');
+            if (!categoryFilterGroup) {
+                const searchFilters = DOM.advancedSearch.querySelector('.search-filters');
+                if (searchFilters) {
+                    categoryFilterGroup = document.createElement('div');
+                    categoryFilterGroup.className = 'filter-group category-filter-group';
+                    
+                    const label = document.createElement('label');
+                    label.textContent = 'Kategori Filtresi:';
+                    
+                    const filterButtons = document.createElement('div');
+                    filterButtons.className = 'filter-buttons';
+                    filterButtons.id = 'category-filter-buttons';
+                    
+                    categoryFilterGroup.appendChild(label);
+                    categoryFilterGroup.appendChild(filterButtons);
+                    searchFilters.appendChild(categoryFilterGroup);
+                }
+            }
+            
+            const categoryButtons = document.getElementById('category-filter-buttons');
+            if (!categoryButtons) return;
+            
+            categoryButtons.innerHTML = '';
+            
+            const categoryList = categories.get();
+            const counts = categories.getCounts();
+            
+            // "Tümü" butonu
+            const allButton = document.createElement('button');
+            allButton.className = 'filter-btn active';
+            allButton.setAttribute('data-category', 'all');
+            allButton.innerHTML = `Tümü <span class="count">(${apps.length})</span>`;
+            allButton.addEventListener('click', () => filters.byCategory('all'));
+            categoryButtons.appendChild(allButton);
+            
+            // Kategori butonları
+            categoryList.forEach(category => {
+                const count = counts[category] || 0;
+                if (count > 0) {
+                    const button = document.createElement('button');
+                    button.className = 'filter-btn';
+                    button.setAttribute('data-category', category);
+                    button.innerHTML = `${category} <span class="count">(${count})</span>`;
+                    button.addEventListener('click', () => filters.byCategory(category));
+                    categoryButtons.appendChild(button);
                 }
             });
-
-            appList.appendChild(card);
-        });
-
-        // "Daha fazla göster" butonunu ekle
-        if (shouldShowMoreButton) {
-            const showMoreButton = createShowMoreButton(filteredApps);
-            appList.appendChild(showMoreButton);
-        }
-        
-        console.log(`✅ ${appsToShow.length}/${filteredApps.length} kart render edildi ${shouldShowMoreButton ? '(daha fazla göster butonu ile)' : ''}`);
-    }
-
-    // Kurulum popup'ını göster - Analytics entegrasyonlu
-    function showInstallPopup(app) {
-        if (!popup || !popupTitle || !popupInstructions) return;
-        
-        // Analytics tracking
-        if (hasAnalytics && window.AnalyticsSystem) {
-            window.AnalyticsSystem.trackAppView(app.name, 'install_popup_opened');
-        }
-        
-        window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/p`);
-        
-        popupTitle.textContent = `${app.name} - Kurulum`;
-        popupInstructions.innerHTML = '';
-        
-        const tabContainer = document.createElement('div');
-        const tabButtons = document.createElement('div');
-        tabButtons.className = 'tab-buttons';
-        
-        const tabContent = document.createElement('div');
-        tabContent.className = 'tab-content';
-        
-        let firstDistro = Object.keys(app.install)[0];
-        
-        Object.keys(app.install).forEach((distro, index) => {
-            const button = document.createElement('button');
-            button.className = `tab-button ${index === 0 ? 'active' : ''}`;
-            button.textContent = distro;
             
-            button.addEventListener('click', () => {
-                tabButtons.querySelectorAll('.tab-button').forEach(btn => 
-                    btn.classList.remove('active')
-                );
-                button.classList.add('active');
-                updateTabContentWithCopy(tabContent, app.install[distro]);
-            });
-            
-            tabButtons.appendChild(button);
-        });
-        
-        updateTabContentWithCopy(tabContent, app.install[firstDistro]);
-        
-        tabContainer.appendChild(tabButtons);
-        tabContainer.appendChild(tabContent);
-        popupInstructions.appendChild(tabContainer);
-        
-        popup.classList.remove("hidden");
-        popup.classList.add("visible");
-    }
+            console.log(`✅ ${categoryList.length + 1} kategori butonu oluşturuldu`);
+        },
 
-    function updateTabContentWithCopy(tabContent, command) {
-        if (!tabContent) return;
-        
-        tabContent.innerHTML = '';
-        tabContent.textContent = command;
-        
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'copy-btn';
-        copyBtn.innerHTML = '📋';
-        copyBtn.title = 'Kopyala';
-        copyBtn.addEventListener('click', () => {
-            copyToClipboard(command);
-            
-            // Analytics tracking
-            if (hasAnalytics && window.AnalyticsSystem) {
-                window.AnalyticsSystem.trackAppView('copy_command', 'action');
+        hideMainFilters: () => {
+            const categoryFilters = document.getElementById('category-filters');
+            if (categoryFilters) {
+                categoryFilters.style.display = 'none';
+                console.log('📋 Ana sayfadaki kategori filtreleri gizlendi');
             }
-        });
-        
-        tabContent.appendChild(copyBtn);
-    }
-
-    // Hakkında popup'ını göster - Analytics entegrasyonlu
-    function showAboutPopup(app) {
-        if (!popup || !popupTitle || !popupInstructions) return;
-        
-        // Analytics tracking
-        if (hasAnalytics && window.AnalyticsSystem) {
-            window.AnalyticsSystem.trackAppView(app.name, 'about_popup_opened');
         }
-        
-        window.history.pushState({}, '', `#${app.name.toLowerCase().replace(/\s+/g, '-')}/h`);
-        
-        if (app.supported) {
-            popupTitle.textContent = `${app.name} - Hakkında`;
-            popupInstructions.innerHTML = '';
-            
-            const tabContainer = document.createElement('div');
-            const tabButtons = document.createElement('div');
-            tabButtons.className = 'tab-buttons';
-            
-            const tabContent = document.createElement('div');
-            tabContent.className = 'tab-content about-content';
-            
-            const screenshotBtn = document.createElement('button');
-            screenshotBtn.className = 'tab-button active';
-            screenshotBtn.textContent = 'Ekran Görüntüsü';
-            
-            const websiteBtn = document.createElement('button');
-            websiteBtn.className = 'tab-button';
-            websiteBtn.textContent = 'Web Sitesi';
-            
-            screenshotBtn.addEventListener('click', () => {
-                tabButtons.querySelectorAll('.tab-button').forEach(btn => 
-                    btn.classList.remove('active')
-                );
-                screenshotBtn.classList.add('active');
-                
-                tabContent.innerHTML = '<div class="loading-message">Yükleniyor...</div>';
-                
-                const img = new Image();
-                img.onload = function() {
-                    tabContent.innerHTML = `<img src="${app.about.screenshot}" alt="${app.name} ekran görüntüsü" class="screenshot">`;
-                };
-                img.onerror = function() {
-                    tabContent.innerHTML = '<div class="error-message">Görsel yüklenemedi</div>';
-                };
-                img.src = app.about.screenshot;
-            });
-            
-            websiteBtn.addEventListener('click', () => {
-                tabButtons.querySelectorAll('.tab-button').forEach(btn => 
-                    btn.classList.remove('active')
-                );
-                websiteBtn.classList.add('active');
-                tabContent.innerHTML = `<a href="${app.about.website}" target="_blank" class="website-link">🌐 ${app.about.website}</a>`;
-            });
-            
-            tabButtons.appendChild(screenshotBtn);
-            tabButtons.appendChild(websiteBtn);
-            
-            tabContent.innerHTML = '<div class="loading-message">Yükleniyor...</div>';
-            const img = new Image();
-            img.onload = function() {
-                tabContent.innerHTML = `<img src="${app.about.screenshot}" alt="${app.name} ekran görüntüsü" class="screenshot">`;
-            };
-            img.onerror = function() {
-                tabContent.innerHTML = '<div class="error-message">Görsel yüklenemedi</div>';
-            };
-            img.src = app.about.screenshot;
-            
-            tabContainer.appendChild(tabButtons);
-            tabContainer.appendChild(tabContent);
-            popupInstructions.appendChild(tabContainer);
-            
-        } else if (app.alternatives && app.alternatives.length > 0) {
-            popupTitle.textContent = `${app.name} - Alternatifler`;
-            popupInstructions.innerHTML = '';
-            
-            app.alternatives.forEach((alt, index) => {
-                const altContainer = document.createElement('div');
-                altContainer.className = 'alternative-container';
-                
-                const altHeader = document.createElement('div');
-                altHeader.className = 'alternative-header';
-                altHeader.innerHTML = `
-                    <h3>${alt.name}</h3>
-                    <p>${alt.description}</p>
-                `;
-                
-                const tabContainer = document.createElement('div');
-                const tabButtons = document.createElement('div');
-                tabButtons.className = 'tab-buttons';
-                
-                const tabContent = document.createElement('div');
-                tabContent.className = 'tab-content about-content';
-                
-                const screenshotBtn = document.createElement('button');
-                screenshotBtn.className = 'tab-button active';
-                screenshotBtn.textContent = 'Ekran Görüntüsü';
-                
-                const websiteBtn = document.createElement('button');
-                websiteBtn.className = 'tab-button';
-                websiteBtn.textContent = 'Web Sitesi';
-                
-                let imageLoaded = false;
-                
-                screenshotBtn.addEventListener('click', () => {
-                    tabButtons.querySelectorAll('.tab-button').forEach(btn => 
-                        btn.classList.remove('active')
-                    );
-                    screenshotBtn.classList.add('active');
-                    
-                    if (!imageLoaded) {
-                        tabContent.innerHTML = '<div class="loading-message">Yükleniyor...</div>';
-                        const img = new Image();
-                        img.onload = function() {
-                            tabContent.innerHTML = `<img src="${alt.screenshot}" alt="${alt.name} ekran görüntüsü" class="screenshot">`;
-                            imageLoaded = true;
-                        };
-                        img.onerror = function() {
-                            tabContent.innerHTML = '<div class="error-message">Görsel yüklenemedi</div>';
-                        };
-                        img.src = alt.screenshot;
-                    } else {
-                        tabContent.innerHTML = `<img src="${alt.screenshot}" alt="${alt.name} ekran görüntüsü" class="screenshot">`;
-                    }
-                });
-                
-                websiteBtn.addEventListener('click', () => {
-                    tabButtons.querySelectorAll('.tab-button').forEach(btn => 
-                        btn.classList.remove('active')
-                    );
-                    websiteBtn.classList.add('active');
-                    tabContent.innerHTML = `<a href="${alt.website}" target="_blank" class="website-link">🌐 ${alt.website}</a>`;
-                });
-                
-                tabButtons.appendChild(screenshotBtn);
-                tabButtons.appendChild(websiteBtn);
-                
-                tabContent.innerHTML = '<div class="loading-message">Yükleniyor...</div>';
-                const img = new Image();
-                img.onload = function() {
-                    tabContent.innerHTML = `<img src="${alt.screenshot}" alt="${alt.name} ekran görüntüsü" class="screenshot">`;
-                    imageLoaded = true;
-                };
-                img.onerror = function() {
-                    tabContent.innerHTML = '<div class="error-message">Görsel yüklenemedi</div>';
-                };
-                img.src = alt.screenshot;
-                
-                tabContainer.appendChild(tabButtons);
-                tabContainer.appendChild(tabContent);
-                altContainer.appendChild(altHeader);
-                altContainer.appendChild(tabContainer);
-                popupInstructions.appendChild(altContainer);
-            });
-            
-        } else {
-            popupTitle.textContent = `${app.name} - Desteklenmeme Sebebi`;
-            popupInstructions.innerHTML = '';
-            
-            const tabContainer = document.createElement('div');
-            const tabButtons = document.createElement('div');
-            tabButtons.className = 'tab-buttons';
-            
-            const tabContent = document.createElement('div');
-            tabContent.className = 'tab-content reason-content';
-            
-            const reasonBtn = document.createElement('button');
-            reasonBtn.className = 'tab-button active';
-            reasonBtn.textContent = 'Desteklenmeme Sebebi';
-            
-            tabButtons.appendChild(reasonBtn);
-            tabContent.innerHTML = `<p>${app.unsupportedReason}</p>`;
-            
-            if (app.about && app.about.website) {
-                tabContent.innerHTML += `<br><a href="${app.about.website}" target="_blank" class="website-link">🌐 Resmi Web Sitesi</a>`;
-            }
-            
-            tabContainer.appendChild(tabButtons);
-            tabContainer.appendChild(tabContent);
-            popupInstructions.appendChild(tabContainer);
-        }
-        
-        popup.classList.remove("hidden");
-        popup.classList.add("visible");
-    }
+    };
 
-    // URL hash kontrolü
-    function checkHashOnLoad() {
-        const hash = window.location.hash.substring(1);
-        if (hash) {
+    // ============ URL HASH MANAGEMENT ============
+    const urlHash = {
+        check: () => {
+            const hash = window.location.hash.substring(1);
+            if (!hash) return;
+            
             const parts = hash.split('/');
             const appName = parts[0].replace(/-/g, ' ');
             const action = parts[1];
@@ -885,171 +930,134 @@ window.initLinuxAppHub = function() {
             if (app) {
                 setTimeout(() => {
                     if (action === 'p' && app.supported) {
-                        showInstallPopup(app);
+                        popup.show(app, 'install');
                     } else if (action === 'h' || !app.supported) {
-                        showAboutPopup(app);
+                        popup.show(app, 'about');
                     } else if (!action) {
-                        if (app.supported) {
-                            showInstallPopup(app);
-                        } else {
-                            showAboutPopup(app);
-                        }
+                        popup.show(app, 'auto');
                     }
-                }, 500);
+                }, CONFIG.LOAD_DELAY * 10);
             }
-        }
-    }
-
-    // Global popup functions for Analytics System
-    window.showAppPopup = function(app, type) {
-        if (type === 'install' && app.supported) {
-            showInstallPopup(app);
-        } else {
-            showAboutPopup(app);
         }
     };
 
-    // Event listeners
-    if (themeToggle) {
-        themeToggle.addEventListener('click', toggleTheme);
-    }
-
-    if (advancedToggle && advancedSearch) {
-        advancedToggle.addEventListener('click', () => {
-            advancedSearch.classList.toggle('active');
-        });
-    }
-
-    if (searchInput) {
-        searchInput.addEventListener("input", e => {
-            currentFilters.search = e.target.value;
-            resetPagination();
-            renderApps();
-        });
-    }
-
-    // Durum filtresi butonları
-    document.querySelectorAll('[data-filter]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            filterByStatus(btn.dataset.filter);
-        });
-    });
-
-    // Popup kapatma olayları
-    if (popupClose && popup) {
-        popupClose.addEventListener("click", () => {
-            popup.classList.remove("visible");
-            popup.classList.add("hidden");
-            window.history.pushState({}, '', window.location.pathname);
-        });
-
-        popup.addEventListener("click", (e) => {
-            if (e.target === popup) {
-                popup.classList.remove("visible");
-                popup.classList.add("hidden");
-                window.history.pushState({}, '', window.location.pathname);
+    // ============ EVENT LISTENERS ============
+    const events = {
+        init: () => {
+            // Theme toggle
+            if (DOM.themeToggle) {
+                DOM.themeToggle.addEventListener('click', theme.toggle);
             }
-        });
-    }
 
-    // Klavye olayları
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-            if (advancedSearch && advancedSearch.classList.contains('active')) {
-                advancedSearch.classList.remove('active');
-            } else if (popup && popup.classList.contains("visible")) {
-                popup.classList.remove("visible");
-                popup.classList.add("hidden");
-                window.history.pushState({}, '', window.location.pathname);
-            }
-            // Popüler uygulamalar popup'ını da kapat
-            else if (hasAnalytics && window.AnalyticsSystem) {
-                window.AnalyticsSystem.closePopularAppsPopup();
-            }
-        }
-    });
-
-    // Browser geri/ileri butonları
-    window.addEventListener('popstate', () => {
-        if (popup && popup.classList.contains('visible')) {
-            popup.classList.remove("visible");
-            popup.classList.add("hidden");
-        }
-        checkHashOnLoad();
-    });
-
-    // Analytics event listeners
-    if (hasAnalytics) {
-        console.log('📊 Analytics event listeners ekleniyor...');
-        
-        // Popular apps updated event
-        window.addEventListener('popularAppsUpdated', (e) => {
-            console.log('📊 Popüler uygulamalar güncellendi:', e.detail.popularApps.length);
-        });
-        
-        // Page visibility change tracking
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                console.log('📊 Sayfa gizlendi');
-            } else {
-                console.log('📊 Sayfa görünür hale geldi');
-                if (window.AnalyticsSystem) {
-                    // Sayfaya geri dönüldüğünde popüler uygulamaları güncelle
-                    setTimeout(() => {
-                        if (typeof window.AnalyticsSystem.calculatePopularApps === 'function') {
-                            window.AnalyticsSystem.calculatePopularApps();
-                        }
-                    }, 1000);
-                }
-            }
-        });
-    }
-
-    // Başlat
-    console.log('🚀 Sistem başlatılıyor...');
-    
-    initTheme();
-    assignCategories();
-    removeCategoryFiltersFromMain(); // Ana sayfadaki kategori filtrelerini kaldır
-    initCategoryFilters(); // Advanced search içine ekle
-    renderApps();
-    
-    // Animasyonlu istatistikler
-    setTimeout(() => {
-        updateStats();
-    }, 300);
-
-    // URL hash kontrolü
-    checkHashOnLoad();
-    
-    // Analytics integration check and setup
-    if (hasAnalytics) {
-        console.log('✅ Analytics entegrasyonu aktif');
-        
-        // Örnek veri oluştur (development için)
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            setTimeout(() => {
-                console.log('🧪 Development mode - Örnek analytics verisi oluşturuluyor...');
-                const sampleApps = ['Discord', 'Visual Studio Code', 'Spotify', 'Steam', 'Google Chrome'];
-                sampleApps.forEach((appName, index) => {
-                    setTimeout(() => {
-                        if (window.AnalyticsSystem) {
-                            // Farklı tipte etkileşimler simüle et
-                            window.AnalyticsSystem.trackAppView(appName, 'view');
-                            if (index % 2 === 0) {
-                                window.AnalyticsSystem.trackAppView(appName, 'about');
-                            }
-                            if (index % 3 === 0) {
-                                window.AnalyticsSystem.trackAppView(appName, 'install');
-                            }
-                        }
-                    }, index * 200);
+            // Advanced search toggle
+            if (DOM.advancedToggle && DOM.advancedSearch) {
+                DOM.advancedToggle.addEventListener('click', () => {
+                    DOM.advancedSearch.classList.toggle('active');
                 });
-            }, 2000);
+            }
+
+            // Search input with debounce
+            if (DOM.searchInput) {
+                const debouncedSearch = utils.debounce((value) => {
+                    state.filters.search = value;
+                    state.cache.filteredApps = null; // Invalidate cache
+                    filters.reset();
+                    render.apps();
+                }, CONFIG.SEARCH_DEBOUNCE);
+
+                DOM.searchInput.addEventListener('input', (e) => {
+                    debouncedSearch(e.target.value);
+                });
+            }
+
+            // Status filter buttons
+            document.querySelectorAll('[data-filter]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filters.byStatus(btn.dataset.filter);
+                });
+            });
+
+            // Popup events
+            if (DOM.popupClose && DOM.popup) {
+                DOM.popupClose.addEventListener('click', popup.hide);
+                DOM.popup.addEventListener('click', (e) => {
+                    if (e.target === DOM.popup) {
+                        popup.hide();
+                    }
+                });
+            }
+
+            // Keyboard events
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (DOM.advancedSearch?.classList.contains('active')) {
+                        DOM.advancedSearch.classList.remove('active');
+                    } else if (DOM.popup?.classList.contains('visible')) {
+                        popup.hide();
+                    } else if (analytics.available && window.AnalyticsSystem?.closePopularAppsPopup) {
+                        window.AnalyticsSystem.closePopularAppsPopup();
+                    }
+                }
+            });
+
+            // Browser navigation
+            window.addEventListener('popstate', () => {
+                if (DOM.popup?.classList.contains('visible')) {
+                    popup.hide();
+                }
+                urlHash.check();
+            });
+
+            console.log('✅ Event listeners başarıyla eklendi');
         }
-    } else {
-        console.log('⚠️ Analytics sistemi yüklenemedi - temel fonksiyonalite devam ediyor');
-    }
-    
-    console.log('✅ Linux App Hub hazır! (Analytics entegrasyonlu)');
+    };
+
+    // ============ GLOBAL FUNCTIONS ============
+    // Analytics System için global fonksiyonlar
+    window.showAppPopup = (app, type) => {
+        popup.show(app, type === 'install' && app.supported ? 'install' : 'about');
+    };
+
+    window.showInstallPopup = (app) => {
+        popup.show(app, 'install');
+    };
+
+    window.showAboutPopup = (app) => {
+        popup.show(app, 'about');
+    };
+
+    // ============ INITIALIZATION SEQUENCE ============
+    const init = {
+        start: () => {
+            console.log('🚀 Sistem başlatılıyor...');
+            
+            // Performance timing
+            const startTime = performance.now();
+            
+            // Initialize components in order
+            theme.init();
+            categories.assign();
+            categoryFilters.hideMainFilters();
+            categoryFilters.init();
+            events.init();
+            analytics.init();
+            
+            // Initial render
+            render.apps();
+            
+            // Animated statistics
+            setTimeout(() => {
+                stats.update();
+            }, CONFIG.LOAD_DELAY * 6);
+
+            // URL hash check
+            urlHash.check();
+            
+            const endTime = performance.now();
+            console.log(`✅ Linux App Hub hazır! (${Math.round(endTime - startTime)}ms)`);
+        }
+    };
+
+    // Start the application
+    init.start();
 };
