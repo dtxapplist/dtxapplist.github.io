@@ -1,4 +1,4 @@
-// assest/app/analytics.js - Düzeltilmiş ve Tamamlanmış Versiyon
+// assest/app/analytics.js - Düzeltilmiş Final Versiyon
 window.AnalyticsSystem = (function() {
     'use strict';
     
@@ -32,6 +32,25 @@ window.AnalyticsSystem = (function() {
             sessionStorage.setItem(STORAGE_KEYS.sessionId, sessionId);
         }
         console.log('📊 Session başlatıldı:', sessionId);
+    }
+    
+    // 🔥 Session ve User ID yönetimi - DOĞRU YER
+    function getSessionId() {
+        let sessionId = sessionStorage.getItem('vercel_session_id');
+        if (!sessionId) {
+            sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            sessionStorage.setItem('vercel_session_id', sessionId);
+        }
+        return sessionId;
+    }
+
+    function getUserId() {
+        let userId = localStorage.getItem('vercel_user_id');
+        if (!userId) {
+            userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            localStorage.setItem('vercel_user_id', userId);
+        }
+        return userId;
     }
     
     // Vercel Analytics entegrasyonu
@@ -69,48 +88,73 @@ window.AnalyticsSystem = (function() {
             return false;
         }
     }
-    
-function trackAppView(appName, action = 'view') {
-    if (!appName) return;
-    
-    const viewData = getStoredData(STORAGE_KEYS.appViews, {});
-    const today = new Date().toISOString().split('T')[0];
-    
-    if (!viewData[today]) {
-        viewData[today] = {};
-    }
-    
-    if (!viewData[today][appName]) {
-        viewData[today][appName] = { view: 0, install: 0, about: 0 };
-    }
-    
-    viewData[today][appName][action]++;
-    
-    setStoredData(STORAGE_KEYS.appViews, viewData);
-    
-    // 🔥 YENİ EKLEME: Enhanced Vercel tracking
-    if (typeof window.va !== 'undefined') {
-        window.va('track', 'app_interaction', {
-            app_name: appName,
-            action: action,
-            session_id: getSessionId(),
-            user_id: getUserId(),
-            timestamp: Date.now()
-        });
+
+    // 🔥 DÜZELME: trackAppView fonksiyonu - Scope içinde
+    function trackAppView(appName, action = 'view') {
+        if (!appName) return;
         
-        // Ayrıca genel tracking
-        window.va('track', `app_${action}`, {
-            app: appName,
-            session: getSessionId()
-        });
+        const viewData = getStoredData(STORAGE_KEYS.appViews, {});
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (!viewData[today]) {
+            viewData[today] = {};
+        }
+        
+        if (!viewData[today][appName]) {
+            viewData[today][appName] = { view: 0, install: 0, about: 0 };
+        }
+        
+        viewData[today][appName][action]++;
+        
+        setStoredData(STORAGE_KEYS.appViews, viewData);
+        
+        // 🔥 Enhanced Vercel tracking - ARTIK ÇALIŞACAK
+        if (typeof window.va !== 'undefined') {
+            window.va('track', 'app_interaction', {
+                app_name: appName,
+                action: action,
+                session_id: getSessionId(),
+                user_id: getUserId(),
+                timestamp: Date.now()
+            });
+            
+            // Ayrıca genel tracking
+            window.va('track', `app_${action}`, {
+                app: appName,
+                session: getSessionId()
+            });
+        }
+        
+        console.log(`📊 ${appName} - ${action} tracked (Local + Vercel)`);
+        
+        // Popüler uygulamaları güncelle
+        updatePopularApps();
+        updatePopularButton();
     }
-    
-    console.log(`📊 ${appName} - ${action} tracked (Local + Vercel)`);
-    
-    // Popüler uygulamaları güncelle
-    updatePopularApps();
-    updatePopularButton();
-}
+
+    // 🔥 Vercel Analytics ile enhanced tracking - Scope içinde
+    function trackAppViewToVercel(appName, action = 'view') {
+        const sessionIdLocal = getSessionId();
+        const timestamp = Date.now();
+        const userId = getUserId();
+        
+        // Local tracking (mevcut)
+        trackAppView(appName, action);
+        
+        // Vercel Analytics tracking (enhanced)
+        if (typeof window.va !== 'undefined') {
+            window.va('track', 'app_interaction_enhanced', {
+                app_name: appName,
+                action: action,
+                session_id: sessionIdLocal,
+                user_id: userId,
+                timestamp: timestamp,
+                page_path: window.location.pathname
+            });
+        }
+        
+        console.log(`📊 Vercel Enhanced: ${appName} - ${action} tracked`);
+    }
     
     // Popüler uygulamaları hesapla
     function calculatePopularApps(days = 7) {
@@ -664,17 +708,20 @@ function trackAppView(appName, action = 'view') {
         }
     }
     
-    // Global olarak expose et
+    // Global olarak expose et - 🔥 Enhanced API
     const publicAPI = {
         init,
         trackAppView,
+        trackAppViewToVercel,  // 🔥 YENİ
         showPopularAppsPopup,
         closePopularAppsPopup,
         trackAndShowApp,
         getPopularApps,
         calculatePopularApps,
         updatePopularButton,
-        addPopularButton
+        addPopularButton,
+        getSessionId,          // 🔥 YENİ
+        getUserId              // 🔥 YENİ
     };
     
     return publicAPI;
@@ -692,216 +739,5 @@ if (document.readyState === 'loading') {
         window.AnalyticsSystem.init();
     }, 100);
 }
-
-// Analytics dosyasına eklenecek Vercel Cache fonksiyonları
-
-// Vercel Analytics ile enhanced tracking
-function trackAppViewToVercel(appName, action = 'view') {
-    const sessionId = getSessionId();
-    const timestamp = Date.now();
-    const userId = getUserId(); // Anonymous user ID
-    
-    // Local tracking (mevcut)
-    trackAppView(appName, action);
-    
-    // Vercel Analytics tracking (enhanced)
-    if (typeof window.va !== 'undefined') {
-        window.va('track', 'app_interaction', {
-            app_name: appName,
-            action: action,
-            session_id: sessionId,
-            user_id: userId,
-            timestamp: timestamp,
-            page_path: window.location.pathname
-        });
-        
-        // Ayrı event olarak da gönder (aggregation için)
-        window.va('track', `app_${action}`, {
-            app: appName,
-            session: sessionId,
-            ts: timestamp
-        });
-    }
-    
-    console.log(`📊 Vercel: ${appName} - ${action} tracked`);
-}
-
-// Session ve User ID yönetimi
-function getSessionId() {
-    let sessionId = sessionStorage.getItem('vercel_session_id');
-    if (!sessionId) {
-        sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        sessionStorage.setItem('vercel_session_id', sessionId);
-    }
-    return sessionId;
-}
-
-function getUserId() {
-    let userId = localStorage.getItem('vercel_user_id');
-    if (!userId) {
-        userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('vercel_user_id', userId);
-    }
-    return userId;
-}
-
-// Popüler uygulamaları Vercel Analytics'ten al
-async function getPopularAppsFromVercel() {
-    try {
-        // Vercel Analytics API endpoint'i (eğer varsa)
-        const response = await fetch('/api/analytics/popular-apps', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('📊 Vercel'den popüler uygulamalar alındı:', data);
-            return data.apps || [];
-        }
-    } catch (error) {
-        console.warn('⚠️ Vercel Analytics API bulunamadı, local cache kullanılıyor');
-    }
-    
-    // Fallback: Local cache
-    return getPopularAppsFromLocal();
-}
-
-// Local cache (mevcut sistem)
-function getPopularAppsFromLocal() {
-    const data = getStoredData('linux_hub_popular_apps', { apps: [], lastUpdated: 0 });
-    
-    // 1 saatten eski ise yeniden hesapla
-    if (Date.now() - data.lastUpdated > 3600000) {
-        updatePopularApps();
-        return getStoredData('linux_hub_popular_apps', { apps: [] }).apps;
-    }
-    
-    return data.apps || [];
-}
-
-// Hybrid yaklaşım: Hem local hem Vercel
-async function getPopularAppsHybrid() {
-    // Önce local'dan hızlı al
-    const localApps = getPopularAppsFromLocal();
-    
-    // Background'da Vercel'den güncelle
-    getPopularAppsFromVercel().then(vercelApps => {
-        if (vercelApps.length > 0) {
-            // Vercel verisi varsa güncelle
-            setStoredData('linux_hub_popular_apps', {
-                apps: vercelApps,
-                lastUpdated: Date.now(),
-                source: 'vercel'
-            });
-            
-            // UI'ı güncelle
-            updatePopularButton();
-            
-            console.log('📊 Popüler uygulamalar Vercel'den güncellendi');
-        }
-    });
-    
-    return localApps;
-}
-
-// Batch analytics gönderimi (performance için)
-class VercelAnalyticsBatch {
-    constructor() {
-        this.queue = [];
-        this.maxBatchSize = 10;
-        this.flushInterval = 5000; // 5 saniye
-        
-        // Otomatik flush
-        setInterval(() => this.flush(), this.flushInterval);
-        
-        // Sayfa kapanırken flush
-        window.addEventListener('beforeunload', () => this.flush());
-    }
-    
-    add(event) {
-        this.queue.push({
-            ...event,
-            timestamp: Date.now(),
-            user_id: getUserId(),
-            session_id: getSessionId()
-        });
-        
-        if (this.queue.length >= this.maxBatchSize) {
-            this.flush();
-        }
-    }
-    
-    flush() {
-        if (this.queue.length === 0) return;
-        
-        const events = [...this.queue];
-        this.queue = [];
-        
-        if (typeof window.va !== 'undefined') {
-            // Batch olarak gönder
-            window.va('track', 'batch_analytics', {
-                events: events,
-                batch_size: events.length,
-                timestamp: Date.now()
-            });
-            
-            console.log(`📊 ${events.length} analytics event Vercel'e gönderildi`);
-        }
-    }
-}
-
-// Global batch instance
-const analyticsBatch = new VercelAnalyticsBatch();
-
-// Optimized tracking fonksiyonu
-function trackOptimized(appName, action) {
-    // Local tracking (hızlı)
-    trackAppView(appName, action);
-    
-    // Batch'e ekle (Vercel için)
-    analyticsBatch.add({
-        type: 'app_interaction',
-        app_name: appName,
-        action: action,
-        page_path: window.location.pathname
-    });
-}
-
-// Analytics initialization için ekleme
-function initVercelCaching() {
-    console.log('📊 Vercel caching sistemi başlatılıyor...');
-    
-    // Sayfa yüklendiğinde Vercel Analytics'i başlat
-    if (typeof window.va !== 'undefined') {
-        window.va('track', 'page_load', {
-            page: window.location.pathname,
-            timestamp: Date.now(),
-            user_id: getUserId(),
-            session_id: getSessionId()
-        });
-        
-        console.log('✅ Vercel Analytics aktif');
-    } else {
-        console.warn('⚠️ Vercel Analytics bulunamadı');
-    }
-    
-    // Hybrid popüler uygulamalar sistemini başlat
-    getPopularAppsHybrid().then(apps => {
-        console.log(`📊 ${apps.length} popüler uygulama yüklendi (hybrid cache)`);
-    });
-}
-
-// Export edilecek fonksiyonlar
-window.VercelCacheSystem = {
-    trackAppViewToVercel,
-    getPopularAppsFromVercel,
-    getPopularAppsHybrid,
-    trackOptimized,
-    initVercelCaching,
-    analyticsBatch
-};
 
 console.log('📊 Analytics System modülü yüklendi');
