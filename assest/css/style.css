@@ -1364,3 +1364,195 @@ h1 {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+/* Top/Popüler Buton için CSS düzeltmeleri - style.css'e eklenecek */
+
+/* Popüler uygulamalar butonu - Çalışan versiyon */
+.stat-item.popular-btn {
+    cursor: pointer !important;
+    pointer-events: all !important;
+    user-select: none !important;
+    border: 2px solid transparent;
+    background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-item.popular-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.stat-item.popular-btn:hover::before {
+    left: 100%;
+}
+
+.stat-item.popular-btn:hover {
+    transform: translateY(-4px) scale(1.05) !important;
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 12px 32px rgba(139, 92, 246, 0.4) !important;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), var(--bg-secondary)) !important;
+}
+
+.stat-item.popular-btn:active {
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3) !important;
+}
+
+.stat-item.popular-btn .stat-number {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900;
+    font-size: 1.8rem;
+    text-shadow: none;
+}
+
+.stat-item.popular-btn .stat-icon {
+    font-size: 1.8rem;
+    animation: pulse-fire 2s ease-in-out infinite;
+}
+
+@keyframes pulse-fire {
+    0%, 100% { 
+        transform: scale(1); 
+        opacity: 0.8; 
+    }
+    50% { 
+        transform: scale(1.1); 
+        opacity: 1; 
+    }
+}
+
+/* Popüler popup stilleri - Eksik olan kısımlar */
+.popular-apps-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s ease;
+    padding: 20px;
+}
+
+.popular-apps-popup.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.popular-apps-popup.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.popular-apps-popup .popup-content {
+    background: var(--bg-secondary);
+    backdrop-filter: var(--backdrop-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 32px;
+    max-width: 800px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+    transform: scale(0.8) translateY(40px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+}
+
+.popular-apps-popup.visible .popup-content {
+    transform: scale(1) translateY(0);
+}
+
+/* Stat item genel override - pointer-events sorununu çöz */
+.stat-item {
+    text-align: center;
+    padding: 16px 24px;
+    background: var(--bg-tertiary);
+    border-radius: 16px;
+    backdrop-filter: var(--backdrop-blur);
+    border: 1px solid var(--border-muted);
+    width: 100px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    /* Remove the pointer-events: none; that was blocking clicks */
+}
+
+/* Sadece normal stat itemlar için pointer-events: none */
+.stat-item:not(.popular-btn) {
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Mobile optimizasyonları */
+@media (max-width: 768px) {
+    .stat-item.popular-btn:hover {
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3) !important;
+    }
+    
+    .stat-item.popular-btn:active {
+        transform: translateY(-1px) scale(1.01) !important;
+    }
+    
+    .stat-item.popular-btn .stat-number {
+        font-size: 1.6rem;
+    }
+    
+    .stat-item.popular-btn .stat-icon {
+        font-size: 1.6rem;
+    }
+}
+
+/* Hover tooltip effect */
+.stat-item.popular-btn::after {
+    content: 'Popüler Uygulamalar';
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px var(--shadow-color);
+    border: 1px solid var(--border-color);
+    z-index: 10;
+}
+
+.stat-item.popular-btn:hover::after {
+    opacity: 1;
+    visibility: visible;
+    bottom: -35px;
+}
+
+/* Focus accessibility */
+.stat-item.popular-btn:focus {
+    outline: 3px solid var(--accent-primary);
+    outline-offset: 2px;
+    }
