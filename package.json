@@ -1,0 +1,25 @@
+{
+  "name": "linux-app-hub",
+  "version": "1.0.0",
+  "description": "Linux App Hub with Analytics",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site - no build needed'",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@vercel/kv": "^1.0.1"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  },
+  "keywords": [
+    "linux",
+    "apps",
+    "analytics",
+    "vercel"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
