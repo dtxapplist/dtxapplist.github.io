@@ -344,4 +344,3 @@ async function handleGetStats(request, corsHeaders) {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
     }
-          }
