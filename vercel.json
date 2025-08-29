@@ -1,4 +1,7 @@
 {
+  "buildCommand": "echo 'Static site - no build needed'",
+  "outputDirectory": ".",
+  "installCommand": "npm install",
   "functions": {
     "api/analytics.js": {
       "maxDuration": 10
