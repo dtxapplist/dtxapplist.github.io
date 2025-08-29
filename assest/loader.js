@@ -1,4 +1,4 @@
-// assest/loader.js - Analytics modülü ile güncellenmiş
+// assest/loader.js - Analytics modülü ile güncellenmiş (FIXED)
 // Optimized Asset Loader for Linux App Hub
 
 (function() {
@@ -98,9 +98,9 @@
         debugLog('Loading data files with analytics');
         
         try {
-            // 1. Önce categories.js'yi yükle
+            // 1. Önce categories.js'yi yükle - FIXED: Doğru yol
             debugLog('Loading categories.js...');
-            await loadJS('assest/app/categories.js', 'categories.js (data)');
+            await loadJS('assest/data/categories.js', 'categories.js (data)');
             
             // Kategorilerin yüklendiğini kontrol et
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -203,30 +203,28 @@
                 debugLog(`Applying categories to ${appsArray.length} apps`);
                 
                 // Kategorileri uygula
-                const categorizedApps = window.applyCategoriesTo(appsArray);
-                window.apps = categorizedApps;
+                const result = window.applyCategoriesTo(appsArray);
                 
                 debugLog('Categories applied successfully');
                 
-                // Sonuçları kontrol et
-                const categorizedCount = window.apps.filter(app => app.category && app.category !== 'Diğer').length;
-                const totalCount = window.apps.length;
-                
-                debugLog('Categorization results:', {
-                    total: totalCount,
-                    categorized: categorizedCount,
-                    percentage: Math.round((categorizedCount / totalCount) * 100) + '%'
-                });
-                
-                // Kategori dağılımını göster
-                if (typeof window.getCategoryCounts === 'function') {
-                    const counts = window.getCategoryCounts(window.apps);
-                    debugLog('Category distribution:', counts);
+                // Sonuçları kontrol et - FIXED: result kontrolü
+                if (result && typeof result === 'object') {
+                    debugLog('Categorization results:', result);
+                } else {
+                    // Apps arrayini kontrol et
+                    const categorizedCount = appsArray.filter(app => app.category && app.category !== 'Diğer').length;
+                    const totalCount = appsArray.length;
+                    
+                    debugLog('Categorization results:', {
+                        total: totalCount,
+                        categorized: categorizedCount,
+                        percentage: Math.round((categorizedCount / totalCount) * 100) + '%'
+                    });
                 }
                 
                 // İlk 5 uygulamanın kategorilerini kontrol et
                 debugLog('Sample categorized apps:');
-                window.apps.slice(0, 5).forEach(app => {
+                appsArray.slice(0, 5).forEach(app => {
                     console.log(`  📱 ${app.name}: ${app.category || 'No category'}`);
                 });
                 
@@ -270,13 +268,12 @@
         if (typeof window.AnalyticsSystem !== 'undefined') {
             debugLog('🚀 Initializing Analytics System...');
             try {
-                if (typeof window.AnalyticsSystem.init === 'function') {
-                    // Analytics'i manuel başlat (otomatik başlatma devre dışı)
-                    window.AnalyticsSystem.init();
-                    debugLog('✅ Analytics system initialized successfully');
-                } else {
-                    debugLog('📊 Analytics system auto-initialized');
+                // Analytics zaten otomatik başlatılıyor, sadece debug etkinleştir
+                if (window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1') {
+                    window.AnalyticsSystem.enableDebug();
                 }
+                debugLog('✅ Analytics system initialized successfully');
             } catch (error) {
                 console.error('❌ Analytics initialization error:', error);
             }
@@ -330,7 +327,7 @@
             debugLog('Post-data-loading check (with Analytics):');
             console.log('🔍 Loaded data status:');
             console.log('  - window.appCategories:', typeof window.appCategories, 
-                typeof window.appCategories === 'object' ? `(${Object.keys(window.appCategories).length} items)` : '');
+                typeof window.appCategories === 'object' ? `(${Object.keys(window.appCategories).length} properties)` : '');
             console.log('  - window.applyCategoriesTo:', typeof window.applyCategoriesTo);
             console.log('  - apps:', typeof apps !== 'undefined' ? `(${apps.length} items)` : 'undefined');
             console.log('  - window.apps:', typeof window.apps !== 'undefined' ? `(${window.apps.length} items)` : 'undefined');
