@@ -123,9 +123,11 @@ window.initLinuxAppHub = function() {
         create: () => {
             console.log('🔥 Creating popular apps button...');
             
-            if (document.getElementById('popular-apps-btn')) {
-                console.log('✅ Popular button already exists');
-                return;
+            // Remove existing button first
+            const existing = document.getElementById('popular-apps-btn');
+            if (existing) {
+                console.log('🗑️ Removing existing popular button');
+                existing.remove();
             }
             
             const statsContainer = document.getElementById('stats');
@@ -134,18 +136,25 @@ window.initLinuxAppHub = function() {
                 return;
             }
             
+            console.log('📊 Stats container found, creating button...');
+            
             const topBtn = document.createElement('div');
             topBtn.className = 'stat-item popular-btn';
             topBtn.id = 'popular-apps-btn';
             topBtn.title = 'Bu haftanın en popüler uygulamaları';
+            topBtn.style.cssText = `
+                cursor: pointer !important;
+                pointer-events: all !important;
+                user-select: none !important;
+            `;
             
             topBtn.innerHTML = `
                 <span class="stat-icon">🔥</span>
                 <span class="stat-number">TOP</span>
             `;
             
-            topBtn.addEventListener('click', () => {
-                console.log('🔥 Popular button clicked!');
+            topBtn.addEventListener('click', (e) => {
+                console.log('🔥 Popular button clicked! Event:', e);
                 popularButton.handleClick();
             });
             
@@ -158,39 +167,47 @@ window.initLinuxAppHub = function() {
             });
             
             statsContainer.appendChild(topBtn);
-            console.log('✅ Popular button added to stats');
+            
+            console.log('✅ Popular button created and added');
+            console.log('🎯 Button element:', topBtn);
+            console.log('🎯 Button in DOM:', document.getElementById('popular-apps-btn'));
+            
+            return topBtn;
         },
         
         handleClick: async () => {
             console.log('🔥 Popular button handleClick started');
             
-            if (window.AnalyticsSystem && typeof window.AnalyticsSystem.calculatePopularApps === 'function') {
-                try {
-                    console.log('📊 Calling calculatePopularApps...');
-                    const result = await window.AnalyticsSystem.calculatePopularApps();
-                    console.log('📊 calculatePopularApps result:', result);
-                } catch (error) {
-                    console.error('❌ calculatePopularApps error:', error);
-                    popularButton.showFallbackPopup();
-                }
-            } else if (window.AnalyticsSystem && typeof window.AnalyticsSystem.getPopularApps === 'function') {
+            if (window.AnalyticsSystem && typeof window.AnalyticsSystem.getPopularApps === 'function') {
                 try {
                     console.log('📊 Calling getPopularApps...');
                     const popularApps = await window.AnalyticsSystem.getPopularApps();
                     console.log('📊 getPopularApps result:', popularApps);
                     
                     if (popularApps && Array.isArray(popularApps) && popularApps.length > 0) {
+                        // Analytics popup'ı varsa onu kullan, yoksa custom popup
                         if (typeof window.AnalyticsSystem.showPopularAppsPopup === 'function') {
+                            console.log('📊 Using Analytics popup');
                             window.AnalyticsSystem.showPopularAppsPopup(popularApps);
                         } else {
+                            console.log('📊 Using custom popup');
                             popularButton.showCustomPopup(popularApps);
                         }
                     } else {
-                        console.warn('⚠️ No popular apps data available');
+                        console.warn('⚠️ No popular apps data available, using fallback');
                         popularButton.showFallbackPopup();
                     }
                 } catch (error) {
                     console.error('❌ getPopularApps error:', error);
+                    popularButton.showFallbackPopup();
+                }
+            } else if (window.AnalyticsSystem && typeof window.AnalyticsSystem.calculatePopularApps === 'function') {
+                try {
+                    console.log('📊 Calling calculatePopularApps...');
+                    const result = await window.AnalyticsSystem.calculatePopularApps();
+                    console.log('📊 calculatePopularApps result:', result);
+                } catch (error) {
+                    console.error('❌ calculatePopularApps error:', error);
                     popularButton.showFallbackPopup();
                 }
             } else {
@@ -219,22 +236,103 @@ window.initLinuxAppHub = function() {
         showCustomPopup: (popularApps) => {
             console.log('🎯 Showing custom popup with', popularApps.length, 'apps');
             
+            // Remove existing popup if any
+            const existingPopup = document.querySelector('.popular-apps-popup');
+            if (existingPopup) {
+                existingPopup.remove();
+            }
+            
             // Create popup
             const popup = document.createElement('div');
-            popup.className = 'popular-apps-popup visible';
+            popup.className = 'popular-apps-popup';
+            popup.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                backdrop-filter: blur(8px);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.4s ease;
+                padding: 20px;
+            `;
+            
             popup.innerHTML = `
-                <div class="popup-content">
-                    <div id="popular-close" style="position: absolute; top: 20px; right: 24px; font-size: 24px; cursor: pointer; color: #ef4444; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(239, 68, 68, 0.1); transition: all 0.3s ease;">×</div>
-                    <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--accent-primary); margin-bottom: 24px; padding-right: 50px;">🔥 Bu Haftanın Popüler Uygulamaları</h2>
+                <div class="popup-content" style="
+                    background: var(--bg-secondary);
+                    backdrop-filter: var(--backdrop-blur);
+                    border: 1px solid var(--border-color);
+                    border-radius: 24px;
+                    padding: 32px;
+                    max-width: 800px;
+                    width: 100%;
+                    max-height: 85vh;
+                    overflow-y: auto;
+                    position: relative;
+                    transform: scale(0.8) translateY(40px);
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+                ">
+                    <div id="popular-close" style="
+                        position: absolute; 
+                        top: 20px; 
+                        right: 24px; 
+                        font-size: 24px; 
+                        cursor: pointer; 
+                        color: #ef4444; 
+                        width: 32px; 
+                        height: 32px; 
+                        border-radius: 50%; 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        background: rgba(239, 68, 68, 0.1); 
+                        transition: all 0.3s ease;
+                    ">×</div>
+                    <h2 style="
+                        font-size: 1.75rem; 
+                        font-weight: 700; 
+                        color: var(--accent-primary); 
+                        margin-bottom: 24px; 
+                        padding-right: 50px;
+                    ">🔥 Bu Haftanın Popüler Uygulamaları</h2>
                     <div class="popular-apps-list">
                         ${popularApps.map((app, index) => `
-                            <div style="display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border-muted);">
-                                <span style="font-size: 1.5rem; font-weight: bold; color: var(--accent-primary); min-width: 30px;">${index + 1}</span>
+                            <div style="
+                                display: flex; 
+                                align-items: center; 
+                                gap: 16px; 
+                                padding: 12px 0; 
+                                border-bottom: 1px solid var(--border-muted);
+                                transition: all 0.3s ease;
+                            " onmouseover="this.style.background='rgba(139, 92, 246, 0.05)'" onmouseout="this.style.background='transparent'">
+                                <span style="
+                                    font-size: 1.5rem; 
+                                    font-weight: bold; 
+                                    color: var(--accent-primary); 
+                                    min-width: 30px;
+                                ">${index + 1}</span>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600; color: var(--text-primary);">${app.name}</div>
-                                    <div style="font-size: 0.875rem; color: var(--text-secondary);">${app.stats?.views || 0} görüntülenme</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-secondary);">${app.stats?.views || app.viewCount || 0} görüntülenme</div>
                                 </div>
-                                <button onclick="popularButton.openApp('${app.name}')" style="padding: 8px 16px; background: var(--accent-primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; transition: all 0.3s ease;" onmouseover="this.style.background='#7c3aed'" onmouseout="this.style.background='var(--accent-primary)'">Aç</button>
+                                <button onclick="window.popularButton.openApp('${app.name}')" style="
+                                    padding: 8px 16px; 
+                                    background: var(--accent-primary); 
+                                    color: white; 
+                                    border: none; 
+                                    border-radius: 8px; 
+                                    cursor: pointer; 
+                                    font-size: 0.875rem; 
+                                    transition: all 0.3s ease;
+                                    font-weight: 500;
+                                " onmouseover="this.style.background='#7c3aed'; this.style.transform='scale(1.05)'" onmouseout="this.style.background='var(--accent-primary)'; this.style.transform='scale(1)'">Aç</button>
                             </div>
                         `).join('')}
                     </div>
@@ -243,12 +341,30 @@ window.initLinuxAppHub = function() {
             
             document.body.appendChild(popup);
             
+            // Show popup with animation
+            requestAnimationFrame(() => {
+                popup.style.opacity = '1';
+                popup.style.visibility = 'visible';
+                const content = popup.querySelector('.popup-content');
+                if (content) {
+                    content.style.transform = 'scale(1) translateY(0)';
+                }
+            });
+            
             // Close functionality
             const closeBtn = popup.querySelector('#popular-close');
             const closePopup = () => {
-                popup.classList.remove('visible');
-                popup.classList.add('hidden');
-                setTimeout(() => document.body.removeChild(popup), 400);
+                popup.style.opacity = '0';
+                popup.style.visibility = 'hidden';
+                const content = popup.querySelector('.popup-content');
+                if (content) {
+                    content.style.transform = 'scale(0.8) translateY(40px)';
+                }
+                setTimeout(() => {
+                    if (document.body.contains(popup)) {
+                        document.body.removeChild(popup);
+                    }
+                }, 400);
             };
             
             closeBtn.addEventListener('click', closePopup);
@@ -320,10 +436,16 @@ window.initLinuxAppHub = function() {
                 console.log('⚠️ Analytics sistemi bulunamadı - temel fonksiyonalite devam ediyor');
             }
             
-            // Popular button'ı burada oluştur
+            // Popular button'ı hemen oluştur (gecikme olmadan)
+            popularButton.create();
+            
+            // Sonra da güvenlik için tekrar dene
             setTimeout(() => {
-                popularButton.create();
-            }, 500);
+                if (!document.getElementById('popular-apps-btn')) {
+                    console.log('🔄 Popular button retry...');
+                    popularButton.create();
+                }
+            }, 100);
         },
 
         setupEventListeners: () => {
@@ -1227,6 +1349,32 @@ window.initLinuxAppHub = function() {
     // Popular button global access
     window.popularButton = popularButton;
 
+    // Manuel init function for debugging
+    window.manualInitPopularButton = () => {
+        console.log('🔧 Manual popular button initialization...');
+        console.log('📊 Stats container:', document.getElementById('stats'));
+        console.log('📊 Existing button:', document.getElementById('popular-apps-btn'));
+        
+        // Remove existing button if any
+        const existing = document.getElementById('popular-apps-btn');
+        if (existing) {
+            existing.remove();
+            console.log('🗑️ Removed existing button');
+        }
+        
+        // Create new button
+        popularButton.create();
+        
+        // Verify creation
+        const newButton = document.getElementById('popular-apps-btn');
+        console.log('✅ New button created:', !!newButton);
+        if (newButton) {
+            console.log('🎯 Button clickable:', newButton.style.pointerEvents !== 'none');
+        }
+        
+        return newButton;
+    };
+
     // ============ INIT SYSTEM ============ 
     const init = {
         start: () => {
@@ -1239,9 +1387,11 @@ window.initLinuxAppHub = function() {
             categoryFilters.hideMainFilters();
             categoryFilters.init();
             events.init();
-            analytics.init();  // Analytics initialization with popular button
             
             render.apps();
+            
+            // Analytics'i render'dan sonra init et
+            analytics.init();
             
             setTimeout(() => {
                 stats.update();
