@@ -1,1 +1,0 @@
-# dtxapplist.github.io
