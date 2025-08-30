@@ -452,6 +452,10 @@
                 this.log('⚠️ Popular apps popup için geçerli veri yok');
                 return;
             }
+            if (!Array.isArray(popularApps)) {
+                console.error('popularApps is not an array:', popularApps);
+                return;
+            }
 
             // Mevcut popup'ı kaldır
             this.closePopularAppsPopup();
