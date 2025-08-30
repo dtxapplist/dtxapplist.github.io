@@ -446,46 +446,49 @@
             this.log('🧪 Test verisi oluşturuldu');
         }
 
-        showPopularAppsPopup(popularApps) {
-            // FIXED: Ensure popularApps is array
-            if (!Array.isArray(popularApps) || popularApps.length === 0) {
-                this.log('⚠️ Popular apps popup için geçerli veri yok');
-                return;
-            }
-            if (!Array.isArray(popularApps)) {
-                console.error('popularApps is not an array:', popularApps);
-                return;
-            }
+showPopularAppsPopup(popularApps) {
+    // FIXED: Ensure popularApps is array
+    if (!Array.isArray(popularApps) || popularApps.length === 0) {
+        this.log('⚠️ Popular apps popup için geçerli veri yok');
+        return;
+    }
+    if (!Array.isArray(popularApps)) {
+        console.error('popularApps is not an array:', popularApps);
+        return;
+    }
 
-            // Mevcut popup'ı kaldır
-            this.closePopularAppsPopup();
+    // İlk 10 uygulamayı al
+    const topApps = popularApps.slice(0, 10);
 
-            const popup = document.createElement('div');
-            popup.id = 'popular-apps-popup';
-            popup.className = 'popular-apps-popup';
-            popup.innerHTML = `
-                <div class="popular-apps-content">
-                    <div class="popular-apps-header">
-                        <h3>🔥 Bu Hafta Popüler</h3>
-                        <button class="close-btn" onclick="window.AnalyticsSystem.closePopularAppsPopup()">&times;</button>
+    // Mevcut popup'ı kaldır
+    this.closePopularAppsPopup();
+
+    const popup = document.createElement('div');
+    popup.id = 'popular-apps-popup';
+    popup.className = 'popular-apps-popup';
+    popup.innerHTML = `
+        <div class="popular-apps-content">
+            <div class="popular-apps-header">
+                <h3>🔥 Bu Hafta Popüler</h3>
+                <button class="close-btn" onclick="window.AnalyticsSystem.closePopularAppsPopup()">&times;</button>
+            </div>
+            <div class="popular-apps-list">
+                ${topApps.map((app, index) => `
+                    <div class="popular-app-item" data-app="${app.name}">
+                        <span class="rank">#${index + 1}</span>
+                        <span class="app-name">${app.name}</span>
+                        <div class="app-stats">
+                            <span class="views" title="Görüntüleme">👁️ ${app.stats?.views || 0}</span>
+                            ${(app.stats?.installs || 0) > 0 ? `<span class="installs" title="Kurulum">📦 ${app.stats.installs}</span>` : ''}
+                        </div>
                     </div>
-                    <div class="popular-apps-list">
-                        ${popularApps.map((app, index) => `
-                            <div class="popular-app-item" data-app="${app.name}">
-                                <span class="rank">#${index + 1}</span>
-                                <span class="app-name">${app.name}</span>
-                                <div class="app-stats">
-                                    <span class="views" title="Görüntüleme">👁️ ${app.stats?.views || 0}</span>
-                                    ${(app.stats?.installs || 0) > 0 ? `<span class="installs" title="Kurulum">📦 ${app.stats.installs}</span>` : ''}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="popular-apps-footer">
-                        <small>Son 7 günün verileri • ${new Date().toLocaleDateString('tr-TR')}</small>
-                    </div>
-                </div>
-            `;
+                `).join('')}
+            </div>
+            <div class="popular-apps-footer">
+                <small>Son 7 günün verileri • ${new Date().toLocaleDateString('tr-TR')}</small>
+            </div>
+        </div>
+    `;
 
             // CSS stilleri
             const style = document.createElement('style');
