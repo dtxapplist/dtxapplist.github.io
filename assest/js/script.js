@@ -107,6 +107,97 @@ window.initLinuxAppHub = function() {
         }
     };
 
+    // ============ DATA VALIDATION ============
+    if (typeof apps === 'undefined' || !Array.isArray(apps)) {
+        console.error('❌ apps verisi bulunamadı!');
+        if (DOM.appList) {
+            DOM.appList.innerHTML = '<div class="error-message">❌ Uygulama verileri yüklenemedi. Lütfen sayfayı yenileyin.</div>';
+        }
+        return;
+    }
+
+    console.log(`📊 ${apps.length} uygulama yüklendi`);
+
+    // ============ POPULAR APPS BUTTON ============ 
+    const popularButton = {
+        create: () => {
+            console.log('🔥 Creating popular apps button...');
+            
+            if (document.getElementById('popular-apps-btn')) {
+                console.log('✅ Popular button already exists');
+                return;
+            }
+            
+            const statsContainer = document.getElementById('stats');
+            if (!statsContainer) {
+                console.error('❌ Stats container not found');
+                return;
+            }
+            
+            const topBtn = document.createElement('div');
+            topBtn.className = 'stat-item popular-btn';
+            topBtn.id = 'popular-apps-btn';
+            topBtn.title = 'Bu haftanın en popüler uygulamaları';
+            
+            topBtn.innerHTML = `
+                <span class="stat-icon">🔥</span>
+                <span class="stat-number">TOP</span>
+            `;
+            
+            topBtn.addEventListener('click', () => {
+                console.log('🔥 Popular button clicked!');
+                popularButton.handleClick();
+            });
+            
+            topBtn.addEventListener('mouseenter', () => {
+                topBtn.style.transform = 'translateY(-4px) scale(1.05)';
+            });
+            
+            topBtn.addEventListener('mouseleave', () => {
+                topBtn.style.transform = 'translateY(0) scale(1)';
+            });
+            
+            statsContainer.appendChild(topBtn);
+            console.log('✅ Popular button added to stats');
+        },
+        
+        handleClick: () => {
+            if (window.AnalyticsSystem && typeof window.AnalyticsSystem.calculatePopularApps === 'function') {
+                window.AnalyticsSystem.calculatePopularApps();
+            } else {
+                console.warn('⚠️ Analytics System not available');
+                popularButton.showFallbackPopup();
+            }
+        },
+        
+        showFallbackPopup: () => {
+            const fallbackApps = [
+                { name: 'Discord', stats: { views: 156 } },
+                { name: 'Visual Studio Code', stats: { views: 134 } },
+                { name: 'Spotify', stats: { views: 98 } },
+                { name: 'Steam', stats: { views: 87 } },
+                { name: 'Google Chrome', stats: { views: 76 } }
+            ];
+            
+            if (window.AnalyticsSystem && typeof window.AnalyticsSystem.showPopularAppsPopup === 'function') {
+                window.AnalyticsSystem.showPopularAppsPopup(fallbackApps);
+            } else {
+                alert('🔥 En Popüler Uygulamalar:\n\n' + 
+                      fallbackApps.map((app, i) => `${i+1}. ${app.name}`).join('\n'));
+            }
+        },
+        
+        update: (count = 'TOP') => {
+            const button = document.getElementById('popular-apps-btn');
+            if (button) {
+                const numberElement = button.querySelector('.stat-number');
+                if (numberElement) {
+                    numberElement.textContent = count;
+                }
+            }
+        }
+    };
+
     // ============ ANALYTICS INTEGRATION ============
     const analytics = {
         available: typeof window.AnalyticsSystem !== 'undefined',
@@ -126,11 +217,17 @@ window.initLinuxAppHub = function() {
             } else {
                 console.log('⚠️ Analytics sistemi bulunamadı - temel fonksiyonalite devam ediyor');
             }
+            
+            // Popular button'ı burada oluştur
+            setTimeout(() => {
+                popularButton.create();
+            }, 500);
         },
 
         setupEventListeners: () => {
             window.addEventListener('popularAppsUpdated', (e) => {
                 console.log('📊 Popüler uygulamalar güncellendi:', e.detail.popularApps.length);
+                popularButton.update(e.detail.popularApps.length);
             });
 
             document.addEventListener('visibilitychange', () => {
@@ -152,21 +249,20 @@ window.initLinuxAppHub = function() {
                             if (index % 3 === 0) analytics.track(appName, 'install');
                         }, index * 100);
                     });
+                    
+                    setTimeout(() => {
+                        if (window.AnalyticsSystem) {
+                            window.AnalyticsSystem.getPopularApps().then(apps => {
+                                if (apps && apps.length > 0) {
+                                    popularButton.update(apps.length);
+                                }
+                            });
+                        }
+                    }, 3000);
                 }, 2000);
             }
         }
     };
-
-    // ============ DATA VALIDATION ============
-    if (typeof apps === 'undefined' || !Array.isArray(apps)) {
-        console.error('❌ apps verisi bulunamadı!');
-        if (DOM.appList) {
-            DOM.appList.innerHTML = '<div class="error-message">❌ Uygulama verileri yüklenemedi. Lütfen sayfayı yenileyin.</div>';
-        }
-        return;
-    }
-
-    console.log(`📊 ${apps.length} uygulama yüklendi`);
 
     // ============ CATEGORY MANAGEMENT ============
     const categories = {
@@ -1026,178 +1122,32 @@ window.initLinuxAppHub = function() {
         popup.show(app, 'about');
     };
 
-// ============ POPULAR APPS BUTTON ============ 
-const popularButton = {
-    create: () => {
-        console.log('🔥 Creating popular apps button...');
-        
-        if (document.getElementById('popular-apps-btn')) {
-            console.log('✅ Popular button already exists');
-            return;
-        }
-        
-        const statsContainer = document.getElementById('stats');
-        if (!statsContainer) {
-            console.error('❌ Stats container not found');
-            return;
-        }
-        
-        const topBtn = document.createElement('div');
-        topBtn.className = 'stat-item popular-btn';
-        topBtn.id = 'popular-apps-btn';
-        topBtn.title = 'Bu haftanın en popüler uygulamaları';
-        
-        topBtn.innerHTML = `
-            <span class="stat-icon">🔥</span>
-            <span class="stat-number">TOP</span>
-        `;
-        
-        topBtn.addEventListener('click', () => {
-            console.log('🔥 Popular button clicked!');
-            popularButton.handleClick();
-        });
-        
-        topBtn.addEventListener('mouseenter', () => {
-            topBtn.style.transform = 'translateY(-4px) scale(1.05)';
-        });
-        
-        topBtn.addEventListener('mouseleave', () => {
-            topBtn.style.transform = 'translateY(0) scale(1)';
-        });
-        
-        statsContainer.appendChild(topBtn);
-        console.log('✅ Popular button added to stats');
-    },
-    
-    handleClick: () => {
-        if (window.AnalyticsSystem && typeof window.AnalyticsSystem.calculatePopularApps === 'function') {
-            window.AnalyticsSystem.calculatePopularApps();
-        } else {
-            console.warn('⚠️ Analytics System not available');
-            popularButton.showFallbackPopup();
-        }
-    },
-    
-    showFallbackPopup: () => {
-        const fallbackApps = [
-            { name: 'Discord', stats: { views: 156 } },
-            { name: 'Visual Studio Code', stats: { views: 134 } },
-            { name: 'Spotify', stats: { views: 98 } },
-            { name: 'Steam', stats: { views: 87 } },
-            { name: 'Google Chrome', stats: { views: 76 } }
-        ];
-        
-        if (window.AnalyticsSystem && typeof window.AnalyticsSystem.showPopularAppsPopup === 'function') {
-            window.AnalyticsSystem.showPopularAppsPopup(fallbackApps);
-        } else {
-            alert('🔥 En Popüler Uygulamalar:\n\n' + 
-                  fallbackApps.map((app, i) => `${i+1}. ${app.name}`).join('\n'));
-        }
-    },
-    
-    update: (count = 'TOP') => {
-        const button = document.getElementById('popular-apps-btn');
-        if (button) {
-            const numberElement = button.querySelector('.stat-number');
-            if (numberElement) {
-                numberElement.textContent = count;
-            }
-        }
-    }
-};
-
-// ============ ANALYTICS INTEGRATION ============ 
-const analytics = {
-    available: typeof window.AnalyticsSystem !== 'undefined',
-    
-    track: (appName, action, data = {}) => {
-        if (analytics.available && window.AnalyticsSystem?.trackAppView) {
-            window.AnalyticsSystem.trackAppView(appName, action);
-            console.log(`📊 Analytics: ${appName} - ${action}`);
-        }
-    },
-
-    init: () => {
-        if (analytics.available) {
-            console.log('📊 Analytics entegrasyonu aktif');
-            analytics.setupEventListeners();
-            analytics.setupDevelopmentData();
-        } else {
-            console.log('⚠️ Analytics sistemi bulunamadı - temel fonksiyonalite devam ediyor');
-        }
-        
-        setTimeout(() => {
-            popularButton.create();
-        }, 500);
-    },
-
-    setupEventListeners: () => {
-        window.addEventListener('popularAppsUpdated', (e) => {
-            console.log('📊 Popüler uygulamalar güncellendi:', e.detail.popularApps.length);
-            popularButton.update(e.detail.popularApps.length);
-        });
-
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && window.AnalyticsSystem?.calculatePopularApps) {
-                setTimeout(() => window.AnalyticsSystem.calculatePopularApps(), 1000);
-            }
-        });
-    },
-
-    setupDevelopmentData: () => {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    // ============ INIT SYSTEM ============ 
+    const init = {
+        start: () => {
+            console.log('🚀 Sistem başlatılıyor...');
+            
+            const startTime = performance.now();
+            
+            theme.init();
+            categories.assign();
+            categoryFilters.hideMainFilters();
+            categoryFilters.init();
+            events.init();
+            analytics.init();  // Analytics initialization with popular button
+            
+            render.apps();
+            
             setTimeout(() => {
-                console.log('🧪 Development mode - Örnek analytics verisi oluşturuluyor...');
-                const sampleApps = ['Discord', 'Visual Studio Code', 'Spotify', 'Steam', 'Google Chrome'];
-                sampleApps.forEach((appName, index) => {
-                    setTimeout(() => {
-                        analytics.track(appName, 'view');
-                        if (index % 2 === 0) analytics.track(appName, 'about');
-                        if (index % 3 === 0) analytics.track(appName, 'install');
-                    }, index * 100);
-                });
-                
-                setTimeout(() => {
-                    if (window.AnalyticsSystem) {
-                        window.AnalyticsSystem.getPopularApps().then(apps => {
-                            if (apps && apps.length > 0) {
-                                popularButton.update(apps.length);
-                            }
-                        });
-                    }
-                }, 3000);
-            }, 2000);
+                stats.update();
+            }, CONFIG.LOAD_DELAY * 6);
+
+            urlHash.check();
+            
+            const endTime = performance.now();
+            console.log(`✅ Linux App Hub hazır! (${Math.round(endTime - startTime)}ms)`);
         }
-    }
-};
-
-// ============ INIT SYSTEM ============ 
-const init = {
-    start: () => {
-        console.log('🚀 Sistem başlatılıyor...');
-        
-        const startTime = performance.now();
-        
-        theme.init();
-        categories.assign();
-        categoryFilters.hideMainFilters();
-        categoryFilters.init();
-        events.init();
-        analytics.init();  // burada Claude’un analytics objesi çalışacak
-        
-        render.apps();
-        
-        setTimeout(() => {
-            stats.update();
-        }, CONFIG.LOAD_DELAY * 6);
-
-        urlHash.check();
-        
-        const endTime = performance.now();
-        console.log(`✅ Linux App Hub hazır! (${Math.round(endTime - startTime)}ms)`);
-    }
-};
-
+    };
 
     // Start the application
     init.start();
