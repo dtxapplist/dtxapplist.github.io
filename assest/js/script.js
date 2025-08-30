@@ -161,9 +161,38 @@ window.initLinuxAppHub = function() {
             console.log('✅ Popular button added to stats');
         },
         
-        handleClick: () => {
+        handleClick: async () => {
+            console.log('🔥 Popular button handleClick started');
+            
             if (window.AnalyticsSystem && typeof window.AnalyticsSystem.calculatePopularApps === 'function') {
-                window.AnalyticsSystem.calculatePopularApps();
+                try {
+                    console.log('📊 Calling calculatePopularApps...');
+                    const result = await window.AnalyticsSystem.calculatePopularApps();
+                    console.log('📊 calculatePopularApps result:', result);
+                } catch (error) {
+                    console.error('❌ calculatePopularApps error:', error);
+                    popularButton.showFallbackPopup();
+                }
+            } else if (window.AnalyticsSystem && typeof window.AnalyticsSystem.getPopularApps === 'function') {
+                try {
+                    console.log('📊 Calling getPopularApps...');
+                    const popularApps = await window.AnalyticsSystem.getPopularApps();
+                    console.log('📊 getPopularApps result:', popularApps);
+                    
+                    if (popularApps && Array.isArray(popularApps) && popularApps.length > 0) {
+                        if (typeof window.AnalyticsSystem.showPopularAppsPopup === 'function') {
+                            window.AnalyticsSystem.showPopularAppsPopup(popularApps);
+                        } else {
+                            popularButton.showCustomPopup(popularApps);
+                        }
+                    } else {
+                        console.warn('⚠️ No popular apps data available');
+                        popularButton.showFallbackPopup();
+                    }
+                } catch (error) {
+                    console.error('❌ getPopularApps error:', error);
+                    popularButton.showFallbackPopup();
+                }
             } else {
                 console.warn('⚠️ Analytics System not available');
                 popularButton.showFallbackPopup();
@@ -171,6 +200,7 @@ window.initLinuxAppHub = function() {
         },
         
         showFallbackPopup: () => {
+            console.log('🎯 Showing fallback popup');
             const fallbackApps = [
                 { name: 'Discord', stats: { views: 156 } },
                 { name: 'Visual Studio Code', stats: { views: 134 } },
@@ -182,8 +212,80 @@ window.initLinuxAppHub = function() {
             if (window.AnalyticsSystem && typeof window.AnalyticsSystem.showPopularAppsPopup === 'function') {
                 window.AnalyticsSystem.showPopularAppsPopup(fallbackApps);
             } else {
-                alert('🔥 En Popüler Uygulamalar:\n\n' + 
-                      fallbackApps.map((app, i) => `${i+1}. ${app.name}`).join('\n'));
+                popularButton.showCustomPopup(fallbackApps);
+            }
+        },
+
+        showCustomPopup: (popularApps) => {
+            console.log('🎯 Showing custom popup with', popularApps.length, 'apps');
+            
+            // Create popup
+            const popup = document.createElement('div');
+            popup.className = 'popular-apps-popup visible';
+            popup.innerHTML = `
+                <div class="popup-content">
+                    <div id="popular-close" style="position: absolute; top: 20px; right: 24px; font-size: 24px; cursor: pointer; color: #ef4444; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(239, 68, 68, 0.1); transition: all 0.3s ease;">×</div>
+                    <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--accent-primary); margin-bottom: 24px; padding-right: 50px;">🔥 Bu Haftanın Popüler Uygulamaları</h2>
+                    <div class="popular-apps-list">
+                        ${popularApps.map((app, index) => `
+                            <div style="display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border-muted);">
+                                <span style="font-size: 1.5rem; font-weight: bold; color: var(--accent-primary); min-width: 30px;">${index + 1}</span>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: var(--text-primary);">${app.name}</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-secondary);">${app.stats?.views || 0} görüntülenme</div>
+                                </div>
+                                <button onclick="popularButton.openApp('${app.name}')" style="padding: 8px 16px; background: var(--accent-primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; transition: all 0.3s ease;" onmouseover="this.style.background='#7c3aed'" onmouseout="this.style.background='var(--accent-primary)'">Aç</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(popup);
+            
+            // Close functionality
+            const closeBtn = popup.querySelector('#popular-close');
+            const closePopup = () => {
+                popup.classList.remove('visible');
+                popup.classList.add('hidden');
+                setTimeout(() => document.body.removeChild(popup), 400);
+            };
+            
+            closeBtn.addEventListener('click', closePopup);
+            popup.addEventListener('click', (e) => {
+                if (e.target === popup) closePopup();
+            });
+            
+            // ESC key
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    closePopup();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        },
+
+        openApp: (appName) => {
+            console.log('🎯 Opening app:', appName);
+            const app = apps.find(a => a.name === appName);
+            if (app) {
+                // Close popular popup first
+                const popup = document.querySelector('.popular-apps-popup');
+                if (popup) {
+                    popup.classList.remove('visible');
+                    popup.classList.add('hidden');
+                    setTimeout(() => document.body.removeChild(popup), 200);
+                }
+                
+                // Open app popup
+                setTimeout(() => {
+                    if (app.supported) {
+                        window.showInstallPopup(app);
+                    } else {
+                        window.showAboutPopup(app);
+                    }
+                }, 300);
             }
         },
         
@@ -1121,6 +1223,9 @@ window.initLinuxAppHub = function() {
     window.showAboutPopup = (app) => {
         popup.show(app, 'about');
     };
+
+    // Popular button global access
+    window.popularButton = popularButton;
 
     // ============ INIT SYSTEM ============ 
     const init = {
