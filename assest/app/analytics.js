@@ -1,5 +1,5 @@
-// assest/app/analytics.js - İstemci tarafı analytics sistemi (FIXED)
-// Vercel KV ile entegre analytics modülü - Hata düzeltmeleri ile
+// assest/app/analytics.js - İstemci tarafı analytics sistemi (POPUP FIXED)
+// Upstash Redis ile entegre analytics modülü
 
 (function() {
     'use strict';
@@ -9,13 +9,13 @@
         API_BASE: '/api/analytics',
         STORAGE_KEY: 'linux_app_hub_analytics',
         BATCH_SIZE: 10,
-        BATCH_TIMEOUT: 5000, // 5 saniye
+        BATCH_TIMEOUT: 5000,
         RETRY_ATTEMPTS: 3,
         RETRY_DELAY: 1000,
-        POPULAR_CACHE_TTL: 5 * 60 * 1000, // 5 dakika
-        DEBUG: true,
-        OFFLINE_MODE: false, // Offline mode for development
-        MOCK_DATA_ENABLED: false // Mock data for testing
+        POPULAR_CACHE_TTL: 5 * 60 * 1000,
+        DEBUG: true, // Debug açık
+        OFFLINE_MODE: false,
+        MOCK_DATA_ENABLED: false // Mock data kapalı
     };
 
     // ============ ANALYTICS SYSTEM ============
@@ -29,7 +29,6 @@
             this.sessionId = this.generateSessionId();
             this.retryQueue = [];
             this.isOnline = navigator.onLine;
-            this.mockData = this.initMockData();
             
             this.init();
         }
@@ -40,22 +39,10 @@
             
             this.log('🚀 Analytics System başlatılıyor...');
             
-            // Detect if API is available
             this.detectAPIAvailability();
-            
-            // Event listeners
             this.setupEventListeners();
-            
-            // Periodic tasks
             this.setupPeriodicTasks();
-            
-            // Page unload handler
             this.setupUnloadHandler();
-            
-            // Initialize with mock data if needed
-            if (CONFIG.MOCK_DATA_ENABLED) {
-                this.initializeWithMockData();
-            }
             
             this.isInitialized = true;
             this.log('✅ Analytics System hazır');
@@ -64,8 +51,7 @@
         async detectAPIAvailability() {
             try {
                 const response = await fetch(`${CONFIG.API_BASE}?action=health`, {
-                    method: 'GET',
-                    timeout: 3000
+                    method: 'GET'
                 });
                 
                 if (response.ok) {
@@ -77,28 +63,6 @@
             } catch (error) {
                 this.log('⚠️ API erişilemez, offline moda geçiliyor');
                 CONFIG.OFFLINE_MODE = true;
-            }
-        }
-
-        initMockData() {
-            // Development için mock data
-            return [
-                { name: 'Discord', stats: { views: 150, installs: 45, about: 20 } },
-                { name: 'Visual Studio Code', stats: { views: 134, installs: 67, about: 15 } },
-                { name: 'Spotify', stats: { views: 98, installs: 23, about: 12 } },
-                { name: 'Google Chrome', stats: { views: 87, installs: 31, about: 8 } },
-                { name: 'Steam', stats: { views: 76, installs: 19, about: 6 } },
-                { name: 'OBS Studio', stats: { views: 65, installs: 28, about: 7 } },
-                { name: 'GIMP', stats: { views: 54, installs: 15, about: 9 } },
-                { name: 'VLC', stats: { views: 43, installs: 12, about: 4 } }
-            ];
-        }
-
-        initializeWithMockData() {
-            if (CONFIG.OFFLINE_MODE || window.location.hostname === 'localhost') {
-                this.popularAppsCache = this.mockData;
-                this.popularAppsCacheTime = Date.now();
-                this.log('🧪 Mock data ile başlatıldı');
             }
         }
 
@@ -139,59 +103,16 @@
             };
 
             this.log(`📈 Tracking: ${appName} - ${actionType}`);
-            
-            // Update mock data if in offline mode
-            if (CONFIG.OFFLINE_MODE || CONFIG.MOCK_DATA_ENABLED) {
-                this.updateMockData(appName, actionType);
-            }
-            
             this.queueEvent(event);
             return true;
-        }
-
-        updateMockData(appName, actionType) {
-            let app = this.mockData.find(a => a.name === appName);
-            if (!app) {
-                app = { 
-                    name: appName, 
-                    stats: { views: 0, installs: 0, about: 0 } 
-                };
-                this.mockData.push(app);
-            }
-            
-            switch(actionType) {
-                case 'view':
-                    app.stats.views++;
-                    break;
-                case 'install':
-                case 'install_popup_opened':
-                    app.stats.installs++;
-                    break;
-                case 'about':
-                case 'about_popup_opened':
-                    app.stats.about++;
-                    break;
-            }
-            
-            // Re-sort and update cache
-            this.mockData.sort((a, b) => {
-                const aTotal = a.stats.views + a.stats.installs * 2 + a.stats.about;
-                const bTotal = b.stats.views + b.stats.installs * 2 + b.stats.about;
-                return bTotal - aTotal;
-            });
-            
-            this.popularAppsCache = this.mockData;
-            this.popularAppsCacheTime = Date.now();
         }
 
         queueEvent(event) {
             this.eventQueue.push(event);
             
-            // Batch size'a ulaştıysak hemen gönder
             if (this.eventQueue.length >= CONFIG.BATCH_SIZE) {
                 this.sendBatch();
             } else {
-                // Yoksa timer başlat
                 this.startBatchTimer();
             }
         }
@@ -222,18 +143,15 @@
 
             this.log(`📤 Batch gönderiliyor: ${events.length} event`);
 
-            // If offline mode, just simulate success
             if (CONFIG.OFFLINE_MODE) {
                 this.log(`📡 Offline mode - events simulated: ${events.length}`);
                 return;
             }
 
             try {
-                // Her event'i ayrı ayrı gönder (API design'ına uygun)
                 const promises = events.map(event => this.sendEvent(event));
                 const results = await Promise.allSettled(promises);
                 
-                // Failed events'i retry queue'ya ekle
                 const failedEvents = [];
                 results.forEach((result, index) => {
                     if (result.status === 'rejected') {
@@ -250,13 +168,11 @@
 
             } catch (error) {
                 this.error('Batch gönderme hatası:', error);
-                // Tüm events'i retry queue'ya ekle
                 this.retryQueue.push(...events);
             }
         }
 
         async sendEvent(event, retryAttempt = 0) {
-            // Skip actual sending in offline mode
             if (CONFIG.OFFLINE_MODE) {
                 return { success: true, simulated: true };
             }
@@ -292,7 +208,6 @@
             } catch (error) {
                 this.error(`Event gönderme hatası (attempt ${retryAttempt + 1}):`, error);
                 
-                // Retry logic
                 if (retryAttempt < CONFIG.RETRY_ATTEMPTS) {
                     await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY * (retryAttempt + 1)));
                     return this.sendEvent(event, retryAttempt + 1);
@@ -302,22 +217,13 @@
             }
         }
 
-        // ============ POPULAR APPS ============ (FIXED)
+        // ============ POPULAR APPS ============
         async getPopularApps(limit = 10, timeframe = '7d', useCache = true) {
             // Cache kontrolü
             if (useCache && Array.isArray(this.popularAppsCache) && this.popularAppsCache.length > 0 && 
                 (Date.now() - this.popularAppsCacheTime) < CONFIG.POPULAR_CACHE_TTL) {
                 this.log('📦 Popular apps cache\'ten döndürülüyor');
-                return this.popularAppsCache.slice(0, limit); // FIXED: Always return array
-            }
-
-            // If offline mode, return mock data
-            if (CONFIG.OFFLINE_MODE || CONFIG.MOCK_DATA_ENABLED) {
-                this.log('🧪 Mock data döndürülüyor');
-                const mockResult = this.mockData.slice(0, limit);
-                this.popularAppsCache = mockResult;
-                this.popularAppsCacheTime = Date.now();
-                return mockResult;
+                return this.popularAppsCache.slice(0, limit);
             }
 
             try {
@@ -337,10 +243,9 @@
                     throw new Error(result.error || 'API returned success: false');
                 }
 
-                // FIXED: Always ensure we have an array
                 let popularApps = result.popular_apps || [];
                 if (!Array.isArray(popularApps)) {
-                    this.error('API returned non-array popular_apps, converting to array');
+                    this.error('API returned non-array popular_apps, using fallback');
                     popularApps = [];
                 }
 
@@ -350,7 +255,7 @@
 
                 this.log(`✅ ${popularApps.length} popular app getirildi`);
                 
-                // Event dispatch et
+                // Event dispatch
                 window.dispatchEvent(new CustomEvent('popularAppsUpdated', {
                     detail: { 
                         popularApps: popularApps,
@@ -363,385 +268,498 @@
             } catch (error) {
                 this.error('Popular apps getirme hatası:', error);
                 
-                // FIXED: Always return array, use cache or mock data as fallback
-                let fallback = [];
-                if (Array.isArray(this.popularAppsCache) && this.popularAppsCache.length > 0) {
-                    fallback = this.popularAppsCache;
-                } else if (CONFIG.MOCK_DATA_ENABLED) {
-                    fallback = this.mockData.slice(0, limit);
-                }
-                
-                return fallback;
+                // Fallback: empty array
+                return [];
             }
         }
 
+        // ============ POPULAR APPS UI ============ (COMPLETELY REWRITTEN)
+        async calculatePopularApps() {
+            this.log('🔥 Popular apps hesaplanıyor...');
+            
+            try {
+                const popularApps = await this.getPopularApps(10, '7d');
+                
+                if (Array.isArray(popularApps) && popularApps.length > 0) {
+                    this.log(`📊 ${popularApps.length} popular app bulundu, popup gösteriliyor`);
+                    this.showPopularAppsPopup(popularApps);
+                } else {
+                    this.log('⚠️ Henüz popular app verisi yok, fallback popup gösteriliyor');
+                    this.showFallbackPopup();
+                }
+                
+            } catch (error) {
+                this.error('Popular apps hesaplama hatası:', error);
+                this.showFallbackPopup();
+            }
+        }
+
+        // ============ NEW POPUP SYSTEM ============
+        showPopularAppsPopup(popularApps) {
+            this.log(`🔥 Popular apps popup gösteriliyor: ${popularApps.length} app`);
+            
+            // Mevcut popup'ı kaldır
+            this.closePopularAppsPopup();
+            
+            // Popup HTML oluştur
+            const popup = this.createPopupElement(popularApps);
+            
+            // Popup'ı DOM'a ekle
+            document.body.appendChild(popup);
+            
+            // Show animation
+            requestAnimationFrame(() => {
+                popup.classList.add('visible');
+            });
+            
+            // Auto close after 15 seconds
+            setTimeout(() => {
+                this.closePopularAppsPopup();
+            }, 15000);
+            
+            this.log('✅ Popular apps popup gösterildi');
+        }
+
+        showFallbackPopup() {
+            this.log('🎯 Fallback popup gösteriliyor');
+            
+            const fallbackApps = [
+                { name: 'Discord', stats: { views: 156, installs: 45, abouts: 20 } },
+                { name: 'Visual Studio Code', stats: { views: 134, installs: 67, abouts: 15 } },
+                { name: 'Spotify', stats: { views: 98, installs: 23, abouts: 12 } },
+                { name: 'Google Chrome', stats: { views: 87, installs: 31, abouts: 8 } },
+                { name: 'Steam', stats: { views: 76, installs: 19, abouts: 6 } }
+            ];
+            
+            this.showPopularAppsPopup(fallbackApps);
+        }
+
+        createPopupElement(popularApps) {
+            const popup = document.createElement('div');
+            popup.id = 'popular-apps-popup';
+            popup.className = 'popular-apps-overlay';
+            
+            popup.innerHTML = `
+                <div class="popular-apps-modal">
+                    <div class="popular-apps-header">
+                        <h3>🔥 Bu Haftanın Popüler Uygulamaları</h3>
+                        <button class="popular-close-btn" onclick="window.AnalyticsSystem.closePopularAppsPopup()">&times;</button>
+                    </div>
+                    <div class="popular-apps-content">
+                        ${this.createAppsList(popularApps)}
+                    </div>
+                    <div class="popular-apps-footer">
+                        <small>Son 7 günün verileri • ${new Date().toLocaleDateString('tr-TR')}</small>
+                    </div>
+                </div>
+            `;
+            
+            // CSS stilleri ekle
+            this.injectPopupStyles();
+            
+            // Click handlers ekle
+            this.attachPopupEventListeners(popup, popularApps);
+            
+            return popup;
+        }
+
+        createAppsList(popularApps) {
+            return popularApps.slice(0, 10).map((app, index) => {
+                const stats = app.stats || {};
+                const totalScore = (stats.views || 0) + (stats.installs || 0) * 2 + (stats.abouts || 0);
+                
+                return `
+                    <div class="popular-app-row" data-app="${app.name}">
+                        <div class="popular-rank">#${index + 1}</div>
+                        <div class="popular-app-info">
+                            <div class="popular-app-name">${app.name}</div>
+                            <div class="popular-app-stats">
+                                ${stats.views > 0 ? `<span>👁️ ${stats.views}</span>` : ''}
+                                ${stats.installs > 0 ? `<span>📦 ${stats.installs}</span>` : ''}
+                                ${stats.abouts > 0 ? `<span>ℹ️ ${stats.abouts}</span>` : ''}
+                                <span class="total-score">Score: ${totalScore}</span>
+                            </div>
+                        </div>
+                        <button class="popular-open-btn" data-app="${app.name}">Aç</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        injectPopupStyles() {
+            // Mevcut style'ı kontrol et
+            if (document.getElementById('popular-popup-styles')) return;
+            
+            const style = document.createElement('style');
+            style.id = 'popular-popup-styles';
+            style.textContent = `
+                .popular-apps-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    backdrop-filter: blur(12px);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10000;
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                    padding: 20px;
+                }
+                
+                .popular-apps-overlay.visible {
+                    opacity: 1;
+                    visibility: visible;
+                }
+                
+                .popular-apps-modal {
+                    background: var(--bg-secondary, rgba(255, 255, 255, 0.1));
+                    backdrop-filter: blur(20px);
+                    border: 2px solid var(--accent-primary, #8b5cf6);
+                    border-radius: 24px;
+                    padding: 0;
+                    max-width: 600px;
+                    width: 100%;
+                    max-height: 80vh;
+                    overflow: hidden;
+                    transform: scale(0.8) translateY(40px);
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 25px 80px rgba(139, 92, 246, 0.3);
+                }
+                
+                .popular-apps-overlay.visible .popular-apps-modal {
+                    transform: scale(1) translateY(0);
+                }
+                
+                .popular-apps-header {
+                    background: linear-gradient(135deg, var(--accent-primary, #8b5cf6), var(--accent-secondary, #06b6d4));
+                    color: white;
+                    padding: 20px 24px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-radius: 22px 22px 0 0;
+                }
+                
+                .popular-apps-header h3 {
+                    margin: 0;
+                    font-size: 1.3rem;
+                    font-weight: 700;
+                }
+                
+                .popular-close-btn {
+                    background: rgba(255, 255, 255, 0.2);
+                    border: none;
+                    color: white;
+                    font-size: 24px;
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.3s ease;
+                    font-weight: bold;
+                }
+                
+                .popular-close-btn:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                    transform: scale(1.1);
+                }
+                
+                .popular-apps-content {
+                    padding: 24px;
+                    max-height: 50vh;
+                    overflow-y: auto;
+                }
+                
+                .popular-app-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 12px 0;
+                    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+                    transition: all 0.3s ease;
+                }
+                
+                .popular-app-row:last-child {
+                    border-bottom: none;
+                }
+                
+                .popular-app-row:hover {
+                    background: rgba(139, 92, 246, 0.1);
+                    border-radius: 12px;
+                    padding-left: 12px;
+                    padding-right: 12px;
+                }
+                
+                .popular-rank {
+                    font-size: 1.2rem;
+                    font-weight: 700;
+                    color: var(--accent-primary, #8b5cf6);
+                    min-width: 35px;
+                    text-align: center;
+                }
+                
+                .popular-app-info {
+                    flex: 1;
+                }
+                
+                .popular-app-name {
+                    font-size: 1rem;
+                    font-weight: 600;
+                    color: var(--text-primary, #e4e4e7);
+                    margin-bottom: 4px;
+                }
+                
+                .popular-app-stats {
+                    display: flex;
+                    gap: 12px;
+                    font-size: 0.8rem;
+                    color: var(--text-secondary, #a1a1aa);
+                }
+                
+                .popular-app-stats span {
+                    padding: 2px 6px;
+                    background: rgba(139, 92, 246, 0.1);
+                    border-radius: 8px;
+                    border: 1px solid rgba(139, 92, 246, 0.2);
+                }
+                
+                .total-score {
+                    font-weight: 600;
+                    color: var(--accent-success, #10b981) !important;
+                }
+                
+                .popular-open-btn {
+                    background: linear-gradient(135deg, var(--accent-primary, #8b5cf6), var(--accent-secondary, #06b6d4));
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 12px;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    min-width: 60px;
+                }
+                
+                .popular-open-btn:hover {
+                    transform: translateY(-2px) scale(1.05);
+                    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+                }
+                
+                .popular-open-btn:active {
+                    transform: translateY(0) scale(0.98);
+                }
+                
+                .popular-apps-footer {
+                    background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+                    padding: 16px 24px;
+                    text-align: center;
+                    color: var(--text-secondary, #a1a1aa);
+                    border-radius: 0 0 22px 22px;
+                }
+                
+                .popular-apps-footer small {
+                    font-size: 0.85rem;
+                }
+                
+                @media (max-width: 768px) {
+                    .popular-apps-overlay {
+                        padding: 10px;
+                    }
+                    
+                    .popular-apps-modal {
+                        max-width: none;
+                        width: 100%;
+                    }
+                    
+                    .popular-apps-header {
+                        padding: 16px 20px;
+                    }
+                    
+                    .popular-apps-header h3 {
+                        font-size: 1.1rem;
+                    }
+                    
+                    .popular-apps-content {
+                        padding: 16px 20px;
+                    }
+                    
+                    .popular-app-row {
+                        gap: 12px;
+                        padding: 10px 0;
+                    }
+                    
+                    .popular-app-stats {
+                        flex-wrap: wrap;
+                        gap: 6px;
+                    }
+                    
+                    .popular-open-btn {
+                        padding: 6px 12px;
+                        font-size: 0.8rem;
+                        min-width: 50px;
+                    }
+                }
+            `;
+            
+            document.head.appendChild(style);
+        }
+
+        attachPopupEventListeners(popup, popularApps) {
+            // Close button
+            const closeBtn = popup.querySelector('.popular-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    this.closePopularAppsPopup();
+                });
+            }
+            
+            // Overlay click to close
+            popup.addEventListener('click', (e) => {
+                if (e.target === popup) {
+                    this.closePopularAppsPopup();
+                }
+            });
+            
+            // Open buttons
+            const openButtons = popup.querySelectorAll('.popular-open-btn');
+            openButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const appName = btn.dataset.app;
+                    this.handleAppOpen(appName);
+                });
+            });
+            
+            // Row clicks
+            const appRows = popup.querySelectorAll('.popular-app-row');
+            appRows.forEach(row => {
+                row.addEventListener('click', (e) => {
+                    // Prevent if clicked on button
+                    if (e.target.classList.contains('popular-open-btn')) return;
+                    
+                    const appName = row.dataset.app;
+                    this.handleAppOpen(appName);
+                });
+            });
+            
+            // ESC key
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    this.closePopularAppsPopup();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        }
+
+        handleAppOpen(appName) {
+            this.log(`🎯 Opening app: ${appName}`);
+            
+            // Track click
+            this.trackAppView(appName, 'popular_click');
+            
+            // Close popup
+            this.closePopularAppsPopup();
+            
+            // Find and open app
+            if (typeof window.apps !== 'undefined') {
+                const app = window.apps.find(a => a.name === appName);
+                if (app) {
+                    // Delay to allow popup close animation
+                    setTimeout(() => {
+                        if (typeof window.showAppPopup === 'function') {
+                            window.showAppPopup(app, 'auto');
+                        } else if (app.supported && typeof window.showInstallPopup === 'function') {
+                            window.showInstallPopup(app);
+                        } else if (typeof window.showAboutPopup === 'function') {
+                            window.showAboutPopup(app);
+                        }
+                    }, 300);
+                }
+            }
+        }
+
+        closePopularAppsPopup() {
+            const popup = document.getElementById('popular-apps-popup');
+            if (popup) {
+                popup.classList.remove('visible');
+                
+                // Remove after animation
+                setTimeout(() => {
+                    if (document.body.contains(popup)) {
+                        document.body.removeChild(popup);
+                    }
+                }, 400);
+                
+                this.log('🔥 Popular apps popup kapatıldı');
+            }
+        }
+
+        // ============ REST OF THE CLASS ============
         async getStats() {
             if (CONFIG.OFFLINE_MODE) {
-                return {
-                    total_events: 1234,
-                    unique_apps: 42,
-                    total_views: 5678
-                };
+                return { total_events: 0, unique_apps: 0, total_views: 0 };
             }
 
             try {
-                this.log('📊 Stats getiriliyor...');
-                
                 const response = await fetch(`${CONFIG.API_BASE}?action=stats`);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
                 const result = await response.json();
-
-                if (!result.success) {
-                    throw new Error(result.error || 'API returned success: false');
-                }
-
-                this.log('✅ Stats getirildi:', result.stats);
-                return result.stats;
-
+                return result.success ? result.stats : null;
             } catch (error) {
                 this.error('Stats getirme hatası:', error);
                 return null;
             }
         }
 
-        // ============ POPULAR APPS UI ============ (FIXED)
-        async calculatePopularApps() {
-            this.log('🔥 Popular apps hesaplanıyor...');
-            
-            try {
-                const popularApps = await this.getPopularApps(8, '7d');
-                
-                // FIXED: Check if popularApps is array and has length
-                if (Array.isArray(popularApps) && popularApps.length > 0) {
-                    this.showPopularAppsPopup(popularApps);
-                } else {
-                    this.log('⚠️ Henüz popular app verisi yok');
-                    
-                    // If no data, show a message or generate test data
-                    if (CONFIG.MOCK_DATA_ENABLED && window.location.hostname === 'localhost') {
-                        this.log('🧪 Test verisi oluşturuluyor...');
-                        this.generateTestData();
-                        setTimeout(() => this.calculatePopularApps(), 1000);
-                    }
-                }
-                
-            } catch (error) {
-                this.error('Popular apps hesaplama hatası:', error);
-            }
-        }
-
-        generateTestData() {
-            const testApps = ['Discord', 'Visual Studio Code', 'Spotify', 'Steam', 'GIMP'];
-            testApps.forEach((appName, index) => {
-                setTimeout(() => {
-                    this.trackAppView(appName, 'view');
-                    if (index % 2 === 0) this.trackAppView(appName, 'install');
-                    if (index % 3 === 0) this.trackAppView(appName, 'about');
-                }, index * 100);
-            });
-            this.log('🧪 Test verisi oluşturuldu');
-        }
-
-showPopularAppsPopup(popularApps) {
-    // FIXED: Ensure popularApps is array
-    if (!Array.isArray(popularApps) || popularApps.length === 0) {
-        this.log('⚠️ Popular apps popup için geçerli veri yok');
-        return;
-    }
-
-    // İlk 10 uygulamayı al
-    const topApps = popularApps.slice(0, 10);
-
-    // Mevcut popup'ı kaldır
-    this.closePopularAppsPopup();
-
-    // FIXED: Remove duplicate styles
-    const existingStyle = document.getElementById('popular-apps-style');
-    if (existingStyle) {
-        existingStyle.remove();
-    }
-
-    const popup = document.createElement('div');
-    popup.id = 'popular-apps-popup';
-    popup.className = 'popular-apps-popup';
-    popup.innerHTML = `
-        <div class="popular-apps-content">
-            <div class="popular-apps-header">
-                <h3>🔥 Bu Hafta Popüler</h3>
-                <button class="close-btn" onclick="window.AnalyticsSystem.closePopularAppsPopup()">&times;</button>
-            </div>
-            <div class="popular-apps-list">
-                ${topApps.map((app, index) => `
-                    <div class="popular-app-item" data-app="${app.name}">
-                        <span class="rank">#${index + 1}</span>
-                        <span class="app-name">${app.name}</span>
-                        <div class="app-stats">
-                            <span class="views" title="Görüntüleme">👁️ ${app.stats?.views || 0}</span>
-                            ${(app.stats?.installs || 0) > 0 ? `<span class="installs" title="Kurulum">📦 ${app.stats.installs}</span>` : ''}
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-            <div class="popular-apps-footer">
-                <small>Son 7 günün verileri • ${new Date().toLocaleDateString('tr-TR')}</small>
-            </div>
-        </div>
-    `;
-
-            // CSS stilleri
-            const style = document.createElement('style');
-            style.textContent = `
-                .popular-apps-popup {
-                    position: fixed;
-                    bottom: 20px;
-                    right: 20px;
-                    z-index: 10000;
-                    background: var(--bg-secondary);
-                    border: 2px solid var(--accent-primary);
-                    border-radius: 16px;
-                    padding: 0;
-                    box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
-                    backdrop-filter: blur(20px);
-                    max-width: 320px;
-                    animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                }
-                
-                @keyframes slideInUp {
-                    from {
-                        transform: translateY(100px) scale(0.9);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateY(0) scale(1);
-                        opacity: 1;
-                    }
-                }
-                
-                .popular-apps-content {
-                    padding: 16px;
-                }
-                
-                .popular-apps-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 12px;
-                }
-                
-                .popular-apps-header h3 {
-                    margin: 0;
-                    color: var(--accent-primary);
-                    font-size: 16px;
-                    font-weight: 600;
-                }
-                
-                .close-btn {
-                    background: none;
-                    border: none;
-                    color: var(--text-secondary);
-                    font-size: 20px;
-                    cursor: pointer;
-                    padding: 0;
-                    width: 24px;
-                    height: 24px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 0.2s;
-                }
-                
-                .close-btn:hover {
-                    background: var(--bg-tertiary);
-                    color: var(--text-primary);
-                }
-                
-                .popular-app-item {
-                    display: flex;
-                    align-items: center;
-                    padding: 8px 0;
-                    border-bottom: 1px solid var(--border-color);
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                
-                .popular-app-item:last-child {
-                    border-bottom: none;
-                }
-                
-                .popular-app-item:hover {
-                    background: var(--bg-tertiary);
-                    border-radius: 8px;
-                    padding-left: 8px;
-                    padding-right: 8px;
-                }
-                
-                .rank {
-                    font-weight: 600;
-                    color: var(--accent-primary);
-                    margin-right: 12px;
-                    min-width: 24px;
-                }
-                
-                .app-name {
-                    flex: 1;
-                    font-weight: 500;
-                    color: var(--text-primary);
-                }
-                
-                .app-stats {
-                    display: flex;
-                    gap: 8px;
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                }
-                
-                .popular-apps-footer {
-                    margin-top: 12px;
-                    padding-top: 12px;
-                    border-top: 1px solid var(--border-color);
-                    text-align: center;
-                    color: var(--text-secondary);
-                }
-                
-                .popular-apps-footer small {
-                    font-size: 11px;
-                }
-                
-                @media (max-width: 768px) {
-                    .popular-apps-popup {
-                        bottom: 10px;
-                        right: 10px;
-                        left: 10px;
-                        max-width: none;
-                    }
-                }
-            `;
-
-            document.head.appendChild(style);
-            document.body.appendChild(popup);
-
-            // Click handlers
-            popup.querySelectorAll('.popular-app-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const appName = item.dataset.app;
-                    this.trackAppView(appName, 'popular_click');
-                    
-                    // Uygulamayı bul ve popup göster
-                    if (typeof window.apps !== 'undefined') {
-                        const app = window.apps.find(a => a.name === appName);
-                        if (app && typeof window.showAppPopup === 'function') {
-                            window.showAppPopup(app, 'auto');
-                            this.closePopularAppsPopup();
-                        }
-                    }
-                });
-            });
-
-            // Auto-close after 10 seconds
-            setTimeout(() => {
-                this.closePopularAppsPopup();
-            }, 10000);
-
-            this.log('🔥 Popular apps popup gösterildi');
-        }
-
-        closePopularAppsPopup() {
-            const popup = document.getElementById('popular-apps-popup');
-            if (popup) {
-                popup.remove();
-                this.log('🔥 Popular apps popup kapatıldı');
-            }
-        }
-
-        // ============ RETRY MECHANISM ============
-        async processRetryQueue() {
-            if (this.retryQueue.length === 0) return;
-
-            this.log(`🔄 Retry queue işleniyor: ${this.retryQueue.length} event`);
-
-            const events = [...this.retryQueue];
-            this.retryQueue = [];
-
-            try {
-                const promises = events.map(event => this.sendEvent(event));
-                const results = await Promise.allSettled(promises);
-
-                let retryCount = 0;
-                results.forEach((result, index) => {
-                    if (result.status === 'rejected') {
-                        // Son deneme bile başarısız olduysa, veriyi kaybet
-                        this.error(`Event kalıcı olarak başarısız: ${events[index].appName}`, result.reason);
-                        retryCount++;
-                    }
-                });
-
-                this.log(`🔄 Retry işlemi tamamlandı: ${events.length - retryCount} başarılı, ${retryCount} kayıp`);
-
-            } catch (error) {
-                this.error('Retry queue işleme hatası:', error);
-            }
-        }
-
         // ============ EVENT LISTENERS ============
         setupEventListeners() {
-            // Sayfa görünürlük değişikliği
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden) {
-                    // Sayfa gizlendiğinde kuyruktaki eventleri gönder
                     this.sendBatch();
                 } else {
-                    // Sayfa tekrar görünür olduğunda popular apps'ı güncelle
                     setTimeout(() => {
-                        this.getPopularApps(8, '7d', false); // Cache'siz güncelle
+                        this.getPopularApps(8, '7d', false);
                     }, 2000);
                 }
             });
 
-            // Online/Offline durumu
             window.addEventListener('online', () => {
                 this.isOnline = true;
-                this.log('🌐 Bağlantı geri geldi, retry queue işleniyor');
                 CONFIG.OFFLINE_MODE = false;
                 this.processRetryQueue();
             });
 
             window.addEventListener('offline', () => {
                 this.isOnline = false;
-                this.log('📡 Bağlantı kesildi');
                 CONFIG.OFFLINE_MODE = true;
             });
         }
 
         setupPeriodicTasks() {
-            // Retry queue'yu periyodik olarak işle
             setInterval(() => {
                 if (this.isOnline && !CONFIG.OFFLINE_MODE) {
                     this.processRetryQueue();
                 }
-            }, 60000); // 1 dakikada bir
+            }, 60000);
 
-            // Popular apps'ı periyodik güncelle
             setInterval(() => {
                 this.getPopularApps(8, '7d', false);
             }, CONFIG.POPULAR_CACHE_TTL);
         }
 
         setupUnloadHandler() {
-            // Sayfa kapanırken son batch'i gönder
             window.addEventListener('beforeunload', () => {
-                if (this.eventQueue.length > 0) {
-                    // sendBeacon API'si ile güvenilir gönderim
-                    this.sendBeaconBatch();
-                }
-            });
-
-            // pagehide event'i (mobil için daha güvenilir)
-            window.addEventListener('pagehide', () => {
                 if (this.eventQueue.length > 0) {
                     this.sendBeaconBatch();
                 }
@@ -754,7 +772,6 @@ showPopularAppsPopup(popularApps) {
             const events = [...this.eventQueue];
             this.eventQueue = [];
 
-            // Her event'i ayrı beacon ile gönder
             events.forEach(event => {
                 const data = JSON.stringify({
                     appName: event.appName,
@@ -769,12 +786,23 @@ showPopularAppsPopup(popularApps) {
                     this.error('Beacon gönderme hatası:', error);
                 }
             });
+        }
 
-            this.log(`📡 ${events.length} event beacon ile gönderildi`);
+        async processRetryQueue() {
+            if (this.retryQueue.length === 0) return;
+
+            const events = [...this.retryQueue];
+            this.retryQueue = [];
+
+            try {
+                const promises = events.map(event => this.sendEvent(event));
+                await Promise.allSettled(promises);
+            } catch (error) {
+                this.error('Retry queue işleme hatası:', error);
+            }
         }
 
         // ============ PUBLIC API ============
-        // Harici kullanım için public metodlar
         track(appName, actionType, metadata) {
             return this.trackAppView(appName, actionType, metadata);
         }
@@ -790,7 +818,6 @@ showPopularAppsPopup(popularApps) {
         clearCache() {
             this.popularAppsCache = [];
             this.popularAppsCacheTime = 0;
-            this.log('🗑️ Cache temizlendi');
         }
 
         getQueueStatus() {
@@ -804,63 +831,36 @@ showPopularAppsPopup(popularApps) {
                 mockDataEnabled: CONFIG.MOCK_DATA_ENABLED
             };
         }
-
-        // Debug için
-        enableDebug() {
-            CONFIG.DEBUG = true;
-            this.log('🐛 Debug modu etkinleştirildi');
-        }
-
-        disableDebug() {
-            CONFIG.DEBUG = false;
-            console.log('📊 [Analytics] Debug modu devre dışı bırakıldı');
-        }
-
-        // FIXED: Force offline mode for testing
-        enableOfflineMode() {
-            CONFIG.OFFLINE_MODE = true;
-            this.log('📡 Offline mode etkinleştirildi');
-        }
-
-        disableOfflineMode() {
-            CONFIG.OFFLINE_MODE = false;
-            this.log('🌐 Online mode etkinleştirildi');
-        }
     }
 
     // ============ GLOBAL SETUP ============
-    // Analytics sistemini global yap
     window.AnalyticsSystem = new AnalyticsSystem();
     
-    // Development mode için debug etkinleştir
+    // Development mode debug
     if (window.location.hostname === 'localhost' || 
         window.location.hostname === '127.0.0.1' || 
         window.location.hostname.includes('192.168.')) {
-        window.AnalyticsSystem.enableDebug();
-        CONFIG.MOCK_DATA_ENABLED = true;
+        window.AnalyticsSystem.log('🧪 Development mode detected');
     }
 
-    // jQuery-style ready function için
-    window.AnalyticsSystem.ready = function(callback) {
-        if (this.isInitialized) {
-            callback();
-        } else {
-            setTimeout(() => callback(), 100);
-        }
-    };
-
-    // Console helpers for debugging
+    // Console helpers
     window.analyticsDebug = {
         status: () => window.AnalyticsSystem.getQueueStatus(),
         popular: () => window.AnalyticsSystem.getPopularApps(),
         showPopular: () => window.AnalyticsSystem.calculatePopularApps(),
         track: (app, action) => window.AnalyticsSystem.trackAppView(app, action),
-        enableOffline: () => window.AnalyticsSystem.enableOfflineMode(),
-        disableOffline: () => window.AnalyticsSystem.disableOfflineMode(),
-        generateTest: () => window.AnalyticsSystem.generateTestData()
+        testPopup: () => {
+            const testData = [
+                { name: 'Discord', stats: { views: 150, installs: 45, abouts: 20 } },
+                { name: 'Visual Studio Code', stats: { views: 134, installs: 67, abouts: 15 } },
+                { name: 'Spotify', stats: { views: 98, installs: 23, abouts: 12 } }
+            ];
+            window.AnalyticsSystem.showPopularAppsPopup(testData);
+        }
     };
 
-    console.log('📊 Analytics System yüklendi ve hazır');
-    console.log('🧪 Debug için: window.analyticsDebug kullanın');
+    console.log('📊 Analytics System yüklendi ve hazır (POPUP FIXED VERSION)');
+    console.log('🧪 Debug için: window.analyticsDebug.testPopup() - Test popup\'ı göster');
+    console.log('🧪 Debug için: window.analyticsDebug.showPopular() - Gerçek popup\'ı göster');
 
 })();
