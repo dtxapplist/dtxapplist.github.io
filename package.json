@@ -8,9 +8,7 @@
     "build": "echo 'Static site - no build needed'",
     "deploy": "vercel --prod"
   },
-  "dependencies": {
-    "@vercel/kv": "^1.0.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "vercel": "^32.0.0"
   },
@@ -18,8 +16,8 @@
     "linux",
     "apps",
     "analytics",
-    "vercel"
+    "upstash"
   ],
-  "author": "Your Name",
+  "author": "dpentx",
   "license": "MIT"
 }
