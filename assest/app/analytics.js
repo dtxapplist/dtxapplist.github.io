@@ -13,9 +13,9 @@
         RETRY_ATTEMPTS: 3,
         RETRY_DELAY: 1000,
         POPULAR_CACHE_TTL: 5 * 60 * 1000, // 5 dakika
-        DEBUG: false,
+        DEBUG: true,
         OFFLINE_MODE: false, // Offline mode for development
-        MOCK_DATA_ENABLED: true // Mock data for testing
+        MOCK_DATA_ENABLED: false // Mock data for testing
     };
 
     // ============ ANALYTICS SYSTEM ============
